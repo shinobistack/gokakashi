@@ -37,8 +37,11 @@ goKakashi/
 ├── go.mod                   # Go module file
 └── go.sum                   # Go module checksum file
 ```
+### Brain dump
 
+This readme will be updated to better. Here for brain dumping. 
 
+**Phase I**
 .env: accept config file. 
 config file can have 
 - list images 
@@ -53,4 +56,36 @@ LTS config file
 Latest hasura config file 
 
 goKakashi <config_file> 
+
+Future Enhancements
+
+1. Implement ACR|GCR|ECR Support:
+
+    * Complete the acr.go implementation.
+    * Handle Azure-specific authentication flows.
+2. Hosting
+
+3. Secure the Private Web Server:
+
+    * Integrate authentication mechanisms such as OAuth2 or JWT.
+    * Restrict access based on user roles or IP addresses.
+    * OR better way
+
+4. Improve Report Presentation:
+<.....> 
+
+5. Storage of reports:
+<...>
+
+6. Support Additional Scanners:
+
+    * Implement interfaces for other vulnerability scanners like Snyk.
+    * Allow users to choose their preferred scanning tool via configuration.
+
+7. Containerization:
+
+    * Containerize goKakashi itself using Docker for easier deployment. Thinking
+
+8. Improve Logging 
+
 
