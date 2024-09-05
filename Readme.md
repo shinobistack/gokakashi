@@ -1,19 +1,17 @@
-goKakashi is a Go-based tool designed to:
+**goKakashi** is a Go-based tool designed to:
 
-Authenticate and Pull Docker Images from multiple container registries:
+1. Authenticate and Pull Docker Images from multiple container registries:
+- Docker Hub 
+- AWS Elastic Container Registry (ECR) (To be implemented)
+- Google Container Registry (GCR) (To be implemented)
+- Azure Container Registry (ACR) (To be implemented)
+2. Scan Docker Images using Trivy for vulnerabilities.
 
-Docker Hub
-AWS Elastic Container Registry (ECR) (To be implemented)
-Google Container Registry (GCR) (To be implemented)
-Azure Container Registry (ACR) (To be implemented)
-Scan Docker Images using Trivy for vulnerabilities.
+3. Serve Scan Reports via:
+- Public Web Server: Accessible without authentication. 
+- Private Web Server: Secured access for internal use.
 
-Serve Scan Reports via:
-
-Public Web Server: Accessible without authentication.
-Private Web Server: Secured access for internal use.
-
-Directory structure
+### Project Structure
 
 ```
 goKakashi/
