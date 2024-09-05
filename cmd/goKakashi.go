@@ -6,10 +6,10 @@ import (
 	"os/signal"
 	"syscall"
 
-	"github.com/hasura/goKakashi/pkg/config"
-	"github.com/hasura/goKakashi/pkg/registry"
-	"github.com/hasura/goKakashi/pkg/scanner"
-	"github.com/hasura/goKakashi/pkg/web"
+	"github.com/ashwiniag/goKakashi/pkg/config"
+	"github.com/ashwiniag/goKakashi/pkg/registry"
+	"github.com/ashwiniag/goKakashi/pkg/scanner"
+	"github.com/ashwiniag/goKakashi/pkg/web"
 	"github.com/joho/godotenv"
 )
 

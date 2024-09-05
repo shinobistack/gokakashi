@@ -1,4 +1,4 @@
-module github.com/hasura/goKakashi
+module github.com/ashwiniag/goKakashi
 
 go 1.20
 

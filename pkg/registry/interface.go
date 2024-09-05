@@ -1,6 +1,6 @@
 package registry
 
-import "github.com/hasura/goKakashi/pkg/config"
+import "github.com/ashwiniag/goKakashi/pkg/config"
 
 // Registry interface defines methods for container registries
 type Registry interface {

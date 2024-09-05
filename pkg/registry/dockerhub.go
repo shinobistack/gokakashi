@@ -2,7 +2,7 @@ package registry
 
 import (
 	"fmt"
-	"github.com/hasura/goKakashi/pkg/config"
+	"github.com/ashwiniag/goKakashi/pkg/config"
 	"log"
 	"os/exec"
 )
