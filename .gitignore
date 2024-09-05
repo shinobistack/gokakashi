@@ -1,0 +1,37 @@
+# Binaries for programs and plugins
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+*.test
+*.out
+
+# Output of the Go build
+/go/bin/
+/bin/
+/goKakashi
+
+# Configuration files
+.env
+
+# Dependency directories (may appear in modules)
+/vendor/
+/Godeps/
+
+# IDE files
+.idea/
+.vscode/
+*.swp
+
+# Go test binaries
+*.cover
+*.test
+*.prof
+
+# Logs
+*.log
+
+# Temporary files
+*.tmp
+*.temp
