@@ -28,6 +28,7 @@ func main() {
 		log.Fatalf("Failed to load config: %v", err)
 	}
 
+	//ToDo: Rmove this later. Need not to log creds info
 	log.Printf("Configuration loaded successfully: %+v", cfg)
 
 	// Initialize the appropriate registry
@@ -37,7 +38,7 @@ func main() {
 		log.Fatalf("Failed to initialize registry: %v", err)
 	}
 
-	// If SkipDockerLogin is true, skip the Docker login
+	// If SkipDockerLogin is true, skip the Docker login if you want to pull public docker images.
 	if !cfg.SkipDockerLogin {
 		log.Println("Authenticating to the Docker registry...")
 		if err := reg.Login(cfg); err != nil {

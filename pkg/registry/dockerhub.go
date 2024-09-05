@@ -17,15 +17,12 @@ func NewDockerHub() *DockerHub {
 
 // Login authenticates to Docker Hub using --password-stdin for secure password handling
 func (d *DockerHub) Login(cfg *config.Config) error {
-	log.Println("Attempting to log in to DockerHub using --password-stdin...")
+	log.Println("Attempting to log in to DockerHub")
 
-	// Construct the docker login command using --password-stdin
-	fmt.Printf("Command: docker login -u %s --password-stdin\n", cfg.DockerUsername)
+	// Construct the docker login command using
+	// --password-stdin better way to handle this?
 	fmt.Printf("Command: docker login -u %s -p %s", cfg.DockerUsername, cfg.DockerPassword)
 	cmd := exec.Command("docker", "login", "-u", cfg.DockerUsername, "-p", cfg.DockerPassword)
-
-	// Pass the password securely through standard input (stdin)
-	//cmd.Stdin = strings.NewReader(cfg.DockerPassword)
 
 	// Capture both stdout and stderr from the command execution
 	output, err := cmd.CombinedOutput()
