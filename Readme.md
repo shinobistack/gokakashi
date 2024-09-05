@@ -38,3 +38,19 @@ goKakashi/
 └── go.sum                   # Go module checksum file
 ```
 
+
+.env: accept config file. 
+config file can have 
+- list images 
+- creds
+- website
+  - port
+  - name
+  - file_path/
+
+configurations
+LTS config file
+Latest hasura config file 
+
+goKakashi <config_file> 
+

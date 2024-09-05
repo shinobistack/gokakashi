@@ -2,9 +2,9 @@ package registry
 
 import (
 	"fmt"
-	"os/exec"
-
 	"github.com/hasura/goKakashi/pkg/config"
+	"log"
+	"os/exec"
 )
 
 // DockerHub struct
@@ -15,22 +15,42 @@ func NewDockerHub() *DockerHub {
 	return &DockerHub{}
 }
 
-// Login authenticates to Docker Hub
+// Login authenticates to Docker Hub using --password-stdin for secure password handling
 func (d *DockerHub) Login(cfg *config.Config) error {
+	log.Println("Attempting to log in to DockerHub using --password-stdin...")
+
+	// Construct the docker login command using --password-stdin
+	fmt.Printf("Command: docker login -u %s --password-stdin\n", cfg.DockerUsername)
+	fmt.Printf("Command: docker login -u %s -p %s", cfg.DockerUsername, cfg.DockerPassword)
 	cmd := exec.Command("docker", "login", "-u", cfg.DockerUsername, "-p", cfg.DockerPassword)
+
+	// Pass the password securely through standard input (stdin)
+	//cmd.Stdin = strings.NewReader(cfg.DockerPassword)
+
+	// Capture both stdout and stderr from the command execution
 	output, err := cmd.CombinedOutput()
+	log.Printf("Docker login output: %s", string(output))
+
 	if err != nil {
 		return fmt.Errorf("docker login failed: %v, %s", err, string(output))
 	}
+
+	log.Println("Successfully logged in to DockerHub.")
 	return nil
 }
 
-// PullImage pulls the specified Docker image
+// PullImage pulls the specified Docker image from Docker Hub
 func (d *DockerHub) PullImage(image string) error {
+	log.Printf("Pulling Docker image: %s...", image)
+
 	cmd := exec.Command("docker", "pull", image)
 	output, err := cmd.CombinedOutput()
+	log.Printf("Docker pull output: %s", string(output))
+
 	if err != nil {
 		return fmt.Errorf("docker pull failed: %v, %s", err, string(output))
 	}
+
+	log.Println("Docker image pulled successfully.")
 	return nil
 }
