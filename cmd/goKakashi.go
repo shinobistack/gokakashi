@@ -6,11 +6,11 @@ import (
 	"os/signal"
 	"syscall"
 
+	"github.com/hasura/goKakashi/pkg/config"
+	"github.com/hasura/goKakashi/pkg/registry"
+	"github.com/hasura/goKakashi/pkg/scanner"
+	"github.com/hasura/goKakashi/pkg/web"
 	"github.com/joho/godotenv"
-	"github.com/yourusername/goKakashi/pkg/config"
-	"github.com/yourusername/goKakashi/pkg/registry"
-	"github.com/yourusername/goKakashi/pkg/scanner"
-	"github.com/yourusername/goKakashi/pkg/web"
 )
 
 func main() {
