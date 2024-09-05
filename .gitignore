@@ -35,3 +35,9 @@
 # Temporary files
 *.tmp
 *.temp
+
+# IntelliJ project files
+.idea/
+*.iml
+*.iws
+out/

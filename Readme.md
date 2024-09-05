@@ -15,6 +15,7 @@ Private Web Server: Secured access for internal use.
 
 Directory structure
 
+```
 goKakashi/
 ├── cmd/                     # Main entry points of the project
 │   └── kakashi.go           # Main function
@@ -37,3 +38,5 @@ goKakashi/
 │   └── ...                  # Future internal packages
 ├── go.mod                   # Go module file
 └── go.sum                   # Go module checksum file
+```
+
