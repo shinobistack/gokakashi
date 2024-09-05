@@ -61,8 +61,6 @@ Future Enhancements
 
 1. Implement ACR|GCR|ECR Support:
 
-    * Complete the acr.go implementation.
-    * Handle Azure-specific authentication flows.
 2. Hosting
 
 3. Secure the Private Web Server:
