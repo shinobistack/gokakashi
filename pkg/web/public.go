@@ -53,7 +53,7 @@ const publicTemplate = `
 <!DOCTYPE html>
 <html>
 <head>
-    <title>public Scan Reports</title>
+    <title>Public Scan Reports</title>
 </head>
 <body>
     <h1>public Scan Reports</h1>
