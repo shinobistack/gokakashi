@@ -2,29 +2,31 @@ package registry
 
 import (
 	"fmt"
-	"github.com/ashwiniag/goKakashi/pkg/config"
 	"log"
 	"os/exec"
+	"strings"
+
+	"github.com/ashwiniag/goKakashi/pkg/config"
 )
 
-// DockerHub struct
 type DockerHub struct{}
 
-// NewDockerHub creates a new DockerHub instance
 func NewDockerHub() *DockerHub {
 	return &DockerHub{}
 }
 
-// Login authenticates to Docker Hub using --password-stdin for secure password handling
-func (d *DockerHub) Login(cfg *config.Config) error {
-	log.Println("Attempting to log in to DockerHub")
+// Login authenticates to Docker Hub using --password-stdin
+func (d *DockerHub) Login(target config.ScanTarget) error {
+	if target.Auth.Username == "" || target.Auth.Password == "" {
+		log.Println("Skipping DockerHub login as no credentials are provided")
+		return nil
+	}
 
-	// Construct the docker login command using
-	// --password-stdin better way to handle this?
-	fmt.Printf("Command: docker login -u %s -p %s", cfg.DockerUsername, cfg.DockerPassword)
-	cmd := exec.Command("docker", "login", "-u", cfg.DockerUsername, "-p", cfg.DockerPassword)
+	log.Println("Attempting to log in to DockerHub using --password-stdin...")
 
-	// Capture both stdout and stderr from the command execution
+	cmd := exec.Command("docker", "login", "-u", target.Auth.Username, "--password-stdin")
+	cmd.Stdin = strings.NewReader(target.Auth.Password)
+
 	output, err := cmd.CombinedOutput()
 	log.Printf("Docker login output: %s", string(output))
 

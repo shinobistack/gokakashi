@@ -5,8 +5,8 @@ import (
 )
 
 // NewRegistry initializes the registry based on the provider
-func NewRegistry(provider string) (Registry, error) {
-	switch provider {
+func NewRegistry(registry string) (Registry, error) {
+	switch registry {
 	case "dockerhub":
 		return NewDockerHub(), nil
 	//case "ecr":
@@ -16,6 +16,6 @@ func NewRegistry(provider string) (Registry, error) {
 	//case "acr":
 	//	return NewACR(), nil
 	default:
-		return nil, fmt.Errorf("unsupported registry provider: %s", provider)
+		return nil, fmt.Errorf("unsupported registry provider: %s", registry)
 	}
 }

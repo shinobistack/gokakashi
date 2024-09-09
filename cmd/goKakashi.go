@@ -1,75 +1,97 @@
 package main
 
 import (
+	"flag"
+	"fmt"
 	"log"
 	"os"
 	"os/signal"
+	"strings"
 	"syscall"
 
 	"github.com/ashwiniag/goKakashi/pkg/config"
 	"github.com/ashwiniag/goKakashi/pkg/registry"
 	"github.com/ashwiniag/goKakashi/pkg/scanner"
 	"github.com/ashwiniag/goKakashi/pkg/web"
-	"github.com/joho/godotenv"
 )
 
 func main() {
-	// Load environment variables from .env file
-	log.Println("Loading environment variables...")
-	err := godotenv.Load()
-	if err != nil {
-		log.Println("No .env file found. Proceeding with environment variables from system environment.")
-	}
+	log.Println("=== Starting goKakashi Tool ===")
 
-	// Load configuration
-	log.Println("Loading configuration...")
-	cfg, err := config.LoadConfig()
+	// Get config file from command-line argument
+	configFile := flag.String("config", "", "Path to the config YAML file")
+	flag.Parse()
+
+	if *configFile == "" {
+		log.Fatal("Please provide the path to the config YAML file using --config")
+	}
+	log.Printf("Using configuration file: %s", *configFile)
+
+	// Load the YAML configuration
+	log.Println("Loading configuration from YAML file...")
+	cfg, err := config.LoadConfig(*configFile)
 	if err != nil {
 		log.Fatalf("Failed to load config: %v", err)
 	}
+	log.Println("Configuration loaded successfully.")
 
-	//ToDo: Rmove this later. Need not to log creds info
-	log.Printf("Configuration loaded successfully: %+v", cfg)
+	// Process scan targets and images
+	for _, target := range cfg.ScanTargets {
+		log.Printf("Processing registry: %s", target.Registry)
 
-	// Initialize the appropriate registry
-	log.Println("Initializing registry...")
-	reg, err := registry.NewRegistry(cfg.RegistryProvider)
-	if err != nil {
-		log.Fatalf("Failed to initialize registry: %v", err)
-	}
+		// Initialize the appropriate registry
+		log.Printf("Initializing registry: %s", target.Registry)
+		reg, err := registry.NewRegistry(target.Registry)
+		if err != nil {
+			log.Fatalf("Failed to initialize registry: %v", err)
+		}
 
-	// If SkipDockerLogin is true, skip the Docker login if you want to pull public docker images.
-	if !cfg.SkipDockerLogin {
-		log.Println("Authenticating to the Docker registry...")
-		if err := reg.Login(cfg); err != nil {
+		// Handle Docker login if credentials are provided
+		log.Printf("Logging in to registry: %s", target.Registry)
+		if err := reg.Login(target); err != nil {
 			log.Fatalf("Registry login failed: %v", err)
 		}
-		log.Println("Successfully authenticated to the Docker registry.")
-	} else {
-		log.Println("Skipping Docker login as per configuration.")
+		log.Println("Successfully logged in.")
+
+		// Iterate over the images and scan them
+		for _, image := range target.Images {
+			for _, tag := range image.Tags {
+				imageWithTag := fmt.Sprintf("%s:%s", image.Name, tag)
+				log.Printf("Pulling and scanning image: %s", imageWithTag)
+
+				if err := reg.PullImage(imageWithTag); err != nil {
+					log.Fatalf("Failed to pull Docker image: %v", err)
+				}
+				log.Printf("Successfully pulled image: %s", imageWithTag)
+
+				// Initialize the scanner (Trivy)
+				trivyScanner := scanner.NewTrivyScanner()
+
+				// Scan the Docker image
+				log.Printf("Scanning image: %s", imageWithTag)
+				report, err := trivyScanner.ScanImage(imageWithTag)
+				if err != nil {
+					log.Fatalf("Error scanning Docker image: %v", err)
+				}
+				log.Println("Scan completed successfully.")
+
+				// Save report to file
+				restructuredImageName := strings.ReplaceAll(image.Name, "/", "_") // Replace slashes with underscores
+				reportFilePath := fmt.Sprintf("%s/%s_%s_report.json", cfg.Website.FilesPath, restructuredImageName, tag)
+				log.Printf("Saving report to: %s", reportFilePath)
+				err = os.WriteFile(reportFilePath, []byte(report), 0644)
+				if err != nil {
+					log.Fatalf("Failed to save report: %v", err)
+				}
+				log.Printf("Report saved successfully at: %s", reportFilePath)
+			}
+		}
 	}
 
-	// Pull the Docker image from the registry
-	log.Printf("Pulling Docker image: %s...", cfg.DockerImage)
-	if err := reg.PullImage(cfg.DockerImage); err != nil {
-		log.Fatalf("Failed to pull Docker image: %v", err)
-	}
-	log.Println("Docker image pulled successfully.")
-
-	// Initialize the scanner (Trivy)
-	trivyScanner := scanner.NewTrivyScanner()
-
-	// Scan the Docker image
-	log.Printf("Starting the scan of Docker image: %s...", cfg.DockerImage)
-	report, err := trivyScanner.ScanImage(cfg.DockerImage)
-	if err != nil {
-		log.Fatalf("Error scanning Docker image: %v", err)
-	}
-	log.Println("Scan completed successfully. Report generated.")
-
-	// Start the public and private web servers
-	go web.StartPublicServer(report, cfg.PublicPort)
-	go web.StartPrivateServer(report, cfg.PrivatePort)
+	// Start web servers to serve reports
+	log.Println("Starting public and private web servers...")
+	go web.StartPublicServer(cfg.Website.FilesPath, cfg.Website.Public.Port)
+	go web.StartPrivateServer(cfg.Website.FilesPath, cfg.Website.Private.Port)
 
 	// Graceful shutdown handling
 	shutdown := make(chan os.Signal, 1)
