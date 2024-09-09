@@ -37,56 +37,57 @@ goKakashi/
 ├── go.mod                   # Go module file
 └── go.sum                   # Go module checksum file
 ```
+### Build and Test
+```
+go build -o goKakashi ./cmd
+./goKakashi --config=lts.yaml
+
+```
+
 ### Brain dump
 
 This readme will be updated to better. Here for brain dumping. 
 
 **Phase I**
-Multiple registries one images?
-one registries multiple images?
-multiple registries and multiple images?
-
 yaml look
 ```
 scan_targets:
-- registry: gcr|acr|ecr|dockerhub|urlInternal
-    auth: 
-        username:
-        password:
+  - registry: dockerhub
+    auth:
+      username: email
+      password: xxxx
     images:
-        - name: hasura/graphql-engine
-          tags: 
-            - v2.36.5
-            - v2.36.3
-            - v2.11.8
-        - name: hasurace/graphql-engine
-          tags: 
-            - v2.36.5
-            - v2.36.3
-            - v2.11.8
-- registry: gcr|acr|ecr|dockerhub|urlInternal
-    auth: 
-        username:
-        password:
+      - name: hasura/graphql-engine
+        tags:
+          - v2.36.0
+          - v2.36.3
+          - v2.11.13
+      - name: hasura/graphql-engine # other repository
+        tags:
+          - v2.36.4
+          - v2.11.8
+    scanner:
+      - tool: Trivy
+  - registry: gcr
+    auth:
+      username: your-gcr-username
+      password: your-gcr-password
     images:
-        - name: hasura/graphql-engine
-          tags: 
-            - v2.34.5
-            - v2.35.3
-            - v2.19.0
-        - name: hasurace/graphql-engine
-          tags: 
-            - v2.32.0
-            - v2.31.0
-            - v2.11.0
+      - name: hasura/graphql-engine
+        tags:
+          - v2.34.5
+          - v2.35.3
+          - v2.19.0
+    scanner:
+      - tool: Trivy
+
 website:
-- hostname: localhost
-    files_path: ~/data
-    public
-        port: 8080
-    private
-        port:9090
-        
+  hostname: localhost
+  files_path: /absolute_path/goKakashi/test_data  # desired absolute path
+  public:
+    port: 8080
+  private:
+    port: 9090
 
 ```
 
@@ -100,24 +101,52 @@ website:
    on http://localhost:8080/public/report
    <v2.34.5 image name> --> on clicking it will show me the report
    <2.35.3 image name> --> on clicking it will show me the report
+4. It understands absolute path and not relative path for file_path. Change it to relative path
+5. Maybe we can restructure the image lists. Like Repository --> drop down images of it ---> on clicking display report
+   Some future thinking.
+6. Having a Scan policy. Example scan_policy.go would does the some job that on the images that have detected
+   HIGH|CRITICAL it should create a linear ticket - this ticket should have the details of HIGH|CRITICAL detected
+   and tagging the teams.
+   scan policy such that like in yaml we could say if this image detects critical then if Notify is set to linear
+   then report it on liner for all CRITICAL details and if Team is mentioned then tag that person on the ticket
+   or assign it to the person. Maybe like for critical we can have linear and slack, for High just linear or
+   medium and low just linear and no tagging the team
+lets, maybe in the yaml we might have something
+images:
+- name: hasura/graphql-engine
+tags:
+- v2.36.5
+- v2.36.3
+- v2.11.8
+scan_policy:
+- Priority: CRITICAL
+- Notify: Linear
+- Team: @\ashwini
+- name: hasurace/graphql-engine
+tags:
+- v2.36.5
+- v2.36.3
+- v2.11.8
 
+==> Tag multiple teams
+==> send multiple notify - linear, slack, jira etc
+7. Authentication. Write now we are just taking basic creds. What if we have basic, token etc authentication
+8. beautifying the JSON - like readable.
 
-Future Enhancements
+9. Implement ACR|GCR|ECR Support:
 
-1. Implement ACR|GCR|ECR Support:
+10. Hosting
 
-2. Hosting
+11. Secure the Private Web Server:
 
-3. Secure the Private Web Server:
-
-4. Improve Report Presentation:
+12. Improve Report Presentation:
 <.....> 
 
-5. Storage of reports:
+13. Storage of reports:
 <...>
 
-6. Support Additional Scanners:
+14. Support Additional Scanners:
 
-7. Improve Logging 
+15. Improve Logging 
 
 

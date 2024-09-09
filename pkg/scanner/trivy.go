@@ -3,28 +3,30 @@ package scanner
 import (
 	"encoding/json"
 	"fmt"
+	"log"
 	"os/exec"
 )
 
-// TrivyScanner struct
 type TrivyScanner struct{}
 
-// NewTrivyScanner creates a new TrivyScanner instance
+// NewTrivyScanner initializes a new Trivy scanner
 func NewTrivyScanner() *TrivyScanner {
 	return &TrivyScanner{}
 }
 
-// ScanImage scans the Docker image using Trivy and returns the report in JSON format
+// ScanImage scans the given Docker image for vulnerabilities using Trivy
 func (t *TrivyScanner) ScanImage(image string) (string, error) {
-	// Execute Trivy scan
-	cmd := exec.Command("trivy", "image", "--quiet", "--format", "json", image)
-	output, err := cmd.CombinedOutput()
+	log.Printf("Scanning Docker image: %s with Trivy", image)
+
+	cmd := exec.Command("trivy", "image", "--format", "json", image)
+	output, err := cmd.Output()
+
 	if err != nil {
-		return "", fmt.Errorf("trivy scan failed: %v, %s", err, string(output))
+		return "", fmt.Errorf("Trivy scan failed: %v", err)
 	}
 
 	// Validate JSON output
-	if !isValidJSON(string(output)) {
+	if !isValidJSON(output) {
 		return "", fmt.Errorf("invalid JSON output from Trivy")
 	}
 
@@ -32,7 +34,7 @@ func (t *TrivyScanner) ScanImage(image string) (string, error) {
 }
 
 // isValidJSON checks if the provided string is valid JSON
-func isValidJSON(s string) bool {
+func isValidJSON(s []byte) bool {
 	var js interface{}
-	return json.Unmarshal([]byte(s), &js) == nil
+	return json.Unmarshal(s, &js) == nil
 }

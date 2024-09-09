@@ -2,69 +2,59 @@ package config
 
 import (
 	"fmt"
-	"os"
-	"strconv"
-
-	"github.com/joho/godotenv"
+	"gopkg.in/yaml.v2"
+	"io/ioutil"
 )
 
 type Config struct {
-	DockerUsername   string
-	DockerPassword   string
-	DockerImage      string
-	RegistryProvider string
-	PublicPort       string
-	PrivatePort      string
-	SkipDockerLogin  bool
-	//AWSRegion        string
-	//GCRProjectID     string
-	//ACRResourceGroup string
-	//ACRRegistry      string
+	ScanTargets []ScanTarget `yaml:"scan_targets"`
+	Website     Website      `yaml:"website"`
 }
 
-func LoadConfig() (*Config, error) {
-	// Load environment variables from .env file (if it exists)
-	err := godotenv.Load()
+type ScanTarget struct {
+	Registry string    `yaml:"registry"`
+	Auth     Auth      `yaml:"auth"`
+	Images   []Image   `yaml:"images"`
+	Scanner  []Scanner `yaml:"scanner"`
+}
+
+type Auth struct {
+	Username string `yaml:"username"`
+	Password string `yaml:"password"`
+}
+
+type Image struct {
+	Name string   `yaml:"name"`
+	Tags []string `yaml:"tags"`
+}
+
+type Scanner struct {
+	Tool string `yaml:"tool"` // Example: Trivy, Synk, etc.
+}
+
+type Website struct {
+	Hostname  string     `yaml:"hostname"`
+	FilesPath string     `yaml:"files_path"`
+	Public    PortConfig `yaml:"public"`
+	Private   PortConfig `yaml:"private"`
+}
+
+type PortConfig struct {
+	Port int `yaml:"port"`
+}
+
+func LoadConfig(configFile string) (*Config, error) {
+	config := &Config{}
+
+	yamlFile, err := ioutil.ReadFile(configFile)
 	if err != nil {
-		fmt.Println("No .env file found. Proceeding with environment variables.")
+		return nil, fmt.Errorf("Failed to read config file: %v", err)
 	}
 
-	skipDockerLogin, _ := strconv.ParseBool(os.Getenv("SKIP_DOCKER_LOGIN"))
-
-	cfg := &Config{
-		DockerUsername:   os.Getenv("DOCKER_USERNAME"),
-		DockerPassword:   os.Getenv("DOCKER_PASSWORD"),
-		DockerImage:      os.Getenv("DOCKER_IMAGE"),
-		RegistryProvider: os.Getenv("REGISTRY_PROVIDER"),
-		PublicPort:       getEnv("PUBLIC_PORT", "8080"),
-		PrivatePort:      getEnv("PRIVATE_PORT", "9090"),
-		SkipDockerLogin:  skipDockerLogin,
-		//AWSRegion:        getEnv("AWS_REGION", "us-east-1"),
-		//GCRProjectID:     os.Getenv("GCR_PROJECT_ID"),
-		//ACRResourceGroup: os.Getenv("ACR_RESOURCE_GROUP"),
-		//ACRRegistry:      os.Getenv("ACR_REGISTRY"),
+	err = yaml.Unmarshal(yamlFile, config)
+	if err != nil {
+		return nil, fmt.Errorf("Error parsing YAML file: %v", err)
 	}
 
-	// Validate required fields
-	if !cfg.SkipDockerLogin && (cfg.DockerUsername == "" || cfg.DockerPassword == "") {
-		return nil, fmt.Errorf("DOCKER_USERNAME and DOCKER_PASSWORD are required unless login is skipped")
-	}
-
-	if cfg.DockerImage == "" {
-		return nil, fmt.Errorf("DOCKER_IMAGE is required")
-	}
-
-	if cfg.RegistryProvider == "" {
-		return nil, fmt.Errorf("REGISTRY_PROVIDER is required")
-	}
-
-	return cfg, nil
-}
-
-// getEnv fetches an environment variable or returns the fallback value
-func getEnv(key, fallback string) string {
-	if value := os.Getenv(key); value != "" {
-		return value
-	}
-	return fallback
+	return config, nil
 }
