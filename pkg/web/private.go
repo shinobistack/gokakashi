@@ -53,10 +53,10 @@ const privateTemplate = `
 <!DOCTYPE html>
 <html>
 <head>
-    <title>private Scan Reports</title>
+    <title>Private Scan Reports</title>
 </head>
 <body>
-    <h1>private Scan Reports</h1>
+    <h1>Private Scan Reports</h1>
     <ul>
         {{range .Reports}}
         <li><a href="/private/view?file={{.}}">{{.}}</a></li>

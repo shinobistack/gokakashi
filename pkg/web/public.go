@@ -56,7 +56,7 @@ const publicTemplate = `
     <title>Public Scan Reports</title>
 </head>
 <body>
-    <h1>public Scan Reports</h1>
+    <h1>Public Scan Reports</h1>
     <ul>
         {{range .Reports}}
         <li><a href="/public/view?file={{.}}">{{.}}</a></li>
