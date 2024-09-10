@@ -24,8 +24,27 @@ type Auth struct {
 }
 
 type Image struct {
-	Name string   `yaml:"name"`
-	Tags []string `yaml:"tags"`
+	Name       string     `yaml:"name"`
+	Tags       []string   `yaml:"tags"`
+	ScanPolicy ScanPolicy `yaml:"scan_policy"`
+}
+
+type ScanPolicy struct {
+	Vulnerabilities []string `yaml:"vulnerabilities"` // e.g. Critical, High
+	Notify          []Notify `yaml:"notify"`
+}
+
+type Notify struct {
+	Tool      string `yaml:"tool"` // e.g. Linear, Jira
+	APIKey    string `yaml:"api_key"`
+	ProjectID string `yaml:"project_id"`
+	Title     string `yaml:"issue_title"`
+	Priority  string `yaml:"issue_priority"`
+	Assignee  string `yaml:"issue_assignee"`
+	Label     string `yaml:"issue_label"`
+	DueDate   string `yaml:"issue_due_date"`
+	TeamID    string `yaml:"team_id"`
+	StateID   string `yaml:"state_id"`
 }
 
 type Scanner struct {
