@@ -130,23 +130,26 @@ tags:
 
 ==> Tag multiple teams
 ==> send multiple notify - linear, slack, jira etc
-7. Authentication. Write now we are just taking basic creds. What if we have basic, token etc authentication
-8. beautifying the JSON - like readable.
+==> On UI should we show only the detected under scan_policy.vulnerabilties reports? Or should we give option to report all
+7. Limitation error on description Linear API Response: {"errors":[{"message":"Argument Validation Error","path":["issueCreate"],"locations":[{"line":3,"column":4}],"extensions":{"code":"INVALID_INPUT","type":"invalid input","userError":true,"userPresentableMessage":"description must be shorter than or equal to 250000 characters.","meta":{}}}],"data":null}
 
-9. Implement ACR|GCR|ECR Support:
+8. Authentication. Write now we are just taking basic creds. What if we have basic, token etc authentication
+9. beautifying the JSON - like readable.
 
-10. Hosting
+10. Implement ACR|GCR|ECR Support:
 
-11. Secure the Private Web Server:
+11. Hosting
 
-12. Improve Report Presentation:
+12. Secure the Private Web Server:
+
+13. Improve Report Presentation:
 <.....> 
 
-13. Storage of reports:
+14. Storage of reports:
 <...>
 
-14. Support Additional Scanners:
+15. Support Additional Scanners:
 
-15. Improve Logging 
+16. Improve Logging 
 
 

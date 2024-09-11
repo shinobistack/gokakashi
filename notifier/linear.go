@@ -9,12 +9,10 @@ import (
 	"net/http"
 )
 
-// Vulnerability represents a vulnerability in the scan results
-type Vulnerability struct {
-	VulnerabilityID string `json:"VulnerabilityID"`
-	PkgName         string `json:"PkgName"`
-	Severity        string `json:"Severity"`
-	Description     string `json:"Description"`
+// TrivyReport represents the overall Trivy scan report
+type TrivyReport struct {
+	ArtifactName string   `json:"ArtifactName"`
+	Results      []Result `json:"Results"`
 }
 
 // Result represents the result field in Trivy output
@@ -24,10 +22,17 @@ type Result struct {
 	Vulnerabilities []Vulnerability `json:"Vulnerabilities"`
 }
 
-// TrivyReport represents the overall Trivy scan report
-type TrivyReport struct {
-	ArtifactName string   `json:"ArtifactName"`
-	Results      []Result `json:"Results"`
+// Vulnerability represents a vulnerability in the scan results
+type Vulnerability struct {
+	VulnerabilityID  string `json:"VulnerabilityID"`
+	PkgName          string `json:"PkgName"`
+	Severity         string `json:"Severity"`
+	InstalledVersion string `json:"InstalledVersion"`
+	FixedVersion     string `json:"FixedVersion"`
+	Title            string `json:"Title"`
+	Description      string `json:"Description"`
+	PrimaryURL       string `json:"PrimaryURL"`
+	Status           string `json:"Status"`
 }
 
 // GraphQLRequest struct for Linear GraphQL API
@@ -36,7 +41,15 @@ type GraphQLRequest struct {
 	Variables map[string]interface{} `json:"variables"`
 }
 
-// LinearNotifier is an example of a notifier that sends data to Linear's API
+// GraphQLResponse represents the GraphQL response structure
+type GraphQLResponse struct {
+	Data   interface{} `json:"data"`
+	Errors []struct {
+		Message string `json:"message"`
+	} `json:"errors"`
+}
+
+// LinearNotifier is an example of a notifier for Linear
 type LinearNotifier struct{}
 
 func NewLinearNotifier() *LinearNotifier {
@@ -44,7 +57,7 @@ func NewLinearNotifier() *LinearNotifier {
 }
 
 // SendNotification sends the vulnerability report to Linear via GraphQL
-func (ln *LinearNotifier) SendNotification(vulnerabilities []Vulnerability, config NotifyConfig) error {
+func (ln *LinearNotifier) SendNotification(report TrivyReport, vulnerabilities []Vulnerability, config NotifyConfig) error {
 	url := "https://api.linear.app/graphql"
 
 	// Prepare GraphQL mutation
@@ -65,7 +78,7 @@ func (ln *LinearNotifier) SendNotification(vulnerabilities []Vulnerability, conf
 	`
 
 	// Construct issue description from vulnerabilities
-	description := formatVulnerabilityReport(vulnerabilities)
+	description := formatVulnerabilityReport(report, vulnerabilities)
 
 	// Prepare variables for the GraphQL mutation
 	variables := map[string]interface{}{
@@ -75,9 +88,9 @@ func (ln *LinearNotifier) SendNotification(vulnerabilities []Vulnerability, conf
 			"teamId":      config.TeamID,    // Ensure this is a valid UUID
 			"projectId":   config.ProjectID, // Ensure this is a valid UUID, if needed
 			"priority":    config.Priority,
-			"assigneeId":  config.Assignee, // Ensure this is a valid UUID
-			"stateId":     config.StateID,  // Ensure this is a valid UUID
-			"dueDate":     config.DueDate,  // Ensure correct date format (YYYY-MM-DD)
+			"assigneeId":  config.Assignee, // Ensure correct assignee ID
+			"stateId":     config.StateID,  // Ensure correct state ID
+			"dueDate":     config.DueDate,
 		},
 	}
 
@@ -111,12 +124,27 @@ func (ln *LinearNotifier) SendNotification(vulnerabilities []Vulnerability, conf
 	}
 	defer resp.Body.Close()
 
-	// Check the response status
-	if resp.StatusCode != http.StatusOK {
-		// Read and log the response body for debugging
-		bodyBytes, _ := ioutil.ReadAll(resp.Body)
-		bodyString := string(bodyBytes)
-		return fmt.Errorf("failed to create issue: status code %d, response: %s", resp.StatusCode, bodyString)
+	// Read and log the full response body
+	bodyBytes, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return fmt.Errorf("failed to read response body: %v", err)
+	}
+	bodyString := string(bodyBytes)
+	log.Printf("Linear API Response: %s", bodyString)
+
+	// Check if the response contains errors
+	var graphQLResponse GraphQLResponse
+	err = json.Unmarshal(bodyBytes, &graphQLResponse)
+	if err != nil {
+		return fmt.Errorf("failed to parse GraphQL response: %v", err)
+	}
+
+	// Check for errors in the GraphQL response
+	if len(graphQLResponse.Errors) > 0 {
+		for _, apiError := range graphQLResponse.Errors {
+			log.Printf("Linear API error: %s", apiError.Message)
+		}
+		return fmt.Errorf("Linear issue creation failed due to API errors")
 	}
 
 	log.Println("Successfully created issue in Linear using GraphQL API.")
@@ -124,10 +152,26 @@ func (ln *LinearNotifier) SendNotification(vulnerabilities []Vulnerability, conf
 }
 
 // formatVulnerabilityReport converts vulnerabilities to a description for the issue
-func formatVulnerabilityReport(vulnerabilities []Vulnerability) string {
-	report := "Detected Vulnerabilities:\n"
+func formatVulnerabilityReport(report TrivyReport, vulnerabilities []Vulnerability) string {
+	var buffer bytes.Buffer
+
+	// Add image information
+	buffer.WriteString(fmt.Sprintf("Image: %s\n\n", report.ArtifactName))
+
+	// Iterate over vulnerabilities and format them in the simplified format
 	for _, vuln := range vulnerabilities {
-		report += fmt.Sprintf("ID: %s, Severity: %s, Package: %s\n", vuln.VulnerabilityID, vuln.Severity, vuln.PkgName)
+		buffer.WriteString(fmt.Sprintf("Library: %s\n", vuln.PkgName))
+		buffer.WriteString(fmt.Sprintf("Vulnerability: %s\n", vuln.VulnerabilityID))
+		buffer.WriteString(fmt.Sprintf("Severity: %s\n", vuln.Severity))
+		buffer.WriteString(fmt.Sprintf("Status: %s\n", vuln.Status))
+		buffer.WriteString(fmt.Sprintf("Installed Version: %s\n", vuln.InstalledVersion))
+		buffer.WriteString(fmt.Sprintf("Fixed Version: %s\n", vuln.FixedVersion))
+		buffer.WriteString(fmt.Sprintf("Title: %s\n", vuln.Title))
+		if vuln.PrimaryURL != "" {
+			buffer.WriteString(fmt.Sprintf("More details: %s\n", vuln.PrimaryURL))
+		}
+		buffer.WriteString("\n") // Add a line break between vulnerabilities
 	}
-	return report
+
+	return buffer.String()
 }

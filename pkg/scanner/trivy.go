@@ -25,6 +25,7 @@ func (t *TrivyScanner) ScanImage(image string, severityLevels []string) (string,
 		// Use Trivy's --severity flag if severity levels are specified
 		severity := strings.Join(severityLevels, ",")
 		log.Printf("Scanning Docker image: %s with Trivy (severity: %s)", image, severity)
+		// trivy image --format json  hasura/graphql-engine:v2.37.0 --severity HIGH,CRITICAL
 		cmd = exec.Command("trivy", "image", "--format", "json", "--severity", severity, image)
 	} else {
 		// Perform a normal scan if no severity levels are provided

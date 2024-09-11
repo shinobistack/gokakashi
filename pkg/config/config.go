@@ -43,7 +43,7 @@ type Notify struct {
 	IssueAssigneeID string `yaml:"issue_assignee_id"`
 	IssueLabel      string `yaml:"issue_label"`
 	IssueDueDate    string `yaml:"issue_due_date"`
-	IssueTeamID     string `yaml:"issue_team_id"`
+	TeamID          string `yaml:"team_id"`
 	IssueStateID    string `yaml:"issue_state_id"`
 }
 
