@@ -35,16 +35,16 @@ type ScanPolicy struct {
 }
 
 type Notify struct {
-	Tool      string `yaml:"tool"` // e.g. Linear, Jira
-	APIKey    string `yaml:"api_key"`
-	ProjectID string `yaml:"project_id"`
-	Title     string `yaml:"issue_title"`
-	Priority  string `yaml:"issue_priority"`
-	Assignee  string `yaml:"issue_assignee"`
-	Label     string `yaml:"issue_label"`
-	DueDate   string `yaml:"issue_due_date"`
-	TeamID    string `yaml:"team_id"`
-	StateID   string `yaml:"state_id"`
+	Tool            string `yaml:"tool"` // e.g. Linear, Jira
+	APIKey          string `yaml:"api_key"`
+	ProjectID       string `yaml:"project_id"`
+	IssueTitle      string `yaml:"issue_title"`
+	IssuePriority   int    `yaml:"issue_priority"`
+	IssueAssigneeID string `yaml:"issue_assignee_id"`
+	IssueLabel      string `yaml:"issue_label"`
+	IssueDueDate    string `yaml:"issue_due_date"`
+	IssueTeamID     string `yaml:"issue_team_id"`
+	IssueStateID    string `yaml:"issue_state_id"`
 }
 
 type Scanner struct {

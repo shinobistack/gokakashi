@@ -68,46 +68,45 @@ func main() {
 				// Initialize the scanner (Trivy)
 				trivyScanner := scanner.NewTrivyScanner()
 
-				// Scan the Docker image
-				log.Printf("Scanning image: %s", imageWithTag)
-				rawReport, vulnerabilities, err := trivyScanner.ScanImage(imageWithTag)
+				// Check for severity levels in scan policy
+				severityLevels := image.ScanPolicy.Vulnerabilities
+				log.Printf("Scan policy severity levels: %v", severityLevels)
+
+				// Scan the Docker image using Trivy
+				report, vulnerabilities, err := trivyScanner.ScanImage(imageWithTag, severityLevels)
 				if err != nil {
 					log.Fatalf("Error scanning Docker image: %v", err)
 				}
 				log.Println("Scan completed successfully.")
 
-				// Filter vulnerabilities based on scan policy
-				filteredVulnerabilities := filterVulnerabilities(vulnerabilities, image.ScanPolicy.Vulnerabilities)
+				// Save report to file
+				restructuredImageName := strings.ReplaceAll(image.Name, "/", "_") // Replace slashes with underscores
+				reportFilePath := fmt.Sprintf("%s/%s_%s_report.json", cfg.Website.FilesPath, restructuredImageName, tag)
+				log.Printf("Saving report to: %s", reportFilePath)
+				err = os.WriteFile(reportFilePath, []byte(report), 0644)
+				if err != nil {
+					log.Fatalf("Failed to save report: %v", err)
+				}
+				log.Printf("Report saved successfully at: %s", reportFilePath)
 
 				// Notify the user based on the policy
 				for _, notifyConfig := range image.ScanPolicy.Notify {
 					if notifyConfig.Tool == "Linear" {
 						linearNotifier := notifier.NewLinearNotifier()
-						err := linearNotifier.SendNotification(filteredVulnerabilities, notifier.NotifyConfig{
+						err := linearNotifier.SendNotification(vulnerabilities, notifier.NotifyConfig{
 							APIKey:    notifyConfig.APIKey,
 							ProjectID: notifyConfig.ProjectID,
-							Title:     notifyConfig.Title,
-							Priority:  notifyConfig.Priority,
-							Assignee:  notifyConfig.Assignee,
-							Label:     notifyConfig.Label,
-							DueDate:   notifyConfig.DueDate,
+							Title:     notifyConfig.IssueTitle,
+							Priority:  notifyConfig.IssuePriority,
+							Assignee:  notifyConfig.IssueAssigneeID,
+							StateID:   notifyConfig.IssueStateID,
+							DueDate:   notifyConfig.IssueDueDate,
 						})
 						if err != nil {
 							log.Printf("Failed to send notification: %v", err)
 						}
 					}
-					// Add other notifiers here example jira
 				}
-
-				// Save report to file
-				restructuredImageName := strings.ReplaceAll(image.Name, "/", "_") // Replace slashes with underscores
-				reportFilePath := fmt.Sprintf("%s/%s_%s_report.json", cfg.Website.FilesPath, restructuredImageName, tag)
-				log.Printf("Saving report to: %s", reportFilePath)
-				err = os.WriteFile(reportFilePath, []byte(rawReport), 0644)
-				if err != nil {
-					log.Fatalf("Failed to save report: %v", err)
-				}
-				log.Printf("Report saved successfully at: %s", reportFilePath)
 			}
 		}
 	}
@@ -123,16 +122,4 @@ func main() {
 	<-shutdown
 
 	log.Println("Shutting down goKakashi gracefully...")
-}
-
-func filterVulnerabilities(vulnerabilities []notifier.Vulnerability, levels []string) []notifier.Vulnerability {
-	var filtered []notifier.Vulnerability
-	for _, v := range vulnerabilities {
-		for _, level := range levels {
-			if v.Severity == level {
-				filtered = append(filtered, v)
-			}
-		}
-	}
-	return filtered
 }
