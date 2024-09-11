@@ -1,0 +1,52 @@
+scan_targets:
+  - registry: dockerhub
+    auth:
+      username: email
+      password: password
+    images:
+      - name: hasura/graphql-engine
+        tags:
+          - v2.36.0
+          - v2.36.3
+          - v2.11.13
+        scan_policy:
+          vulnerabilities:
+            - CRITICAL
+            - HIGH
+          notify:
+            - tool: Linear
+              api_key: lin_api_xxxx
+              project_id: #UUID
+              team_id: #UUID
+              issue_title: TEST2 Vulnerability Report
+              issue_priority: 2
+              issue_assignee_id: #UUID of Assignee, here its ashwini@hasura.io
+              issue_state_id: # UUID of Backlog, Triage, In progres etc
+              issue_due_date: 2024-12-01 #YYYY-MM-DD
+      - name: hasura/graphql-engine # other repository
+        tags:
+          - v2.36.4
+          - v2.11.8
+        scan_policy:
+          vulnerabilities:
+            - CRITICAL
+            - HIGH
+          notify:
+            - tool: Linear
+              api_key: lin_api_xxxx
+              project_id: #UUID
+              team_id: #UUID
+              issue_title: TEST2 Vulnerability Report
+              issue_priority: 2
+              issue_assignee_id: #UUID of Assignee, here its ashwini@hasura.io
+              issue_state_id: # UUID of Backlog, Triage, In progres etc
+              issue_due_date: 2024-12-01 #YYYY-MM-DD
+    scanner:
+      - tool: Trivy
+website:
+  hostname: localhost
+  files_path:  # absolute path
+  public:
+    port: 8080
+  private:
+    port: 9090
