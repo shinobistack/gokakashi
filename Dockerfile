@@ -23,4 +23,4 @@ ENV DOCKER_PASSWORD="your-dockerhub-password"
 ENV LINEAR_API_KEY="your-linear-api-key"
 
 # Run the application
-CMD ["./goKakashi"]
+ENTRYPOINT ["./goKakashi"]
