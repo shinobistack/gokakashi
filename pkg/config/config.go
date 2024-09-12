@@ -12,10 +12,11 @@ type Config struct {
 }
 
 type ScanTarget struct {
-	Registry string    `yaml:"registry"`
-	Auth     Auth      `yaml:"auth"`
-	Images   []Image   `yaml:"images"`
-	Scanner  []Scanner `yaml:"scanner"`
+	Registry     string    `yaml:"registry"`
+	Auth         Auth      `yaml:"auth"`
+	Images       []Image   `yaml:"images"`
+	Scanner      []Scanner `yaml:"scanner"`
+	CronSchedule string    `yaml:"cronSchedule"`
 }
 
 type Auth struct {
