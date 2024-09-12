@@ -73,7 +73,6 @@ func scheduleScan(cronScheduler *cron.Cron, target config.ScanTarget, filesPath 
 		if err != nil {
 			log.Fatalf("Failed to schedule cron job for registry %s: %v", target.Registry, err)
 		}
-
 		cronScheduler.Start()
 	} else {
 		log.Printf("No cron schedule provided for registry %s. Running scan immediately.", target.Registry)

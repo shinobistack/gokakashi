@@ -16,7 +16,7 @@ type ScanTarget struct {
 	Auth         Auth      `yaml:"auth"`
 	Images       []Image   `yaml:"images"`
 	Scanner      []Scanner `yaml:"scanner"`
-	CronSchedule string    `yaml:"cronSchedule"`
+	CronSchedule string    `yaml:"cron_schedule"`
 }
 
 type Auth struct {
