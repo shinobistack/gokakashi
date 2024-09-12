@@ -1,0 +1,6 @@
+test_data/
+.env
+scan_policy_curl.sh
+*.yaml
+*.json
+goKakashi
