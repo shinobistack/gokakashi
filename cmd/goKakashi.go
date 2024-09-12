@@ -3,6 +3,7 @@ package main
 import (
 	"flag"
 	"fmt"
+	"github.com/ashwiniag/goKakashi/pkg/utils"
 	"log"
 	"os"
 	"os/signal"
@@ -15,6 +16,9 @@ import (
 	"github.com/ashwiniag/goKakashi/pkg/scanner"
 	"github.com/ashwiniag/goKakashi/pkg/web"
 )
+
+// Path to store hash JSON
+const hashFilePath = "./hashes.json"
 
 func main() {
 	log.Println("=== Starting goKakashi Tool ===")
@@ -86,6 +90,33 @@ func main() {
 				if len(filteredVulnerabilities) == 0 {
 					log.Printf("No vulnerabilities matching the specified severity levels (%v) were found in image: %s. Skipping ticket creation.", severityLevels, imageWithTag)
 					continue // Skip to the next image
+				}
+
+				// Convert []notifier.Vulnerability to []string using ExtractVulnerabilityIDs
+				vulnerabilityData, vulnerabilityEntries := utils.ConvertVulnerabilities(vulnerabilities)
+
+				// Generate a unique hash for this image, tag, and vulnerabilities
+				hash := utils.GenerateHash(image.Name, tag, vulnerabilityEntries)
+
+				// Check if this hash already exists in the JSON file
+				exists, err := utils.HashExists(hashFilePath, hash)
+				if err != nil {
+					log.Fatalf("Error checking hash: %v", err)
+				}
+
+				if exists {
+					log.Printf("Hash already exists for %s:%s, skipping Linear issue creation", image.Name, tag)
+					continue // Skip to the next image
+				}
+
+				entry := utils.HashEntry{
+					Image:           image.Name,
+					Tag:             tag,
+					Vulnerabilities: vulnerabilityData,
+					Hash:            hash,
+				}
+				if err := utils.SaveHashToFile(hashFilePath, entry); err != nil {
+					log.Fatalf("Error saving hash: %v", err)
 				}
 
 				// Save report to file
