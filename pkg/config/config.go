@@ -32,6 +32,7 @@ type Image struct {
 type ScanPolicy struct {
 	Vulnerabilities []string          `yaml:"vulnerabilities"` // e.g. Critical, High
 	Notify          map[string]Notify `yaml:"notify"`
+	CronSchedule    string            `yaml:"cron_schedule"`
 }
 
 type Notify struct {
