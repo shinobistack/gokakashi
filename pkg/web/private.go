@@ -10,7 +10,7 @@ import (
 )
 
 func StartPrivateServer(reportPath string, port int) {
-	http.HandleFunc("/private/report", func(w http.ResponseWriter, r *http.Request) {
+	http.HandleFunc("/reports", func(w http.ResponseWriter, r *http.Request) {
 		files, err := filepath.Glob(reportPath + "/*_report.json")
 		if err != nil {
 			http.Error(w, "Failed to load reports", http.StatusInternalServerError)
