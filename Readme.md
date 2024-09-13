@@ -160,6 +160,6 @@ We’re excited to share goKakashi early with the community to gather feedback a
 Whether you're curious, have suggestions, or if your team is looking for a fast and efficient way to streamline vulnerability scanning (and get back to enjoying that extra ice cream or your favorite anime), we’d love to hear from you. Feel free to open an issue or submit a pull request or request any features that would help on GitHub. Let’s build something awesome together!
 
 ## Reach Out
-If you have any questions, ideas, or just want to connect, feel free to reach me on X (formerly Twitter) at @AshwiniGaddagi. I'd love to hear from you!
+If you have any questions, ideas, or just want to connect, feel free to reach me on X (formerly Twitter) at [@AshwiniGaddagi](https://x.com/AshwiniGaddagi). I'd love to hear from you!
 
 
