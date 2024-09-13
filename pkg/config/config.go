@@ -30,12 +30,11 @@ type Image struct {
 }
 
 type ScanPolicy struct {
-	Vulnerabilities []string `yaml:"vulnerabilities"` // e.g. Critical, High
-	Notify          []Notify `yaml:"notify"`
+	Vulnerabilities []string          `yaml:"vulnerabilities"` // e.g. Critical, High
+	Notify          map[string]Notify `yaml:"notify"`
 }
 
 type Notify struct {
-	Tool            string `yaml:"tool"` // e.g. Linear, Jira
 	APIKey          string `yaml:"api_key"`
 	ProjectID       string `yaml:"project_id"`
 	IssueTitle      string `yaml:"issue_title"`

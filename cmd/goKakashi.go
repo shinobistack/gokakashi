@@ -130,8 +130,8 @@ func main() {
 				log.Printf("Report saved successfully at: %s", reportFilePath)
 
 				// Notify the user based on the policy
-				for _, notifyConfig := range image.ScanPolicy.Notify {
-					if notifyConfig.Tool == "Linear" {
+				for toolName, notifyConfig := range image.ScanPolicy.Notify {
+					if toolName == "Linear" {
 						linearNotifier := notifier.NewLinearNotifier()
 						err := linearNotifier.SendNotification(notifier.TrivyReport{
 							ArtifactName: imageWithTag,
