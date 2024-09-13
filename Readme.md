@@ -2,7 +2,7 @@
 Make vulnerability management effortless with **goKakashi**! 
 This tool simplifies the process of pulling, scanning, reporting, and notifying across all your container images. Gone are the days of manually juggling multiple tools and managing disparate processes—**goKakashi** brings everything under one roof.
 
-## Key Features:
+## Key Features
 1. **Multi-Platform Image Aggregation**
    Pull images from Dockerhub, ECR, GCR, ACR or private hosted repositories—all in one place!  
    _Current Support:_ Dockerhub integration. \
@@ -128,7 +128,7 @@ website:
 ```
 **Current Support:** Continuously developing.
 
-## Execution:
+## Execution
 ```
 #binary
 ./gokakshi --config=/config/config.yaml
@@ -137,14 +137,14 @@ docker run -it -v /Users/ashwiniag/config:/app/config -v /var/run/docker.sock:/v
 
 ``` 
 
-## Roadmap:
+## Roadmap
 - Jira Integration
 - Slack Notifications
 - API Endpoints for CI/CD to scan during development phase
 - GCR, ACR, and Self-hosted registry integration
 <more to be dumped from notes>
 
-## Current Phase:
+## Current Phase
 goKakashi is currently in active development. Right now, we support:
 
 - Dockerhub Integration
@@ -155,11 +155,11 @@ goKakashi is currently in active development. Right now, we support:
 
 More features are on the way! 🚀 Stay tuned as we continue to build and improve. Your feedback and pain points are highly appreciated! 🌻 
 
-## Transparency & Feedback: ✨
+## Transparency & Feedback ✨
 We’re excited to share goKakashi early with the community to gather feedback and improve quickly.\
 Whether you're curious, have suggestions, or if your team is looking for a fast and efficient way to streamline vulnerability scanning (and get back to enjoying that extra ice cream or your favorite anime), we’d love to hear from you. Feel free to open an issue or submit a pull request or request any features that would help on GitHub. Let’s build something awesome together!
 
-## Reach Out
+## Reach Out 💭
 If you have any questions, ideas, or just want to connect, feel free to reach me on X (formerly Twitter) at [@AshwiniGaddagi](https://x.com/AshwiniGaddagi). I'd love to hear from you!
 
 
