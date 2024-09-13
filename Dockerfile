@@ -1,8 +1,11 @@
-# Stage 1: Build the Go binary
-FROM golang:1.22-bookworm AS builder
+# Stage 1: Build the Go binary using Alpine
+FROM golang:1.22-alpine AS builder
 
 # Ensure the build fails on any command failure
-SHELL ["/bin/bash", "-o", "pipefail", "-c"]
+SHELL ["/bin/ash", "-o", "pipefail", "-c"]
+
+# Install build dependencies
+RUN apk add --no-cache git bash
 
 # Set the working directory
 WORKDIR /app
@@ -19,30 +22,20 @@ COPY . .
 # Build the Go binary for amd64
 RUN GOARCH=amd64 go build -o goKakashi ./cmd/goKakashi.go
 
-# Stage 2: Final image for running the application
-FROM debian:bookworm-slim
+# Stage 2: Final image for running the application with Alpine
+FROM alpine:3.18
 
 # Ensure the build fails on any command failure
-SHELL ["/bin/bash", "-o", "pipefail", "-c"]
+SHELL ["/bin/ash", "-o", "pipefail", "-c"]
+
+# Install Docker CLI and other dependencies
+RUN apk add --no-cache docker-cli curl bash ca-certificates
+
+# Install Trivy
+RUN curl -sfL https://github.com/aquasecurity/trivy/releases/download/v0.18.3/trivy_0.18.3_Linux-64bit.tar.gz | tar -xz -C /usr/local/bin
 
 # Set working directory
 WORKDIR /app
-
-# Install dependencies: Docker CLI and Trivy
-RUN apt-get update && \
-    apt-get install -y ca-certificates curl gnupg lsb-release && \
-    install -m 0755 -d /etc/apt/keyrings && \
-    curl -fsSL https://download.docker.com/linux/debian/gpg -o /etc/apt/keyrings/docker.asc && \
-    chmod a+r /etc/apt/keyrings/docker.asc && \
-    echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.asc] https://download.docker.com/linux/debian \
-    bullseye stable" | tee /etc/apt/sources.list.d/docker.list > /dev/null && \
-    apt-get update && \
-    apt-get install -y docker-ce-cli
-RUN curl -L -o trivy.deb https://github.com/aquasecurity/trivy/releases/download/v0.18.3/trivy_0.18.3_Linux-64bit.deb && \
-    dpkg -i trivy.deb && \
-    apt-get clean && \
-    rm -rf /var/lib/apt/lists/*
-
 
 # Copy the Go binary from the builder stage
 COPY --from=builder /app/goKakashi /app/goKakashi
