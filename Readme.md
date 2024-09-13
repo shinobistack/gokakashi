@@ -1,4 +1,4 @@
-# goKakashi - The Ultimate Image Vulnerability Scanner 🔍🚀
+# goKakashi - The Centralized Image Vulnerability Platform 🔍🚀
 Make vulnerability management effortless with **goKakashi**! 
 This tool simplifies the process of pulling, scanning, reporting, and notifying across all your container images. Gone are the days of manually juggling multiple tools and managing disparate processes—**goKakashi** brings everything under one roof.
 
