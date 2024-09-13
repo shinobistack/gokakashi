@@ -120,7 +120,7 @@ func runImageScan(target config.ScanTarget, image config.Image, cfg *config.Conf
 		trivyScanner := scanner.NewTrivyScanner()
 
 		// Check for severity levels in scan policy
-		severityLevels := image.ScanPolicy.Vulnerabilities
+		severityLevels := image.ScanPolicy.Severity
 		log.Printf("Scan policy severity levels: %v", severityLevels)
 
 		// Scan the Docker image using Trivy
