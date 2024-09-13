@@ -124,7 +124,10 @@ func runImageScan(target config.ScanTarget, image config.Image, cfg *config.Conf
 		// Scan the Docker image using Trivy
 		report, vulnerabilities, err := trivyScanner.ScanImage(imageWithTag, severityLevels)
 		if err != nil {
-			log.Fatalf("Error scanning Docker image: %v", err)
+			log.Printf("Error scanning Docker image: %v. Skipping this scan", err)
+			// Output the error message to stderr as well
+			fmt.Fprintf(os.Stderr, "Scan failed for image %s: %v\n", imageWithTag, err)
+			return
 		}
 		log.Println("Scan completed successfully.")
 
