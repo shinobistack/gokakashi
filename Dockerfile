@@ -38,8 +38,11 @@ RUN apt-get update && \
     bullseye stable" | tee /etc/apt/sources.list.d/docker.list > /dev/null && \
     apt-get update && \
     apt-get install -y docker-ce-cli
-# Install Trivy v0.55.0
-RUN curl -sfL https://raw.githubusercontent.com/aquasecurity/trivy/main/install.sh | sh -s -- -b /usr/local/bin
+RUN curl -L -o trivy.deb https://github.com/aquasecurity/trivy/releases/download/v0.18.3/trivy_0.18.3_Linux-64bit.deb && \
+    dpkg -i trivy.deb && \
+    apt-get clean && \
+    rm -rf /var/lib/apt/lists/*
+
 
 # Copy the Go binary from the builder stage
 COPY --from=builder /app/goKakashi /app/goKakashi
