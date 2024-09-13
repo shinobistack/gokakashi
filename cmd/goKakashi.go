@@ -110,7 +110,9 @@ func runImageScan(target config.ScanTarget, image config.Image, cfg *config.Conf
 		log.Printf("Pulling and scanning image: %s", imageWithTag)
 
 		if err := reg.PullImage(imageWithTag); err != nil {
-			log.Fatalf("Failed to pull Docker image: %v", err)
+			log.Printf("Failed to pull Docker image: %v", err)
+			fmt.Fprintf(os.Stderr, "Failed to pull Docker image: %v\n", err)
+			return
 		}
 		log.Printf("Successfully pulled image: %s", imageWithTag)
 
