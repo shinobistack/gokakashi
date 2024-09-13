@@ -55,11 +55,11 @@ This tool simplifies the process of pulling, scanning, reporting, and notifying 
    _Current Support:_ Under development.
 
 ## Why Use goKakashi?
-- Reduce Engineering Overhead: By centralizing the scanning process, goKakashi removes the need for multiple tools and need for managing and collaborating at multiple places.
-- Streamline Release Management: Automate the detection, reporting, and discussing resolution of vulnerabilities, reducing last-minute firefights. 
-- Increase Security Proactivity: Catch vulnerabilities before your customers do and maintain their trust with proactive management.
-- Scalability: Designed to support long-term solutions for managing large-scale image vulnerability detection, goKakashi streamlines everything into a single, centralized platform.
-- Unified Platform: One tool to rule them all—be it for vulnerability scanning, reporting, or even access and communicating directly with your team!
+- **Reduce Engineering Overhead:** By centralizing the scanning process, goKakashi removes the need for multiple tools and need for managing and collaborating at multiple places.
+- **Streamline Release Management:** Automate the detection, reporting, and discussing resolution of vulnerabilities, reducing last-minute firefights. 
+- **Increase Security Proactivity:** Catch vulnerabilities before your customers do and maintain their trust with proactive management.
+- **Scalability:** Designed to support long-term solutions for managing large-scale image vulnerability detection, goKakashi streamlines everything into a single, centralized platform.
+- **Unified Platform:** One tool to rule them all—be it for vulnerability scanning, reporting, or even access and communicating directly with your team!
 
 
 ## Getting Started
