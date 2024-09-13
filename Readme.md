@@ -51,21 +51,20 @@ Example: config.yaml
 scan_targets:
   - registry: dockerhub
     auth:
-      username: email
-      password: password
+      username: ${DOCKER_USERNAME}
+      password: ${DOCKER_PASSWORD}
     images:
-      - name: hasura/graphql-engine
+      - name: xx/xx
         tags:
           - v2.36.0
           - v2.36.3
-#          - v2.11.13
         scan_policy:
           vulnerabilities:
             - CRITICAL
             - HIGH
           notify:
-            - tool: Linear
-              api_key: lin_api_xxxx
+            Linear:
+              api_key: ${LINEAR_API_KEY}
               project_id: UUID
               team_id: UUID
               issue_title: TEST2 Vulnerability Report
@@ -73,19 +72,12 @@ scan_targets:
               issue_assignee_id: UUID of Assignee
               issue_state_id: UUID of Backlog, Triage, In progres etc
               issue_due_date: 2024-12-01 #YYYY-MM-DD
-      - name: hasura/graphql-engine # other repository
-        tags:
-          - v2.36.4
-          - v2.11.8
-    scanner:
-      - tool: Trivy
 website:
   hostname: localhost
-  files_path: /Users/ashwinigaddagi/work/goKakashi/test_data # absolute
+  files_path: /app/website # absolute
   public:
     port: 8080
   private:
     port: 9090
-
 
 ```
