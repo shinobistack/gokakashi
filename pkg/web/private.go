@@ -10,7 +10,10 @@ import (
 )
 
 func StartPrivateServer(reportPath string, port int) {
-	http.HandleFunc("/reports", func(w http.ResponseWriter, r *http.Request) {
+	// Create a new ServeMux for the private server
+	mux := http.NewServeMux()
+
+	mux.HandleFunc("/reports", func(w http.ResponseWriter, r *http.Request) {
 		files, err := filepath.Glob(reportPath + "/*_report.json")
 		if err != nil {
 			http.Error(w, "Failed to load reports", http.StatusInternalServerError)
@@ -26,7 +29,7 @@ func StartPrivateServer(reportPath string, port int) {
 		tmpl.Execute(w, data)
 	})
 
-	http.HandleFunc("/private/view", func(w http.ResponseWriter, r *http.Request) {
+	mux.HandleFunc("/view", func(w http.ResponseWriter, r *http.Request) {
 		reportFile := r.URL.Query().Get("file")
 		if reportFile == "" {
 			http.Error(w, "No file specified", http.StatusBadRequest)
@@ -44,7 +47,7 @@ func StartPrivateServer(reportPath string, port int) {
 	})
 
 	log.Printf("Starting private server on port %d...", port)
-	if err := http.ListenAndServe(":"+strconv.Itoa(port), nil); err != nil { // Convert port to string
+	if err := http.ListenAndServe(":"+strconv.Itoa(port), mux); err != nil {
 		log.Fatalf("Private server failed: %v", err)
 	}
 }
@@ -59,7 +62,7 @@ const privateTemplate = `
     <h1>Private Scan Reports</h1>
     <ul>
         {{range .Reports}}
-        <li><a href="/private/view?file={{.}}">{{.}}</a></li>
+        <li><a href="/view?file={{.}}">{{.}}</a></li>
         {{end}}
     </ul>
 </body>
