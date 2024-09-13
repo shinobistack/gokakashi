@@ -110,7 +110,9 @@ func runImageScan(target config.ScanTarget, image config.Image, cfg *config.Conf
 		log.Printf("Pulling and scanning image: %s", imageWithTag)
 
 		if err := reg.PullImage(imageWithTag); err != nil {
-			log.Fatalf("Failed to pull Docker image: %v", err)
+			log.Printf("Failed to pull Docker image: %v", err)
+			fmt.Fprintf(os.Stderr, "Failed to pull Docker image: %v\n", err)
+			return
 		}
 		log.Printf("Successfully pulled image: %s", imageWithTag)
 
@@ -118,13 +120,16 @@ func runImageScan(target config.ScanTarget, image config.Image, cfg *config.Conf
 		trivyScanner := scanner.NewTrivyScanner()
 
 		// Check for severity levels in scan policy
-		severityLevels := image.ScanPolicy.Vulnerabilities
+		severityLevels := image.ScanPolicy.Severity
 		log.Printf("Scan policy severity levels: %v", severityLevels)
 
 		// Scan the Docker image using Trivy
 		report, vulnerabilities, err := trivyScanner.ScanImage(imageWithTag, severityLevels)
 		if err != nil {
-			log.Fatalf("Error scanning Docker image: %v", err)
+			log.Printf("Error scanning Docker image: %v. Skipping this scan", err)
+			// Output the error message to stderr as well
+			fmt.Fprintf(os.Stderr, "Scan failed for image %s: %v\n", imageWithTag, err)
+			return
 		}
 		log.Println("Scan completed successfully.")
 
