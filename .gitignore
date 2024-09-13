@@ -41,3 +41,4 @@
 *.iml
 *.iws
 out/
+hashes.json
