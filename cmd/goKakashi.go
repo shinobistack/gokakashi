@@ -13,6 +13,7 @@ import (
 	"os/signal"
 	"strings"
 	"syscall"
+	"time"
 
 	"github.com/ashwiniag/goKakashi/notifier"
 	"github.com/ashwiniag/goKakashi/pkg/config"
@@ -59,8 +60,10 @@ func main() {
 			if image.ScanPolicy.CronSchedule != "" {
 				schedule := image.ScanPolicy.CronSchedule
 				_, err := cronSchedule.AddFunc(schedule, func() {
-					log.Printf("Scheduled scan triggered for %s:%s", image.Name, strings.Join(image.Tags, ", "))
+					start := time.Now()
+					log.Printf("Scheduled scan started at %v for %s:%s", start, image.Name, strings.Join(image.Tags, ", "))
 					runImageScan(target, image, cfg)
+					log.Printf("Scheduled scan completed at %v for %s:%s", time.Now(), image.Name, strings.Join(image.Tags, ", "))
 				})
 				if err != nil {
 					log.Printf("Invalid cron schedule for image %s: %v", image.Name, err)
