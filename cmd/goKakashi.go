@@ -183,6 +183,8 @@ func runImageScan(target config.ScanTarget, image config.Image, cfg *config.Conf
 		for toolName, notifyConfig := range image.ScanPolicy.Notify {
 			if toolName == "Linear" {
 				linearNotifier := notifier.NewLinearNotifier()
+				// Include image name by default in Linear issue title, ensuring the title length does not exceed Linear's 256-character limit.
+				finalTitle := fmt.Sprintf("%s %s", imageWithTag, notifyConfig.IssueTitle)
 				err := linearNotifier.SendNotification(notifier.TrivyReport{
 					ArtifactName: imageWithTag,
 					Results:      []notifier.Result{},
@@ -190,7 +192,7 @@ func runImageScan(target config.ScanTarget, image config.Image, cfg *config.Conf
 					APIKey:    notifyConfig.APIKey,
 					TeamID:    notifyConfig.TeamID,
 					ProjectID: notifyConfig.ProjectID,
-					Title:     notifyConfig.IssueTitle,
+					Title:     finalTitle,
 					Priority:  notifyConfig.IssuePriority,
 					Assignee:  notifyConfig.IssueAssigneeID,
 					StateID:   notifyConfig.IssueStateID,
