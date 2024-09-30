@@ -41,6 +41,31 @@ scan_targets:
               issue_due_date: 2024-12-01  # YYYY-MM-DD
     scanner:
       - tool: Trivy
+  - registry: gcr
+    auth:
+      type: serviceAccount
+      json_key_path: "/path_to_.json"
+    images:
+      - name: gcr.io/ashwiniag/name
+        tags:
+          - v2.36.0
+        scan_policy:
+          severity:
+            - CRITICAL
+            - HIGH
+          notify:
+            Linear:
+              api_key: xxxx
+              project_id: 24c2aac3-638a-4824-8371-26f250fbaed1
+              team_id: e9f2cd02-7113-4ec3-bb08-ea7a151f542a
+              issue_title: TEST2
+              issue_priority: 2
+              issue_assignee_id: d74e16a8-b9e4-4fcf-a2d5-da01787f1678 # UUID of Assignee, here its ashwini@hasura.io
+              issue_state_id: 822cf3fe-a0bd-4401-9423-310c4f27d71f # UUID of Backlog, Triage, In progres etc
+              issue_due_date: 2024-12-01 #YYYY-MM-DD
+          cron_schedule: "*/1 * * * *"
+    scanner:
+      - tool: Trivy
 website:
   hostname: localhost
   files_path: /app/website  # absolute

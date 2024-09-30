@@ -23,7 +23,7 @@ COPY . .
 RUN GOARCH=amd64 go build -o goKakashi ./cmd/goKakashi.go
 
 # Stage 2: Final image for running the application with Alpine
-FROM alpine:3.18
+FROM alpine:3.20
 
 # Ensure the build fails on any command failure
 SHELL ["/bin/ash", "-o", "pipefail", "-c"]
@@ -32,10 +32,12 @@ SHELL ["/bin/ash", "-o", "pipefail", "-c"]
 RUN apk add --no-cache docker-cli curl bash ca-certificates
 
 # Install Trivy
-RUN curl -sfL https://github.com/aquasecurity/trivy/releases/download/v0.18.3/trivy_0.18.3_Linux-64bit.tar.gz | tar -xz -C /usr/local/bin
+RUN curl -sfL https://github.com/aquasecurity/trivy/releases/download/v0.55.1/trivy_0.55.1_Linux-64bit.tar.gz | tar -xz -C /usr/local/bin
 
 # Set working directory
 WORKDIR /app
+
+RUN mkdir -p /app/website
 
 # Copy the Go binary from the builder stage
 COPY --from=builder /app/goKakashi /app/goKakashi
