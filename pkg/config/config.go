@@ -19,8 +19,10 @@ type ScanTarget struct {
 }
 
 type Auth struct {
-	Username string `yaml:"username"`
-	Password string `yaml:"password"`
+	Type        string `yaml:"type"` // Types of authentication
+	Username    string `yaml:"username"`
+	Password    string `yaml:"password"`
+	JSONKeyPath string `yaml:"json_key_path"` // Optional: For GCR service account
 }
 
 type Image struct {

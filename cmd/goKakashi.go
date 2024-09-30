@@ -51,8 +51,8 @@ func main() {
 	cronSchedule := cron.New()
 	// Ensure cron is stopped when program exits
 	defer cronSchedule.Stop()
-	// Register cron jobs for each scan target
 
+	// Register cron jobs for each scan target
 	// Process scan targets and images
 	for _, target := range cfg.ScanTargets {
 		// Iterate over the images and scan them

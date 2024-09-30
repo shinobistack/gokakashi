@@ -17,7 +17,7 @@ func NewDockerHub() *DockerHub {
 
 // Login authenticates to Docker Hub using --password-stdin
 func (d *DockerHub) Login(target config.ScanTarget) error {
-	if target.Auth.Username == "" || target.Auth.Password == "" {
+	if target.Auth.Type == "basicAuth" && target.Auth.Username == "" && target.Auth.Password == "" {
 		log.Println("Skipping DockerHub login as no credentials are provided")
 		return nil
 	}

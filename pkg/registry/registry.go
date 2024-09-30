@@ -11,8 +11,8 @@ func NewRegistry(registry string) (Registry, error) {
 		return NewDockerHub(), nil
 	//case "ecr":
 	//	return NewECR(), nil
-	//case "gcr":
-	//	return NewGCR(), nil
+	case "gcr":
+		return NewGCR(), nil
 	//case "acr":
 	//	return NewACR(), nil
 	default:
