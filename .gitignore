@@ -42,3 +42,6 @@
 *.iws
 out/
 hashes.json
+config/*.json
+scan_policy_curl.sh
+*.yaml
