@@ -23,12 +23,21 @@ func (g *GCR) Login(target config.ScanTarget) error {
 
 		log.Println("Authenticating with GCR using service account...")
 
-		cmd := exec.Command("gcloud", "auth", "configure-docker")
+		cmd := exec.Command("gcloud", "auth", "activate-service-account", "--key-file", target.Auth.JSONKeyPath)
 		output, err := cmd.CombinedOutput()
 		log.Printf("gcloud auth output: %s", string(output))
 
 		if err != nil {
-			return fmt.Errorf("GCR login failed: %v, %s", err, string(output))
+			return fmt.Errorf("service account activation failed: %v, %s", err, string(output))
+		}
+
+		log.Println("Configuring Docker to use gcloud credentials for GCR...")
+		cmd = exec.Command("gcloud", "auth", "configure-docker", "gcr.io")
+		output, err = cmd.CombinedOutput()
+		log.Printf("gcloud configure-docker output: %s", string(output))
+
+		if err != nil {
+			return fmt.Errorf("Docker configuration failed: %v, %s", err, string(output))
 		}
 
 		log.Println("Successfully authenticated with GCR.")
