@@ -6,4 +6,6 @@ scan_policy_curl.sh
 goKakashi
 config/*.yaml
 config/*.json
-
+*.yaml
+*.html
+listdirectory.go

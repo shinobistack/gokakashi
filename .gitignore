@@ -45,3 +45,5 @@ hashes.json
 config/*.json
 scan_policy_curl.sh
 *.yaml
+*.html
+listdirectory.go
