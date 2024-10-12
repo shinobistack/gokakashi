@@ -31,7 +31,7 @@ async function pollScanStatus(apiHost, apiToken, scanId) {
             method: 'GET',
             headers: { 'Authorization': `Bearer ${apiToken}` }
         });
-
+        console.log(statusData)
         status = statusData.status;
         retries++;
 
