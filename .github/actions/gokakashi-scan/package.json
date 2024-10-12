@@ -4,6 +4,7 @@
   "description": "GitHub Action for scanning images using goKakashi",
   "main": "index.js",
   "private": true,
+  "type": "module",
   "scripts": {
     "start": "node index.js"
   },
