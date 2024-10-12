@@ -1,0 +1,10 @@
+{
+  "name": "gokakashi-scan-action",
+  "version": "1.0.0",
+  "description": "GitHub Action for scanning images using goKakashi",
+  "main": "index.js",
+  "dependencies": {
+    "@actions/core": "^1.10.1",
+    "node-fetch": "^3.3.2"
+  }
+}
