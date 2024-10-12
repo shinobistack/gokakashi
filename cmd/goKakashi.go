@@ -2,9 +2,8 @@ package main
 
 import (
 	"flag"
-	"fmt"
-	"github.com/ashwiniag/goKakashi/pkg/registry"
-	"github.com/ashwiniag/goKakashi/pkg/scanner"
+	"github.com/ashwiniag/goKakashi/pkg/api"
+	"github.com/ashwiniag/goKakashi/pkg/config"
 	"github.com/ashwiniag/goKakashi/pkg/utils"
 	"github.com/ashwiniag/goKakashi/pkg/web"
 	"github.com/robfig/cron/v3"
@@ -14,13 +13,7 @@ import (
 	"strings"
 	"syscall"
 	"time"
-
-	"github.com/ashwiniag/goKakashi/notifier"
-	"github.com/ashwiniag/goKakashi/pkg/config"
 )
-
-// Path to store hash JSON
-const hashFilePath = "./hashes.json"
 
 func main() {
 	log.Println("=== Starting goKakashi Tool ===")
@@ -32,20 +25,24 @@ func main() {
 	if *configFile == "" {
 		log.Fatal("Please provide the path to the config YAML file using --config")
 	}
-	log.Printf("Using configuration file: %s", *configFile)
-
-	// Load the YAML configuration
-	log.Println("Loading configuration from YAML file...")
-	cfg, err := config.LoadConfig(*configFile)
+	// Load and validate the configuration file
+	cfg, err := config.LoadAndValidateConfig(*configFile)
 	if err != nil {
-		log.Fatalf("Failed to load config: %v", err)
+		log.Fatalf("Error: %v", err)
 	}
-	log.Println("Configuration loaded successfully.")
 
 	// Start web servers to serve reports
-	log.Println("Starting public and private web servers...")
-	go web.StartPublicServer(cfg.Website.FilesPath, cfg.Website.Public.Port)
-	go web.StartPrivateServer(cfg.Website.FilesPath, cfg.Website.Private.Port)
+	log.Println("Starting web servers...")
+	// Initialize web servers
+	webServer := web.NewWebServer()
+	err = webServer.StartWebServers(cfg)
+	if err != nil {
+		log.Fatalf("Failed to start web servers: %v", err)
+	}
+
+	log.Println("Starting API server for scan functionality at port 8000...")
+	//// call api func main
+	go api.StartAPIServer(8000, cfg.Websites, cfg.APIToken)
 
 	// Initialize cron job for scheduling scans
 	cronSchedule := cron.New()
@@ -62,7 +59,7 @@ func main() {
 				_, err := cronSchedule.AddFunc(schedule, func() {
 					start := time.Now()
 					log.Printf("Scheduled scan started at %v for %s:%s", start, image.Name, strings.Join(image.Tags, ", "))
-					runImageScan(target, image, cfg)
+					utils.RunImageScan(target, image, cfg)
 					log.Printf("Scheduled scan completed at %v for %s:%s", time.Now(), image.Name, strings.Join(image.Tags, ", "))
 				})
 				if err != nil {
@@ -72,7 +69,7 @@ func main() {
 				}
 			} else {
 				log.Printf("No cron schedule for image %s. Running scan immediately.", image.Name)
-				runImageScan(target, image, cfg)
+				utils.RunImageScan(target, image, cfg)
 			}
 		}
 	}
@@ -86,136 +83,4 @@ func main() {
 	<-shutdown
 
 	log.Println("Shutting down goKakashi gracefully...")
-}
-
-func runImageScan(target config.ScanTarget, image config.Image, cfg *config.Config) {
-	log.Printf("Processing registry: %s", target.Registry)
-
-	// Initialize the appropriate registry
-	log.Printf("Initializing registry: %s", target.Registry)
-	reg, err := registry.NewRegistry(target.Registry)
-	if err != nil {
-		log.Fatalf("Failed to initialize registry: %v", err)
-	}
-
-	// Handle Docker login if credentials are provided
-	log.Printf("Logging in to registry: %s", target.Registry)
-	if err := reg.Login(target); err != nil {
-		log.Fatalf("Registry login failed: %v", err)
-	}
-	log.Println("Successfully logged in.")
-
-	for _, tag := range image.Tags {
-		imageWithTag := fmt.Sprintf("%s:%s", image.Name, tag)
-		log.Printf("Pulling and scanning image: %s", imageWithTag)
-
-		if err := reg.PullImage(imageWithTag); err != nil {
-			log.Printf("Failed to pull Docker image: %v", err)
-			fmt.Fprintf(os.Stderr, "Failed to pull Docker image: %v\n", err)
-			return
-		}
-		log.Printf("Successfully pulled image: %s", imageWithTag)
-
-		// Initialize the scanner (Trivy)
-		trivyScanner := scanner.NewTrivyScanner()
-
-		// Check for severity levels in scan policy
-		severityLevels := image.ScanPolicy.Severity
-		log.Printf("Scan policy severity levels: %v", severityLevels)
-
-		// Scan the Docker image using Trivy
-		report, vulnerabilities, err := trivyScanner.ScanImage(imageWithTag, severityLevels)
-		if err != nil {
-			log.Printf("Error scanning Docker image: %v. Skipping this scan", err)
-			// Output the error message to stderr as well
-			fmt.Fprintf(os.Stderr, "Scan failed for image %s: %v\n", imageWithTag, err)
-			return
-		}
-		log.Println("Scan completed successfully.")
-
-		// Save report to file
-		restructuredImageName := strings.ReplaceAll(image.Name, "/", "_") // Replace slashes with underscores
-		reportFilePath := fmt.Sprintf("%s/%s_%s_report.json", cfg.Website.FilesPath, restructuredImageName, tag)
-		log.Printf("Saving report to: %s", reportFilePath)
-		err = os.WriteFile(reportFilePath, []byte(report), 0644)
-		if err != nil {
-			log.Fatalf("Failed to save report: %v", err)
-		}
-		log.Printf("Report saved successfully at: %s", reportFilePath)
-
-		// Filter vulnerabilities based on severity levels
-		filteredVulnerabilities := filterVulnerabilitiesBySeverity(vulnerabilities, severityLevels)
-
-		// If no matching vulnerabilities are found, skip creating a Linear ticket
-		if len(filteredVulnerabilities) == 0 {
-			log.Printf("No vulnerabilities matching the specified severity levels (%v) were found in image: %s. Skipping ticket creation.", severityLevels, imageWithTag)
-			continue // Skip to the next image
-		}
-
-		// Convert []notifier.Vulnerability to []string using ExtractVulnerabilityIDs
-		vulnerabilityData, vulnerabilityEntries := utils.ConvertVulnerabilities(vulnerabilities)
-
-		// Generate a unique hash for this image, tag, and vulnerabilities
-		hash := utils.GenerateHash(image.Name, tag, vulnerabilityEntries)
-
-		// Check if this hash already exists in the JSON file
-		exists, err := utils.HashExists(hashFilePath, hash)
-		if err != nil {
-			log.Fatalf("Error checking hash: %v", err)
-		}
-
-		if exists {
-			log.Printf("Hash already exists for %s:%s, skipping Linear issue creation", image.Name, tag)
-			continue // Skip to the next image
-		}
-
-		entry := utils.HashEntry{
-			Image:           image.Name,
-			Tag:             tag,
-			Vulnerabilities: vulnerabilityData,
-			Hash:            hash,
-		}
-		if err := utils.SaveHashToFile(hashFilePath, entry); err != nil {
-			log.Fatalf("Error saving hash: %v", err)
-		}
-
-		// Notify the user based on the policy
-		for toolName, notifyConfig := range image.ScanPolicy.Notify {
-			if toolName == "Linear" {
-				linearNotifier := notifier.NewLinearNotifier()
-				// Include image name by default in Linear issue title, ensuring the title length does not exceed Linear's 256-character limit.
-				finalTitle := fmt.Sprintf("%s %s", imageWithTag, notifyConfig.IssueTitle)
-				err := linearNotifier.SendNotification(notifier.TrivyReport{
-					ArtifactName: imageWithTag,
-					Results:      []notifier.Result{},
-				}, vulnerabilities, notifier.NotifyConfig{
-					APIKey:    notifyConfig.APIKey,
-					TeamID:    notifyConfig.TeamID,
-					ProjectID: notifyConfig.ProjectID,
-					Title:     finalTitle,
-					Priority:  notifyConfig.IssuePriority,
-					Assignee:  notifyConfig.IssueAssigneeID,
-					StateID:   notifyConfig.IssueStateID,
-					DueDate:   notifyConfig.IssueDueDate,
-				})
-				if err != nil {
-					log.Printf("Failed to send notification: %v", err)
-				}
-			}
-			// Add other notifiers here example jira
-		}
-	}
-}
-
-// filterVulnerabilitiesBySeverity filters vulnerabilities based on the provided severity levels
-func filterVulnerabilitiesBySeverity(vulnerabilities []notifier.Vulnerability, severityLevels []string) []notifier.Vulnerability {
-	var filtered []notifier.Vulnerability
-	for _, v := range vulnerabilities {
-		for _, level := range severityLevels {
-			if v.Severity == level {
-				filtered = append(filtered, v)
-			}
-		}
-	}
-	return filtered
 }

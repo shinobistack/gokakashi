@@ -29,10 +29,18 @@ FROM alpine:3.20
 SHELL ["/bin/ash", "-o", "pipefail", "-c"]
 
 # Install Docker CLI and other dependencies
-RUN apk add --no-cache docker-cli curl bash ca-certificates
+RUN apk add --no-cache docker-cli curl bash ca-certificates python3
 
 # Install Trivy
 RUN curl -sfL https://github.com/aquasecurity/trivy/releases/download/v0.55.1/trivy_0.55.1_Linux-64bit.tar.gz | tar -xz -C /usr/local/bin
+
+# Install minimal gcloud CLI
+RUN curl -sS -o /tmp/google-cloud-cli.tar.gz https://dl.google.com/dl/cloudsdk/channels/rapid/downloads/google-cloud-cli-494.0.0-linux-x86_64.tar.gz \
+    && tar -xvf /tmp/google-cloud-cli.tar.gz \
+    && ./google-cloud-sdk/install.sh --quiet
+
+# Add gcloud to the PATH
+ENV PATH=$PATH:/google-cloud-sdk/bin
 
 # Set working directory
 WORKDIR /app

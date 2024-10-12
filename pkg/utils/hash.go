@@ -25,6 +25,9 @@ type VulnerabilityData struct {
 	FixedVersion     string `json:"fixed_version"`     // Version where the vulnerability is fixed (if available)
 }
 
+// Path to store hash JSON
+const hashFilePath = "./hashes.json"
+
 // ConvertVulnerabilities converts []notifier.Vulnerability to []VulnerabilityData for hash storage
 func ConvertVulnerabilities(vulnerabilities []notifier.Vulnerability) ([]VulnerabilityData, []string) {
 	var vulnerabilityData []VulnerabilityData
