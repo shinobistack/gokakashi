@@ -67,7 +67,7 @@ async function run() {
         // Step 3: Check the scan report for vulnerabilities
         const reportResponse = await fetch(reportUrl);
         const reportData = await reportResponse.json();
-        const failOnSeverity = core.getInput('fail_on_severity'); // Get user-defined severity level
+        const failOnSeverity = getInput('fail_on_severity'); // Get user-defined severity level
         // const hasVulnsToFail = reportData.vulnerabilities.some(vuln => vuln.severity === failOnSeverity);
 
         if (failOnSeverity) {
@@ -78,7 +78,7 @@ async function run() {
                 severitiesToFailOn.includes(vuln.severity)
             );
             if (hasVulnsToFail) {
-                core.setFailed(`Vulnerabilities found with severity: ${severitiesToFailOn.join(', ')}`);
+                setFailed(`Vulnerabilities found with severity: ${severitiesToFailOn.join(', ')}`);
             } else {
                 console.log(`No vulnerabilities found with severity: ${severitiesToFailOn.join(', ')}`);
             }

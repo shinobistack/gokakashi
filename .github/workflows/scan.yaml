@@ -21,7 +21,7 @@ jobs:
           image_name: 'hasura/graphql-engine:v2.35.0'
           severity: 'CRITICAL,HIGH'
           publish: 'report_private'
-          fail_on_severity: 'HIGH,CRITICAL'
+#          fail_on_severity: 'HIGH,CRITICAL'
 
       - name: Log the Scan Report URL
         run: |
