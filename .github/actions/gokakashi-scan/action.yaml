@@ -47,3 +47,10 @@ runs:
       run: node index.js
       shell: bash
       working-directory: .github/actions/gokakashi-scan
+      env:
+        INPUT_API_HOST: ${{ inputs.api_host }}
+        INPUT_API_TOKEN: ${{ inputs.api_token }}
+        INPUT_IMAGE_NAME: ${{ inputs.image_name }}
+        INPUT_SEVERITY: ${{ inputs.severity }}
+        INPUT_PUBLISH: ${{ inputs.publish }}
+        INPUT_FAIL_ON_SEVERITY: ${{ inputs.fail_on_severity }}
