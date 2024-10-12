@@ -13,13 +13,19 @@ inputs:
     description: 'The Docker image to scan'
     required: true
   severity:
-    description: 'Minimum severity level to report'
+    description: 'Comma-separated list of severity levels to report'
     required: true
     default: 'CRITICAL'
   publish:
     description: 'The publish path for the scan report'
     required: false
     default: 'report_private'
+  inputs:
+    fail_on_severity:
+      description: 'Comma-separated list of severity levels to fail the job on (e.g., CRITICAL,HIGH)'
+      required: false
+      default: 'CRITICAL'
+
 
 outputs:
   report_url:
