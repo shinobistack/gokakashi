@@ -51,6 +51,9 @@ async function run() {
         const severity = getInput('severity');
         const publish = getInput('publish');
         const failOnSeverity = getInput('fail_on_severity');
+        console.log(`API Host: ${apiHost}`);
+        console.log(`API Token: ${apiToken}`);
+        console.log(`Image Name: ${imageName}`);
 
         // Validate inputs
         if (!apiHost || !apiToken || !imageName) {
