@@ -25,7 +25,6 @@ inputs:
     required: false
     default: 'CRITICAL'
 
-
 outputs:
   report_url:
     description: 'URL of the scan report'
