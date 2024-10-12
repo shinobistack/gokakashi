@@ -1,4 +1,4 @@
-const fetch  = require ('node-fetch');
+const fetch = require('node-fetch');  // Use CommonJS require for v2.x
 const { setFailed, getInput, setOutput } = require('@actions/core');
 
 async function run() {
@@ -9,6 +9,7 @@ async function run() {
         const imageName = getInput('image_name');
         const severity = getInput('severity');
         const publish = getInput('publish');
+        const failOnSeverity = getInput('fail_on_severity'); // Get user-defined severity level
 
         // Step 1: Trigger the scan and get the scan_id
         const triggerResponse = await fetch(`${apiHost}/api/v0/scan?image=${imageName}&severity=${severity}&publish=${publish}`, {
@@ -67,12 +68,11 @@ async function run() {
         // Step 3: Check the scan report for vulnerabilities
         const reportResponse = await fetch(reportUrl);
         const reportData = await reportResponse.json();
-        const failOnSeverity = getInput('fail_on_severity'); // Get user-defined severity level
-        // const hasVulnsToFail = reportData.vulnerabilities.some(vuln => vuln.severity === failOnSeverity);
 
         if (failOnSeverity) {
             // Split the severities into an array
             const severitiesToFailOn = failOnSeverity.split(',').map(sev => sev.trim().toUpperCase());
+
             // Check if the report contains any vulnerabilities matching the specified severities
             const hasVulnsToFail = reportData.vulnerabilities.some(vuln =>
                 severitiesToFailOn.includes(vuln.severity)
@@ -86,7 +86,7 @@ async function run() {
             console.log('No fail_on_severity defined, proceeding without failing the job.');
         }
     } catch (error) {
-    setFailed(error.message);
+        setFailed(error.message);
     }
 }
 
