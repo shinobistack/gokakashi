@@ -1,18 +1,64 @@
-const fetch = require('node-fetch');
-const { setFailed, getInput, setOutput } = require('@actions/core');
+import fetch from 'node-fetch';
+import { setFailed, getInput, setOutput } from '@actions/core';
+
+const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms));
+
+async function makeRequest(url, options) {
+    try {
+        const response = await fetch(url, options);
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        return await response.json();
+    } catch (error) {
+        console.error(`Request failed: ${error.message}`);
+        throw error;
+    }
+}
+
+async function pollScanStatus(apiHost, apiToken, scanId) {
+    let status = 'queued';
+    let retries = 0;
+    const maxRetries = 30;
+    const initialDelay = 10000;
+
+    while ((status === 'queued' || status === 'in-progress') && retries < maxRetries) {
+        console.log(`Current scan status: ${status}. Waiting for completion...`);
+
+        await sleep(initialDelay * Math.pow(2, retries));
+
+        const statusData = await makeRequest(`${apiHost}/api/v0/scan/${scanId}/status`, {
+            method: 'GET',
+            headers: { 'Authorization': `Bearer ${apiToken}` }
+        });
+
+        status = statusData.status;
+        retries++;
+
+        if (status === 'completed') {
+            return statusData.report_url[0];
+        }
+    }
+
+    throw new Error(`Scan did not complete within the expected time. Final status: ${status}`);
+}
 
 async function run() {
     try {
-        // Input parameters from the action
         const apiHost = getInput('api_host');
         const apiToken = getInput('api_token');
         const imageName = getInput('image_name');
         const severity = getInput('severity');
         const publish = getInput('publish');
-        const failOnSeverity = getInput('fail_on_severity'); // Get user-defined severity level
+        const failOnSeverity = getInput('fail_on_severity');
 
-        // Step 1: Trigger the scan and get the scan_id
-        const triggerResponse = await fetch(`${apiHost}/api/v0/scan?image=${imageName}&severity=${severity}&publish=${publish}`, {
+        // Validate inputs
+        if (!apiHost || !apiToken || !imageName) {
+            throw new Error('Missing required inputs: api_host, api_token, or image_name');
+        }
+
+        console.log('Triggering scan...');
+        const triggerData = await makeRequest(`${apiHost}/api/v0/scan?image=${imageName}&severity=${severity}&publish=${publish}`, {
             method: 'POST',
             headers: {
                 'Authorization': `Bearer ${apiToken}`,
@@ -20,60 +66,18 @@ async function run() {
             }
         });
 
-        if (!triggerResponse.ok) {
-            throw new Error(`Failed to trigger the scan. Status: ${triggerResponse.status}`);
-        }
-
-        const triggerData = await triggerResponse.json();
         const scanId = triggerData.scan_id;
-
         console.log(`Scan triggered with scan ID: ${scanId}`);
 
-        // Step 2: Poll the scan status until it's completed
-        let status = 'queued';
-        let reportUrl = '';
+        const reportUrl = await pollScanStatus(apiHost, apiToken, scanId);
+        console.log(`Scan completed. Report URL: ${reportUrl}`);
+        setOutput('report_url', reportUrl);
 
-        while (status === 'queued' || status === 'in-progress') {
-            console.log(`Current scan status: ${status}. Waiting for completion...`);
-
-            await new Promise(r => setTimeout(r, 10000)); // Wait 10 seconds between polls
-
-            const statusResponse = await fetch(`${apiHost}/api/v0/scan/${scanId}/status`, {
-                method: 'GET',
-                headers: {
-                    'Authorization': `Bearer ${apiToken}`
-                }
-            });
-
-            if (!statusResponse.ok) {
-                throw new Error(`Failed to get scan status. Status: ${statusResponse.status}`);
-            }
-
-            const statusData = await statusResponse.json();
-            status = statusData.status;
-
-            // Check if scan is completed
-            if (status === 'completed') {
-                reportUrl = statusData.report_url[0]; // Extract report URL
-                console.log(`Scan completed. Report URL: ${reportUrl}`);
-                setOutput('report_url', reportUrl);  // Set the output for future steps
-            }
-        }
-
-        // If the scan did not complete successfully
-        if (status !== 'completed') {
-            throw new Error(`Scan failed with status: ${status}`);
-        }
-
-        // Step 3: Check the scan report for vulnerabilities
-        const reportResponse = await fetch(reportUrl);
-        const reportData = await reportResponse.json();
+        console.log('Fetching scan report...');
+        const reportData = await makeRequest(reportUrl);
 
         if (failOnSeverity) {
-            // Split the severities into an array
             const severitiesToFailOn = failOnSeverity.split(',').map(sev => sev.trim().toUpperCase());
-
-            // Check if the report contains any vulnerabilities matching the specified severities
             const hasVulnsToFail = reportData.vulnerabilities.some(vuln =>
                 severitiesToFailOn.includes(vuln.severity)
             );
@@ -86,7 +90,7 @@ async function run() {
             console.log('No fail_on_severity defined, proceeding without failing the job.');
         }
     } catch (error) {
-        setFailed(error.message);
+        setFailed(`Action failed: ${error.message}`);
     }
 }
 
