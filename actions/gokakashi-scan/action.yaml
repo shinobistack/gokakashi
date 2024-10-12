@@ -1,0 +1,30 @@
+name: 'goKakashi Scan'
+description: 'A GitHub Action to trigger and monitor GoKakashi image scans.'
+author: 'gokakashi'
+
+inputs:
+  api_host:
+    description: 'The base URL of the goKakashi API'
+    required: true
+  api_token:
+    description: 'API token for authentication with goKakashi'
+    required: true
+  image_name:
+    description: 'The Docker image to scan'
+    required: true
+  severity:
+    description: 'Minimum severity level to report'
+    required: true
+    default: 'CRITICAL'
+  publish:
+    description: 'The publish path for the scan report'
+    required: false
+    default: 'report_private'
+
+outputs:
+  report_url:
+    description: 'URL of the scan report'
+
+runs:
+  using: 'node16'
+  main: 'index.js'

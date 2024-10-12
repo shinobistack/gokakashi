@@ -47,3 +47,4 @@ scan_policy_curl.sh
 *.yaml
 *.html
 listdirectory.go
+!actions/gokakashi-scan/action.yaml
