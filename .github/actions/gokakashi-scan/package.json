@@ -3,7 +3,6 @@
   "version": "1.0.0",
   "description": "GitHub Action for scanning images using goKakashi",
   "main": "index.js",
-  "type": "module",
   "private": true,
   "scripts": {
     "start": "node index.js"

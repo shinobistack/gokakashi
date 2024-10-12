@@ -10,7 +10,7 @@ inputs:
     description: 'API token for authentication with goKakashi'
     required: true
   image_name:
-    description: 'The Docker image to scan'
+    description: 'The image to scan'
     required: true
   severity:
     description: 'Comma-separated list of severity levels to report'
@@ -19,7 +19,6 @@ inputs:
   publish:
     description: 'The publish path for the scan report'
     required: false
-    default: 'report_private'
   fail_on_severity:
     description: 'Comma-separated list of severity levels to fail the job on (e.g., CRITICAL,HIGH)'
     required: false
@@ -30,5 +29,19 @@ outputs:
     description: 'URL of the scan report'
 
 runs:
-  using: 'node20'
-  main: 'index.js'
+  using: 'composite'
+  steps:
+    - name: Set up Node.js
+      uses: actions/setup-node@v3
+      with:
+        node-version: '20.x'
+        cache: 'npm'
+        cache-dependency-path: .github/actions/gokakashi-scan/package-lock.json
+
+    - name: Install dependencies
+      run: npm ci
+      shell: bash
+
+    - name: Run goKakashi scan
+      run: node index.js
+      shell: bash
