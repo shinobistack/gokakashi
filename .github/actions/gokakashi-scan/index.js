@@ -1,5 +1,5 @@
-import fetch from 'node-fetch';
-import { setFailed, getInput, setOutput } from '@actions/core';
+const fetch  = require ('node-fetch');
+const { setFailed, getInput, setOutput } = require('@actions/core');
 
 async function run() {
     try {
