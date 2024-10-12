@@ -1,4 +1,4 @@
-const fetch = require('node-fetch');  // Use CommonJS require for v2.x
+const fetch = require('node-fetch');
 const { setFailed, getInput, setOutput } = require('@actions/core');
 
 async function run() {
