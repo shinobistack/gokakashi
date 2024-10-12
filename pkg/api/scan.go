@@ -141,7 +141,7 @@ func saveScanStatus(scanID, status string, reportFilePaths []string, configuredD
 	var reportURLs []string
 	for _, filePath := range reportFilePaths {
 		// Generate the URL from hostname, port, and the file path
-		reportURL := fmt.Sprintf("http://%s:%d/reports/%s", configuredDomain, port, filepath.Base(filePath))
+		reportURL := fmt.Sprintf("https://%s:%d/reports/%s", configuredDomain, port, filepath.Base(filePath))
 		reportURLs = append(reportURLs, reportURL)
 	}
 	// Build the scan result
