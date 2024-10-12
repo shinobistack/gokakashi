@@ -69,8 +69,9 @@ type Website struct {
 	// ToDo: How do we validated the token string for each webserver, currently this is not being used
 	APIToken string `yaml:"api_token"`
 	// ToDo: define to which webserver config user wants to publish to
-	Publish      string `yaml:"visibility"`
-	ReportSubDir string `yaml:"report_sub_dir"`
+	Publish          string `yaml:"visibility"`
+	ReportSubDir     string `yaml:"report_sub_dir"`
+	ConfiguredDomain string `yaml:"configured_domain"`
 }
 
 //type PortConfig struct {
