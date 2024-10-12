@@ -17,10 +17,10 @@ jobs:
         id: gokakashi_scan
         uses: ./.github/actions/gokakashi-scan
         with:
-          api_host: 'https://private-scan-reports.hasura-app.io:9090'
+          api_host: 'http://scan-reports.hasura-app.io:8080'
           api_token: 'ashwiniag123'
           image_name: 'hasura/graphql-engine:v2.35.0'
-          severity: 'CRITICAL,HIGH'
+          severity: 'HIGH,CRITICAL'
           publish: 'report_private'
           # fail_on_severity: 'HIGH,CRITICAL'
 
