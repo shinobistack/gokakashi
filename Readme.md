@@ -1,4 +1,7 @@
 # goKakashi - The Centralized Image Vulnerability Platform 🔍🚀
+
+[![golangci-lint](https://github.com/gokakashi/goKakashi/actions/workflows/lint.yml/badge.svg?branch=main)](https://github.com/gokakashi/goKakashi/actions/workflows/lint.yml)
+
 Make vulnerability management effortless with **goKakashi**! 
 This tool simplifies the process of pulling, scanning, reporting, and notifying across all your container images. Gone are the days of manually juggling multiple tools and managing disparate processes—**goKakashi** brings everything under one roof.
 
