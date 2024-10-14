@@ -2,17 +2,18 @@ package main
 
 import (
 	"flag"
-	"github.com/ashwiniag/goKakashi/pkg/api"
-	"github.com/ashwiniag/goKakashi/pkg/config"
-	"github.com/ashwiniag/goKakashi/pkg/utils"
-	"github.com/ashwiniag/goKakashi/pkg/web"
-	"github.com/robfig/cron/v3"
 	"log"
 	"os"
 	"os/signal"
 	"strings"
 	"syscall"
 	"time"
+
+	"github.com/ashwiniag/goKakashi/pkg/api"
+	"github.com/ashwiniag/goKakashi/pkg/config"
+	"github.com/ashwiniag/goKakashi/pkg/utils"
+	"github.com/ashwiniag/goKakashi/pkg/web"
+	"github.com/robfig/cron/v3"
 )
 
 func main() {
@@ -59,7 +60,11 @@ func main() {
 				_, err := cronSchedule.AddFunc(schedule, func() {
 					start := time.Now()
 					log.Printf("Scheduled scan started at %v for %s:%s", start, image.Name, strings.Join(image.Tags, ", "))
-					utils.RunImageScan(target, image, cfg)
+					err := utils.RunImageScan(target, image, cfg)
+					if err != nil {
+						log.Println("Error running image scan", err)
+						return
+					}
 					log.Printf("Scheduled scan completed at %v for %s:%s", time.Now(), image.Name, strings.Join(image.Tags, ", "))
 				})
 				if err != nil {
@@ -69,7 +74,11 @@ func main() {
 				}
 			} else {
 				log.Printf("No cron schedule for image %s. Running scan immediately.", image.Name)
-				utils.RunImageScan(target, image, cfg)
+				err := utils.RunImageScan(target, image, cfg)
+				if err != nil {
+					log.Println("Error running image scan", err)
+					return
+				}
 			}
 		}
 	}

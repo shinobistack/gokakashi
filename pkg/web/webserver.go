@@ -2,12 +2,13 @@ package web
 
 import (
 	"fmt"
-	"github.com/ashwiniag/goKakashi/pkg/config"
 	"log"
 	"net/http"
 	"os"
 	"path/filepath"
 	"text/template"
+
+	"github.com/ashwiniag/goKakashi/pkg/config"
 )
 
 const ReportsRootDir = "reports/"
@@ -88,7 +89,11 @@ func (ws *WebServer) handleListDirectoriesAndFiles(websiteID, rootPath string) h
 
 		// Use the directoryTemplate to display both directories and files
 		tmpl := template.Must(template.New("directories").Parse(directoryTemplate))
-		tmpl.Execute(w, struct{ Entries []string }{Entries: entries})
+		err = tmpl.Execute(w, struct{ Entries []string }{Entries: entries})
+		if err != nil {
+			http.Error(w, "Failed to template site", http.StatusInternalServerError)
+			return
+		}
 	}
 }
 
@@ -119,10 +124,14 @@ func (ws *WebServer) handleListReports(rootPath string) http.HandlerFunc {
 		log.Printf("Listing reports in directory: %s", reportDir)
 
 		tmpl := template.Must(template.New("reports").Parse(reportTemplate))
-		tmpl.Execute(w, struct {
+		err = tmpl.Execute(w, struct {
 			Reports []string
 			Dir     string
 		}{Reports: files, Dir: dir})
+		if err != nil {
+			http.Error(w, "Failed to template site", http.StatusInternalServerError)
+			return
+		}
 	}
 }
 
@@ -137,6 +146,8 @@ func (ws *WebServer) handleViewReportFile(rootPath string) http.HandlerFunc {
 
 		// If the file path contains the full path, just use it directly
 		filePath := filepath.Clean(file)
+		// Explore reading file in chunks and responding back to avoid
+		// potential memory exhaustion in case of large reports
 		reportData, err := os.ReadFile(filePath)
 		if err != nil {
 			http.Error(w, "Failed to read report", http.StatusInternalServerError)
@@ -146,7 +157,11 @@ func (ws *WebServer) handleViewReportFile(rootPath string) http.HandlerFunc {
 		log.Printf("Serving report file: %s", filePath)
 
 		w.Header().Set("Content-Type", "application/json")
-		w.Write(reportData)
+		_, err = w.Write(reportData)
+		if err != nil {
+			log.Println("Error writing report data in response", err)
+			return
+		}
 	}
 }
 

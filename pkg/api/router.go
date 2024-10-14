@@ -1,10 +1,12 @@
 package api
 
 import (
-	"github.com/ashwiniag/goKakashi/pkg/config"
-	"github.com/gorilla/mux"
+	"log"
 	"net/http"
 	"strconv"
+
+	"github.com/ashwiniag/goKakashi/pkg/config"
+	"github.com/gorilla/mux"
 )
 
 func StartAPIServer(port int, websites map[string]config.Website, validToken string) {
@@ -19,5 +21,9 @@ func StartAPIServer(port int, websites map[string]config.Website, validToken str
 	// Wrap StatusHandler similarly
 	r.Handle("/api/v0/scan/{scan_id}/status", BearerTokenAuth(http.HandlerFunc(StatusHandler), validToken)).Methods("GET")
 
-	http.ListenAndServe(":"+strconv.Itoa(port), r)
+	err := http.ListenAndServe(":"+strconv.Itoa(port), r)
+	if err != nil {
+		log.Println("Error starting up the server", err)
+		return
+	}
 }

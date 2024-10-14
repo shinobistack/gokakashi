@@ -2,14 +2,15 @@ package utils
 
 import (
 	"fmt"
-	"github.com/ashwiniag/goKakashi/notifier"
-	"github.com/ashwiniag/goKakashi/pkg/config"
-	"github.com/ashwiniag/goKakashi/pkg/registry"
-	"github.com/ashwiniag/goKakashi/pkg/scanner"
 	"log"
 	"os"
 	"path/filepath"
 	"strings"
+
+	"github.com/ashwiniag/goKakashi/notifier"
+	"github.com/ashwiniag/goKakashi/pkg/config"
+	"github.com/ashwiniag/goKakashi/pkg/registry"
+	"github.com/ashwiniag/goKakashi/pkg/scanner"
 )
 
 const reportsRootDir = "reports/"
@@ -67,7 +68,7 @@ func SaveScanReport(image config.Image, tag, report string, websites map[string]
 	if apiPublishTarget != "" {
 		publishTargets = []string{apiPublishTarget}
 	}
-	if publishTargets != nil && len(publishTargets) > 0 {
+	if len(publishTargets) > 0 {
 		for _, publishTarget := range publishTargets {
 			websiteConfig, ok := websites[publishTarget]
 			if !ok {

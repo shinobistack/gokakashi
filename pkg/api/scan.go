@@ -4,10 +4,6 @@ import (
 	"encoding/json"
 	_ "encoding/json"
 	"fmt"
-	"github.com/ashwiniag/goKakashi/pkg/config"
-	"github.com/ashwiniag/goKakashi/pkg/scanner"
-	"github.com/ashwiniag/goKakashi/pkg/utils"
-	_ "github.com/ashwiniag/goKakashi/pkg/utils"
 	"log"
 	"net/http"
 	"os"
@@ -16,6 +12,11 @@ import (
 	_ "strings"
 	"sync"
 	"time"
+
+	"github.com/ashwiniag/goKakashi/pkg/config"
+	"github.com/ashwiniag/goKakashi/pkg/scanner"
+	"github.com/ashwiniag/goKakashi/pkg/utils"
+	_ "github.com/ashwiniag/goKakashi/pkg/utils"
 )
 
 var (
@@ -93,7 +94,11 @@ func StartScan(w http.ResponseWriter, r *http.Request, websites map[string]confi
 		Status: string(StatusQueued),
 	}
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(response)
+	err := json.NewEncoder(w).Encode(response)
+	if err != nil {
+		log.Println("Error responding json", err)
+		return
+	}
 }
 
 func runScan(scanID string, image string, severity string, publishTarget string, websites map[string]config.Website) {
@@ -114,7 +119,12 @@ func runScan(scanID string, image string, severity string, publishTarget string,
 	if err != nil {
 		log.Printf("Error scanning image: %v", err)
 		updateScanStatus(scanID, StatusFailed)
-		saveScanStatus(scanID, string(StatusFailed), nil, "", 0) // Save the error result
+		// TODO: Save the error result
+		_, err := saveScanStatus(scanID, string(StatusFailed), nil, "", 0)
+		if err != nil {
+			log.Println("Error saving scan status", err)
+			return
+		}
 		return
 	}
 	// On scan completion, update status and save the report
@@ -129,10 +139,13 @@ func runScan(scanID string, image string, severity string, publishTarget string,
 	websiteConfig := websites[publishTarget]
 
 	// Save the scan result for future retrieval
-	saveScanStatus(scanID, string(StatusCompleted), reportFilePaths, websiteConfig.ConfiguredDomain, websiteConfig.Port)
+	_, err = saveScanStatus(scanID, string(StatusCompleted), reportFilePaths, websiteConfig.ConfiguredDomain, websiteConfig.Port)
+	if err != nil {
+		log.Println("Error saving scan status", err)
+		return
+	}
 
 	// ToDo: save the report if visibility=private|public and status=completed
-
 }
 
 func saveScanStatus(scanID, status string, reportFilePaths []string, configuredDomain string, port int) ([]string, error) {

@@ -5,10 +5,10 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
-	"github.com/ashwiniag/goKakashi/notifier"
-	"io/ioutil"
 	"os"
 	"strings"
+
+	"github.com/ashwiniag/goKakashi/notifier"
 )
 
 type HashEntry struct {
@@ -58,11 +58,15 @@ func GenerateHash(image string, tag string, vulnerabilities []string) string {
 func SaveHashToFile(filePath string, entry HashEntry) error {
 	var entries []HashEntry
 
-	file, err := ioutil.ReadFile(filePath)
-	if err == nil {
-		json.Unmarshal(file, &entries)
+	file, err := os.ReadFile(filePath)
+	if err != nil {
+		return err
 	}
 
+	err = json.Unmarshal(file, &entries)
+	if err != nil {
+		return err
+	}
 	entries = append(entries, entry)
 
 	fileContent, err := json.Marshal(entries)
@@ -70,14 +74,14 @@ func SaveHashToFile(filePath string, entry HashEntry) error {
 		return err
 	}
 
-	return ioutil.WriteFile(filePath, fileContent, 0644)
+	return os.WriteFile(filePath, fileContent, 0644)
 }
 
 // HashExists checks if the hash already exists in the JSON file
 func HashExists(filePath string, hash string) (bool, error) {
 	var entries []HashEntry
 
-	file, err := ioutil.ReadFile(filePath)
+	file, err := os.ReadFile(filePath)
 	if err != nil {
 		if os.IsNotExist(err) {
 			return false, nil // No file yet, so no hash exists
@@ -85,7 +89,10 @@ func HashExists(filePath string, hash string) (bool, error) {
 		return false, err
 	}
 
-	json.Unmarshal(file, &entries)
+	err = json.Unmarshal(file, &entries)
+	if err != nil {
+		return false, err
+	}
 
 	for _, entry := range entries {
 		if entry.Hash == hash {
