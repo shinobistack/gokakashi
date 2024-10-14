@@ -2,9 +2,10 @@ package config
 
 import (
 	"fmt"
-	"gopkg.in/yaml.v2"
-	"io/ioutil"
 	"log"
+	"os"
+
+	"gopkg.in/yaml.v2"
 )
 
 const ReportsRootDir = "reports/"
@@ -81,14 +82,14 @@ type Website struct {
 func LoadConfig(configFile string) (*Config, error) {
 	config := &Config{}
 
-	yamlFile, err := ioutil.ReadFile(configFile)
+	yamlFile, err := os.ReadFile(configFile)
 	if err != nil {
-		return nil, fmt.Errorf("Failed to read config file: %v", err)
+		return nil, fmt.Errorf("failed to read config file: %v", err)
 	}
 
 	err = yaml.Unmarshal(yamlFile, config)
 	if err != nil {
-		return nil, fmt.Errorf("Error parsing YAML file: %v", err)
+		return nil, fmt.Errorf("error parsing YAML file: %v", err)
 	}
 
 	return config, nil
@@ -98,20 +99,20 @@ func LoadConfig(configFile string) (*Config, error) {
 func ValidateConfig(cfg *Config) error {
 	//Ensure the Websites fields are not empty
 	if len(cfg.Websites) == 0 {
-		return fmt.Errorf("Websites cannot be empty")
+		return fmt.Errorf("websites cannot be empty")
 	}
 
 	// Validate scan targets
 	if len(cfg.ScanTargets) == 0 {
-		return fmt.Errorf("No scan targets specified in the configuration")
+		return fmt.Errorf("no scan targets specified in the configuration")
 	}
 
 	for _, target := range cfg.ScanTargets {
 		if target.Registry == "" {
-			return fmt.Errorf("Registry for scan target cannot be empty")
+			return fmt.Errorf("registry for scan target cannot be empty")
 		}
 		if len(target.Images) == 0 {
-			return fmt.Errorf("No images specified for registry: %s", target.Registry)
+			return fmt.Errorf("no images specified for registry: %s", target.Registry)
 		}
 	}
 

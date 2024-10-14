@@ -4,7 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"log"
 	"net/http"
 )
@@ -125,7 +125,7 @@ func (ln *LinearNotifier) SendNotification(report TrivyReport, vulnerabilities [
 	defer resp.Body.Close()
 
 	// Read and log the full response body
-	bodyBytes, err := ioutil.ReadAll(resp.Body)
+	bodyBytes, err := io.ReadAll(resp.Body)
 	if err != nil {
 		return fmt.Errorf("failed to read response body: %v", err)
 	}
@@ -144,7 +144,7 @@ func (ln *LinearNotifier) SendNotification(report TrivyReport, vulnerabilities [
 		for _, apiError := range graphQLResponse.Errors {
 			log.Printf("Linear API error: %s", apiError.Message)
 		}
-		return fmt.Errorf("Linear issue creation failed due to API errors")
+		return fmt.Errorf("linear issue creation failed due to API errors")
 	}
 
 	log.Println("Successfully created issue in Linear using GraphQL API.")
