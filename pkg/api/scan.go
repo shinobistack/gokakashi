@@ -120,7 +120,7 @@ func runScan(scanID string, image string, severity string, publishTarget string,
 		log.Printf("Error scanning image: %v", err)
 		updateScanStatus(scanID, StatusFailed)
 		// TODO: Save the error result
-		_, err := saveScanStatus(scanID, string(StatusFailed), nil, "", 0)
+		_, err := saveScanStatus(scanID, string(StatusFailed), nil, "")
 		if err != nil {
 			log.Println("Error saving scan status", err)
 			return
@@ -139,7 +139,7 @@ func runScan(scanID string, image string, severity string, publishTarget string,
 	websiteConfig := websites[publishTarget]
 
 	// Save the scan result for future retrieval
-	_, err = saveScanStatus(scanID, string(StatusCompleted), reportFilePaths, websiteConfig.ConfiguredDomain, websiteConfig.Port)
+	_, err = saveScanStatus(scanID, string(StatusCompleted), reportFilePaths, websiteConfig.ConfiguredDomain)
 	if err != nil {
 		log.Println("Error saving scan status", err)
 		return
@@ -148,13 +148,13 @@ func runScan(scanID string, image string, severity string, publishTarget string,
 	// ToDo: save the report if visibility=private|public and status=completed
 }
 
-func saveScanStatus(scanID, status string, reportFilePaths []string, configuredDomain string, port int) ([]string, error) {
+func saveScanStatus(scanID, status string, reportFilePaths []string, configuredDomain string) ([]string, error) {
 	resultFilePath := fmt.Sprintf("/tmp/%s.json", scanID)
 	// Build the report URLs for each saved report
 	var reportURLs []string
 	for _, filePath := range reportFilePaths {
 		// Generate the URL from hostname, port, and the file path
-		reportURL := fmt.Sprintf("https://%s:%d/reports/%s", configuredDomain, port, filepath.Base(filePath))
+		reportURL := fmt.Sprintf("https://%s/reports/%s", configuredDomain, filepath.Base(filePath))
 		reportURLs = append(reportURLs, reportURL)
 	}
 	// Build the scan result
