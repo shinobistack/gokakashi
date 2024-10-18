@@ -1,4 +1,4 @@
-package main
+package cmd
 
 import (
 	"flag"
@@ -14,9 +14,16 @@ import (
 	"github.com/ashwiniag/goKakashi/pkg/utils"
 	"github.com/ashwiniag/goKakashi/pkg/web"
 	"github.com/robfig/cron/v3"
+	"github.com/spf13/cobra"
 )
 
-func main() {
+var serverCmd = &cobra.Command{
+	Use:   "server",
+	Short: "Start the GoKakshi Server",
+	Run:   runServer,
+}
+
+func runServer(cmd *cobra.Command, args []string) {
 	log.Println("=== Starting goKakashi Tool ===")
 
 	// Get config file from command-line argument
