@@ -20,7 +20,7 @@ RUN go mod tidy
 COPY . .
 
 # Build the Go binary for amd64
-RUN GOARCH=amd64 go build -o goKakashi ./cmd/goKakashi.go
+RUN GOARCH=amd64 go build -o gokakashi
 
 # Stage 2: Final image for running the application with Alpine
 FROM alpine:3.20
@@ -48,7 +48,7 @@ WORKDIR /app
 RUN mkdir -p /app/website
 
 # Copy the Go binary from the builder stage
-COPY --from=builder /app/goKakashi /app/goKakashi
+COPY --from=builder /app/gokakashi /app/gokakashi
 
 # Expose ports
 EXPOSE 8080
@@ -60,7 +60,7 @@ ENV DOCKER_PASSWORD="your-dockerhub-password"
 ENV LINEAR_API_KEY="your-linear-api-key"
 
 # Make sure the binary is executable
-RUN chmod +x /app/goKakashi
+RUN chmod +x /app/gokakashi
 
 # Set the entrypoint to the application binary
-ENTRYPOINT ["/app/goKakashi"]
+ENTRYPOINT ["/app/gokakashi"]
