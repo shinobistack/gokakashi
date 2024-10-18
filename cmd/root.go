@@ -11,7 +11,7 @@ var rootCmd = &cobra.Command{
 	Use:   "gokakashi",
 	Short: "GoKakashi - The Container image vulnerability management platform",
 	Run: func(cmd *cobra.Command, args []string) {
-		cmd.Help()
+		_ = cmd.Help()
 	},
 }
 
