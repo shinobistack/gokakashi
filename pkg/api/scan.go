@@ -72,6 +72,8 @@ func StartScan(w http.ResponseWriter, r *http.Request, websites map[string]confi
 
 	err := json.NewDecoder(r.Body).Decode(&req)
 	if err != nil {
+		// Check request params if there is no valid request body
+		// TODO: get rid of this block after doing https://github.com/shinobistack/gokakashi-scan-action/issues/6
 		req.Image = r.URL.Query().Get("image")
 		req.Severity = r.URL.Query().Get("severity")
 		req.Publish = r.URL.Query().Get("publish")
