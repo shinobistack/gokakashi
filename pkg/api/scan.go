@@ -17,6 +17,7 @@ import (
 	"github.com/ashwiniag/goKakashi/pkg/scanner"
 	"github.com/ashwiniag/goKakashi/pkg/utils"
 	_ "github.com/ashwiniag/goKakashi/pkg/utils"
+	"golang.org/x/exp/maps"
 )
 
 var (
@@ -24,6 +25,12 @@ var (
 	scanStatusStore = make(map[string]string)
 	statusMutex     = &sync.Mutex{}
 )
+
+type ScanRequest struct {
+	Image    string `json:"image"`
+	Severity string `json:"severity"`
+	Publish  string `json:"publish"`
+}
 
 type ScanResponse struct {
 	ScanID string `json:"scan_id"`
@@ -61,21 +68,37 @@ func updateScanStatus(scanID string, status ScanStatus) {
 
 // StartSingleImageScan POST /api/v0/scan?image=<>&severity=<>&publish=<>
 func StartScan(w http.ResponseWriter, r *http.Request, websites map[string]config.Website) {
-	image := r.URL.Query().Get("image")
-	if image == "" {
+	var req ScanRequest
+
+	err := json.NewDecoder(r.Body).Decode(&req)
+	if err != nil {
+		// Check request params if there is no valid request body
+		// TODO: get rid of this block after doing https://github.com/shinobistack/gokakashi-scan-action/issues/6
+		req.Image = r.URL.Query().Get("image")
+		req.Severity = r.URL.Query().Get("severity")
+		req.Publish = r.URL.Query().Get("publish")
+	}
+
+	if req.Image == "" {
 		http.Error(w, jsonErrorResponse("Image is missing"), http.StatusBadRequest)
 		return
 	}
 
-	// Ensure it can take severity is either HIGH or CRITICAL or HIGH,CRITICAL
-	severity := r.URL.Query().Get("severity")
-	if severity == "" || !(severity == "HIGH" || severity == "CRITICAL" || severity == "HIGH,CRITICAL") {
-		http.Error(w, jsonErrorResponse("Severity must be HIGH, CRITICAL, or HIGH,CRITICAL"), http.StatusBadRequest)
+	allowedSev := map[string]struct{}{"HIGH": {}, "CRITICAL": {}}
+	validSev := true
+	for _, sev := range strings.Split(req.Severity, ",") {
+		if _, exists := allowedSev[sev]; !exists {
+			validSev = false
+			break
+		}
+	}
+	if !validSev {
+		http.Error(w, jsonErrorResponse(fmt.Sprintf("Severity must be %s", strings.Join(maps.Keys(allowedSev), ","))), http.StatusBadRequest)
 		return
 	}
+
 	// Publish to mentioned website.ReportSubDir
-	publishTarget := r.URL.Query().Get("publish")
-	if publishTarget == "" {
+	if req.Publish == "" {
 		http.Error(w, jsonErrorResponse("publish field is missing, report will not be saved"), http.StatusBadRequest)
 		return
 	}
@@ -84,17 +107,17 @@ func StartScan(w http.ResponseWriter, r *http.Request, websites map[string]confi
 	scanID := generateScanID()
 	updateScanStatus(scanID, StatusQueued)
 
-	log.Printf("Initiating scan for image %s with severity %s", image, severity)
+	log.Printf("Initiating scan for image %s with severity %s", req.Image, req.Severity)
 
 	// Start the scan asynchronously
-	go runScan(scanID, image, severity, publishTarget, websites)
+	go runScan(scanID, req.Image, req.Severity, req.Publish, websites)
 
 	response := ScanResponse{
 		ScanID: scanID,
 		Status: string(StatusQueued),
 	}
 	w.Header().Set("Content-Type", "application/json")
-	err := json.NewEncoder(w).Encode(response)
+	err = json.NewEncoder(w).Encode(response)
 	if err != nil {
 		log.Println("Error responding json", err)
 		return
