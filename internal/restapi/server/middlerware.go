@@ -1,4 +1,4 @@
-package api
+package server
 
 import (
 	"net/http"
@@ -22,10 +22,3 @@ func BearerTokenAuth(next http.Handler, authToken string) http.Handler {
 		next.ServeHTTP(w, r)
 	})
 }
-
-// # Start a scan
-//curl -X POST "http://localhost:8000/api/v0/scan?image=nginx:latest&visibility=private" \
-//     -H "Authorization: Bearer your_api_token_here"
-//# Check scan status
-//curl -X GET "http://localhost:8000/api/v0/scan/scan_20230101120000/status" \
-//     -H "Authorization: Bearer your_api_token_here"

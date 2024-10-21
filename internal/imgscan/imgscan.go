@@ -112,3 +112,29 @@ func UpdateScanStatus(scanID string, status ScanStatus) {
 	defer statusMutex.Unlock()
 	scanStatusStore[scanID] = string(status)
 }
+
+func GetScanStatus(scanID string) (string, string, error) {
+	statusMutex.Lock()
+	defer statusMutex.Unlock()
+
+	// Check if the scan ID exists in the in-memory status store
+	if status, exists := scanStatusStore[scanID]; exists {
+		return scanID, status, nil
+	}
+
+	// If not found in memory, check the temporary file
+	filePath := fmt.Sprintf("/tmp/%s.json", scanID)
+	if _, err := os.Stat(filePath); err == nil {
+		// File exists, read the status from the file
+		fileData, err := os.ReadFile(filePath)
+		if err == nil {
+			var result map[string]string
+			if json.Unmarshal(fileData, &result) == nil {
+				return result["scanID"], result["status"], nil
+			}
+		}
+	}
+
+	// Return an error if scan ID not found
+	return "", "", fmt.Errorf("scan ID not found")
+}
