@@ -9,7 +9,7 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/ashwiniag/goKakashi/pkg/api"
+	restapi "github.com/ashwiniag/goKakashi/internal/restapi/server"
 	"github.com/ashwiniag/goKakashi/pkg/config"
 	"github.com/ashwiniag/goKakashi/pkg/utils"
 	"github.com/ashwiniag/goKakashi/pkg/web"
@@ -49,8 +49,12 @@ func runServer(cmd *cobra.Command, args []string) {
 	}
 
 	log.Println("Starting API server for scan functionality at port 8000...")
-	//// call api func main
-	go api.StartAPIServer(8000, cfg.Websites, cfg.APIToken)
+	s := &restapi.Server{
+		AuthToken: cfg.APIToken,
+		Websites:  cfg.Websites,
+		Port:      8000,
+	}
+	go s.Serve()
 
 	// Initialize cron job for scheduling scans
 	cronSchedule := cron.New()
