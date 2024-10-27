@@ -17,7 +17,10 @@ var rootCmd = &cobra.Command{
 
 func init() {
 	rootCmd.AddCommand(versionCmd)
+
+	serverConfigFilePath = serverCmd.Flags().String("config", "", "Path to the config YAML file")
 	rootCmd.AddCommand(serverCmd)
+
 	rootCmd.AddCommand(scanCmd)
 }
 
