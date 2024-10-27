@@ -1,12 +1,10 @@
 package scan
 
 import (
-	"encoding/json"
+	"context"
 	_ "encoding/json"
 	"errors"
 	"fmt"
-	"log"
-	"net/http"
 	"strings"
 	_ "strings"
 	"time"
@@ -15,6 +13,7 @@ import (
 	"github.com/ashwiniag/goKakashi/pkg/config"
 	_ "github.com/ashwiniag/goKakashi/pkg/utils"
 	"github.com/scriptnull/jsonseal"
+	"github.com/swaggest/usecase/status"
 	"golang.org/x/exp/maps"
 )
 
@@ -25,8 +24,8 @@ type PostRequest struct {
 }
 
 type PostResponse struct {
-	ScanID string `json:"scan_id"`
-	Status string `json:"status"`
+	ScanID string             `json:"scan_id"`
+	Status imgscan.ScanStatus `json:"status"`
 }
 
 type PostHandler struct {
@@ -72,41 +71,20 @@ func (req *PostRequest) Validate() error {
 	return check.Validate()
 }
 
-func (ph *PostHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	var req PostRequest
-
-	err := jsonseal.NewDecoder(r.Body).DecodeValidate(&req)
+func Post(_ context.Context, req PostRequest, res *PostResponse) error {
+	err := req.Validate()
 	if err != nil {
-		http.Error(w, jsonErrorResponse(jsonseal.JSONFormat(err)), http.StatusBadRequest)
-		return
+		return status.Wrap(err, status.InvalidArgument)
 	}
 
-	scanID := generateScanID()
-	imgscan.UpdateScanStatus(scanID, imgscan.StatusQueued)
+	res.ScanID = generateScanID()
+	res.Status = imgscan.StatusQueued
+	imgscan.UpdateScanStatus(res.ScanID, res.Status)
 
-	log.Printf("Initiating scan for image %s with severity %s", req.Image, req.Severity)
-	go imgscan.RunScan(scanID, req.Image, req.Severity, req.Publish, ph.Websites)
-
-	response := PostResponse{
-		ScanID: scanID,
-		Status: string(imgscan.StatusQueued),
-	}
-	w.Header().Set("Content-Type", "application/json")
-	err = json.NewEncoder(w).Encode(response)
-	if err != nil {
-		log.Println("Error responding json", err)
-		return
-	}
+	return nil
 }
 
 // Generate a unique scan ID based on the current timestamp
 func generateScanID() string {
 	return fmt.Sprintf("scan-%d", time.Now().UnixNano())
-}
-
-// jsonErrorResponse creates a unified JSON error response
-func jsonErrorResponse(message string) string {
-	response := map[string]string{"error": message}
-	jsonResponse, _ := json.Marshal(response) // Ignore error for simplicity
-	return string(jsonResponse)
 }

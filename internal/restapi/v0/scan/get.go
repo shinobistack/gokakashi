@@ -1,15 +1,19 @@
 package scan
 
 import (
+	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
-	"log"
-	"net/http"
 	"os"
 
 	"github.com/ashwiniag/goKakashi/internal/imgscan"
-	"github.com/gorilla/mux"
+	"github.com/swaggest/usecase/status"
 )
+
+type GetRequest struct {
+	ScanID string `path:"scan_id"`
+}
 
 type GetResponse struct {
 	ScanID     string   `json:"scanID"`
@@ -17,27 +21,19 @@ type GetResponse struct {
 	ReportURLs []string `json:"report_url,omitempty"` // Optional field
 }
 
-func GetHandler(w http.ResponseWriter, r *http.Request) {
-	vars := mux.Vars(r)
-	scanID := vars["scan_id"]
-
-	log.Printf("Get scan status for scanID %s", scanID)
-	_, status, err := imgscan.GetScanStatus(scanID)
+func Get(_ context.Context, req GetRequest, res *GetResponse) error {
+	_, s, err := imgscan.GetScanStatus(req.ScanID)
 	if err != nil {
-		http.Error(w, jsonErrorResponse(fmt.Sprintf("Scan ID %s not found", scanID)), http.StatusNotFound)
-		return
+		return status.Wrap(errors.New("scan id not found"), status.InvalidArgument)
 	}
 
-	// Create the response
-	response := GetResponse{
-		ScanID: scanID,
-		Status: status,
-	}
+	res.ScanID = req.ScanID
+	res.Status = s
 
 	// If the status is completed, add the report URL
 	// Todo: to provide correct file path
-	if status == string(imgscan.StatusCompleted) {
-		reportFilePath := fmt.Sprintf("/tmp/%s.json", scanID)
+	if res.Status == string(imgscan.StatusCompleted) {
+		reportFilePath := fmt.Sprintf("/tmp/%s.json", req.ScanID)
 		fileData, err := os.ReadFile(reportFilePath)
 		if err == nil {
 			var result map[string]interface{}
@@ -51,16 +47,11 @@ func GetHandler(w http.ResponseWriter, r *http.Request) {
 						}
 					}
 					// Set all URLs in the response
-					response.ReportURLs = reportURLs
+					res.ReportURLs = reportURLs
 				}
 			}
 		}
 	}
 
-	w.Header().Set("Content-Type", "application/json")
-	err = json.NewEncoder(w).Encode(response)
-	if err != nil {
-		log.Println("Error responsing json", err)
-		return
-	}
+	return nil
 }
