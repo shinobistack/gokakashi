@@ -1,7 +1,6 @@
 package cmd
 
 import (
-	"flag"
 	"log"
 	"os"
 	"os/signal"
@@ -23,18 +22,16 @@ var serverCmd = &cobra.Command{
 	Run:   runServer,
 }
 
+var serverConfigFilePath *string
+
 func runServer(cmd *cobra.Command, args []string) {
 	log.Println("=== Starting goKakashi Tool ===")
 
-	// Get config file from command-line argument
-	configFile := flag.String("config", "", "Path to the config YAML file")
-	flag.Parse()
-
-	if *configFile == "" {
+	if *serverConfigFilePath == "" {
 		log.Fatal("Please provide the path to the config YAML file using --config")
 	}
 	// Load and validate the configuration file
-	cfg, err := config.LoadAndValidateConfig(*configFile)
+	cfg, err := config.LoadAndValidateConfig(*serverConfigFilePath)
 	if err != nil {
 		log.Fatalf("Error: %v", err)
 	}
