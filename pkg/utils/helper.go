@@ -9,7 +9,7 @@ import (
 
 	"github.com/ashwiniag/goKakashi/notifier"
 
-	"github.com/ashwiniag/goKakashi/pkg/config/v0"
+	"github.com/ashwiniag/goKakashi/internal/config/v0"
 	"github.com/ashwiniag/goKakashi/pkg/registry"
 	"github.com/ashwiniag/goKakashi/pkg/scanner"
 )

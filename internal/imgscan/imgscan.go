@@ -9,7 +9,7 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/ashwiniag/goKakashi/pkg/config/v0"
+	"github.com/ashwiniag/goKakashi/internal/config/v0"
 	"github.com/ashwiniag/goKakashi/pkg/scanner"
 	"github.com/ashwiniag/goKakashi/pkg/utils"
 )
