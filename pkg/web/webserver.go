@@ -8,7 +8,7 @@ import (
 	"path/filepath"
 	"text/template"
 
-	"github.com/ashwiniag/goKakashi/pkg/config"
+	"github.com/shinobistack/gokakashi/internal/config/v0"
 )
 
 const ReportsRootDir = "reports/"

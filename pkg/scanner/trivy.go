@@ -3,10 +3,11 @@ package scanner
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/ashwiniag/goKakashi/notifier" // Import the notifier package
 	"log"
 	"os/exec"
 	"strings"
+
+	"github.com/shinobistack/gokakashi/notifier" // Import the notifier package
 )
 
 type TrivyScanner struct{}
