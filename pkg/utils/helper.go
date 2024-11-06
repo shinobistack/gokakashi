@@ -7,11 +7,11 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/ashwiniag/goKakashi/notifier"
+	"github.com/shinobistack/gokakashi/notifier"
 
-	"github.com/ashwiniag/goKakashi/internal/config/v0"
-	"github.com/ashwiniag/goKakashi/pkg/registry"
-	"github.com/ashwiniag/goKakashi/pkg/scanner"
+	"github.com/shinobistack/gokakashi/internal/config/v0"
+	"github.com/shinobistack/gokakashi/pkg/registry"
+	"github.com/shinobistack/gokakashi/pkg/scanner"
 )
 
 const reportsRootDir = "reports/"

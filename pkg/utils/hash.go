@@ -8,7 +8,7 @@ import (
 	"os"
 	"strings"
 
-	"github.com/ashwiniag/goKakashi/notifier"
+	"github.com/shinobistack/gokakashi/notifier"
 )
 
 type HashEntry struct {

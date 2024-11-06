@@ -8,11 +8,11 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/ashwiniag/goKakashi/internal/config/v0"
-	restapi "github.com/ashwiniag/goKakashi/internal/restapi/server"
-	"github.com/ashwiniag/goKakashi/pkg/utils"
-	"github.com/ashwiniag/goKakashi/pkg/web"
 	"github.com/robfig/cron/v3"
+	"github.com/shinobistack/gokakashi/internal/config/v0"
+	restapi "github.com/shinobistack/gokakashi/internal/restapi/server"
+	"github.com/shinobistack/gokakashi/pkg/utils"
+	"github.com/shinobistack/gokakashi/pkg/web"
 	"github.com/spf13/cobra"
 )
 

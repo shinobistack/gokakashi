@@ -9,10 +9,10 @@ import (
 	_ "strings"
 	"time"
 
-	"github.com/ashwiniag/goKakashi/internal/config/v0"
-	"github.com/ashwiniag/goKakashi/internal/imgscan"
-	_ "github.com/ashwiniag/goKakashi/pkg/utils"
 	"github.com/scriptnull/jsonseal"
+	"github.com/shinobistack/gokakashi/internal/config/v0"
+	"github.com/shinobistack/gokakashi/internal/imgscan"
+	_ "github.com/shinobistack/gokakashi/pkg/utils"
 	"github.com/swaggest/usecase/status"
 	"golang.org/x/exp/maps"
 )

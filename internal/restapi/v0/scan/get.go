@@ -7,7 +7,7 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/ashwiniag/goKakashi/internal/imgscan"
+	"github.com/shinobistack/gokakashi/internal/imgscan"
 	"github.com/swaggest/usecase/status"
 )
 

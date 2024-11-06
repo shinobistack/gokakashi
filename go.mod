@@ -1,4 +1,4 @@
-module github.com/ashwiniag/goKakashi
+module github.com/shinobistack/gokakashi
 
 go 1.22.2
 

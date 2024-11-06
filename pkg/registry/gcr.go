@@ -6,7 +6,7 @@ import (
 	"os"
 	"os/exec"
 
-	"github.com/ashwiniag/goKakashi/internal/config/v0"
+	"github.com/shinobistack/gokakashi/internal/config/v0"
 )
 
 type GCR struct{}

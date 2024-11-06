@@ -9,9 +9,9 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/ashwiniag/goKakashi/internal/config/v0"
-	"github.com/ashwiniag/goKakashi/pkg/scanner"
-	"github.com/ashwiniag/goKakashi/pkg/utils"
+	"github.com/shinobistack/gokakashi/internal/config/v0"
+	"github.com/shinobistack/gokakashi/pkg/scanner"
+	"github.com/shinobistack/gokakashi/pkg/utils"
 )
 
 var (

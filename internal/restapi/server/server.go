@@ -5,8 +5,8 @@ import (
 	"net/http"
 	"strconv"
 
-	"github.com/ashwiniag/goKakashi/internal/config/v0"
-	"github.com/ashwiniag/goKakashi/internal/restapi/v0/scan"
+	"github.com/shinobistack/gokakashi/internal/config/v0"
+	"github.com/shinobistack/gokakashi/internal/restapi/v0/scan"
 	"github.com/swaggest/openapi-go/openapi31"
 	"github.com/swaggest/rest/web"
 	swgui "github.com/swaggest/swgui/v5emb"
