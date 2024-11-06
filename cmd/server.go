@@ -9,7 +9,7 @@ import (
 	"time"
 
 	restapi "github.com/ashwiniag/goKakashi/internal/restapi/server"
-	"github.com/ashwiniag/goKakashi/pkg/config"
+	"github.com/ashwiniag/goKakashi/pkg/config/v0"
 	"github.com/ashwiniag/goKakashi/pkg/utils"
 	"github.com/ashwiniag/goKakashi/pkg/web"
 	"github.com/robfig/cron/v3"
@@ -25,11 +25,15 @@ var serverCmd = &cobra.Command{
 var serverConfigFilePath *string
 
 func runServer(cmd *cobra.Command, args []string) {
+	if *serverConfigFilePath != "" {
+		handleConfigV0()
+		return
+	}
+}
+
+func handleConfigV0() {
 	log.Println("=== Starting goKakashi Tool ===")
 
-	if *serverConfigFilePath == "" {
-		log.Fatal("Please provide the path to the config YAML file using --config")
-	}
 	// Load and validate the configuration file
 	cfg, err := config.LoadAndValidateConfig(*serverConfigFilePath)
 	if err != nil {

@@ -10,7 +10,7 @@ import (
 	"time"
 
 	"github.com/ashwiniag/goKakashi/internal/imgscan"
-	"github.com/ashwiniag/goKakashi/pkg/config"
+	"github.com/ashwiniag/goKakashi/pkg/config/v0"
 	_ "github.com/ashwiniag/goKakashi/pkg/utils"
 	"github.com/scriptnull/jsonseal"
 	"github.com/swaggest/usecase/status"

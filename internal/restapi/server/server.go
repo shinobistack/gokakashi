@@ -6,7 +6,7 @@ import (
 	"strconv"
 
 	"github.com/ashwiniag/goKakashi/internal/restapi/v0/scan"
-	"github.com/ashwiniag/goKakashi/pkg/config"
+	"github.com/ashwiniag/goKakashi/pkg/config/v0"
 	"github.com/swaggest/openapi-go/openapi31"
 	"github.com/swaggest/rest/web"
 	swgui "github.com/swaggest/swgui/v5emb"
