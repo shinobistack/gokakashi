@@ -6,6 +6,7 @@ import (
 	"strconv"
 
 	"github.com/shinobistack/gokakashi/internal/config/v0"
+	"github.com/shinobistack/gokakashi/internal/restapi/server/middleware"
 	"github.com/shinobistack/gokakashi/internal/restapi/v0/scan"
 	"github.com/swaggest/openapi-go/openapi31"
 	"github.com/swaggest/rest/web"
@@ -27,7 +28,7 @@ func (srv *Server) Service() *web.Service {
 	s.OpenAPISchema().SetDescription("This is the GoKakashi REST API.")
 	s.OpenAPISchema().SetVersion("v0.0.1")
 
-	bearerAuth := &BearerTokenAuth{AuthToken: srv.AuthToken}
+	bearerAuth := &middleware.BearerTokenAuth{AuthToken: srv.AuthToken}
 	s.Wrap(bearerAuth.Middleware)
 
 	s.Post("/api/v0/scan", usecase.NewInteractor(scan.Post))
