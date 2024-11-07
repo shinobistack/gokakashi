@@ -1,6 +1,9 @@
 package schema
 
-import "entgo.io/ent"
+import (
+	"entgo.io/ent"
+	"entgo.io/ent/schema/field"
+)
 
 // ScanPolicy holds the schema definition for the ScanPolicy entity.
 type ScanPolicy struct {
@@ -9,7 +12,10 @@ type ScanPolicy struct {
 
 // Fields of the ScanPolicy.
 func (ScanPolicy) Fields() []ent.Field {
-	return nil
+	return []ent.Field{
+		field.String("name"),
+		field.String("trigger_type"),
+	}
 }
 
 // Edges of the ScanPolicy.
