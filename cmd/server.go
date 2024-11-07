@@ -10,7 +10,8 @@ import (
 
 	"github.com/robfig/cron/v3"
 	"github.com/shinobistack/gokakashi/internal/config/v0"
-	restapi "github.com/shinobistack/gokakashi/internal/restapi/server"
+	restapi "github.com/shinobistack/gokakashi/internal/restapi/server/v0"
+	restapiv1 "github.com/shinobistack/gokakashi/internal/restapi/server/v1"
 	"github.com/shinobistack/gokakashi/pkg/utils"
 	"github.com/shinobistack/gokakashi/pkg/web"
 	"github.com/spf13/cobra"
@@ -29,6 +30,16 @@ func runServer(cmd *cobra.Command, args []string) {
 		handleConfigV0()
 		return
 	}
+
+	handleConfigV1()
+}
+
+func handleConfigV1() {
+	log.Println("=== Starting goKakashi Tool ===")
+
+	srv := restapiv1.NewServer(nil)
+	srv.PrintInfo()
+	srv.Serve()
 }
 
 func handleConfigV0() {
