@@ -3,6 +3,7 @@ package policies
 import (
 	"context"
 	"errors"
+	"slices"
 
 	"github.com/google/uuid"
 	"github.com/scriptnull/jsonseal"
@@ -10,7 +11,28 @@ import (
 )
 
 type PostRequest struct {
-	Name string `json:"name"`
+	Name    string  `json:"name"`
+	Trigger Trigger `json:"trigger"`
+}
+
+type Trigger struct {
+	Type TriggerType `json:"type"`
+}
+
+type TriggerType string
+
+var (
+	Cron TriggerType = "cron"
+	CI   TriggerType = "ci"
+
+	allowedTriggerTypes = []TriggerType{
+		Cron,
+		CI,
+	}
+)
+
+func (t TriggerType) Valid() bool {
+	return slices.Contains(allowedTriggerTypes, t)
 }
 
 type PostResponse struct {
@@ -18,7 +40,8 @@ type PostResponse struct {
 }
 
 var (
-	ErrNotFound error = errors.New("not found")
+	ErrNotFound           error = errors.New("not found")
+	ErrInvalidTriggerType error = errors.New("invalid trigger type")
 )
 
 func (req *PostRequest) Validate() error {
@@ -28,6 +51,14 @@ func (req *PostRequest) Validate() error {
 		if req.Name == "" {
 			return ErrNotFound
 		}
+		return nil
+	})
+
+	check.Field("trigger.type").Check(func() error {
+		if !req.Trigger.Type.Valid() {
+			return ErrInvalidTriggerType
+		}
+
 		return nil
 	})
 
