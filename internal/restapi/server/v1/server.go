@@ -72,11 +72,10 @@ func (srv *Server) Service() *web.Service {
 	s.Docs("/docs", swgui.NewWithConfig(swg.Config{
 		ShowTopBar: true,
 		SettingsUI: map[string]string{
-			// When "urls" are configured, Swagger UI ignores "url" and switches to multi API mode.
 			"urls": `[
 	{"url": "/api/v1/openapi.json", "name": "APIv1"}
 ]`,
-			`"urls.primaryName"`: `"APIv1"`, // Using APIv2 as default.
+			`"urls.primaryName"`: `"APIv1"`,
 		},
 	}))
 	return s
