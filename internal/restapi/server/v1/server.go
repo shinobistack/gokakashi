@@ -1,15 +1,19 @@
 package server
 
 import (
+	"encoding/json"
 	"fmt"
 	"log"
 	"net/http"
 
+	// "github.com/go-chi/chi/v5/middleware"
 	"github.com/shinobistack/gokakashi/internal/restapi/server/middleware"
 	"github.com/shinobistack/gokakashi/internal/restapi/v1/policies"
+	"github.com/swaggest/openapi-go"
 	"github.com/swaggest/openapi-go/openapi3"
 	"github.com/swaggest/openapi-go/openapi31"
 	"github.com/swaggest/rest/web"
+	swg "github.com/swaggest/swgui"
 	swgui "github.com/swaggest/swgui/v5emb"
 	"github.com/swaggest/usecase"
 )
@@ -58,12 +62,23 @@ func (srv *Server) Service() *web.Service {
 	apiV1 := web.NewService(v1r)
 
 	bearerAuth := &middleware.BearerTokenAuth{AuthToken: srv.AuthToken}
-	apiV1.Wrap(bearerAuth.Middleware)
-
+	apiV1.Wrap(
+		bearerAuth.Middleware,
+	)
 	apiV1.Post("/policies", usecase.NewInteractor(policies.Post))
-
+	s.Mount("/api/v1/openapi.json", specHandler(apiV1.OpenAPICollector.SpecSchema()))
 	s.Mount("/api/v1", apiV1)
-	s.Docs("/docs", swgui.New)
+
+	s.Docs("/docs", swgui.NewWithConfig(swg.Config{
+		ShowTopBar: true,
+		SettingsUI: map[string]string{
+			// When "urls" are configured, Swagger UI ignores "url" and switches to multi API mode.
+			"urls": `[
+	{"url": "/api/v1/openapi.json", "name": "APIv1"}
+]`,
+			`"urls.primaryName"`: `"APIv1"`, // Using APIv2 as default.
+		},
+	}))
 	return s
 }
 
@@ -86,4 +101,16 @@ func (s *Server) Serve() {
 		log.Println("Error starting up the server", err)
 		return
 	}
+}
+
+func specHandler(s openapi.SpecSchema) http.Handler {
+	j, err := json.Marshal(s)
+	if err != nil {
+		panic(err)
+	}
+
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		_, _ = w.Write(j)
+	})
 }
