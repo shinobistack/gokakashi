@@ -36,7 +36,9 @@ func (t TriggerType) Valid() bool {
 }
 
 type PostResponse struct {
-	ID uuid.UUID `json:"id"`
+	ID      uuid.UUID `json:"id"`
+	Name    string    `json:"name"`
+	Trigger Trigger   `json:"trigger"`
 }
 
 var (
