@@ -1,19 +1,15 @@
 package cmd
 
 import (
-	"log"
-	"os"
-	"os/signal"
-	"strings"
-	"syscall"
-	"time"
-
 	"github.com/robfig/cron/v3"
 	"github.com/shinobistack/gokakashi/internal/config/v0"
 	restapi "github.com/shinobistack/gokakashi/internal/restapi/server"
-	"github.com/shinobistack/gokakashi/pkg/utils"
 	"github.com/shinobistack/gokakashi/pkg/web"
 	"github.com/spf13/cobra"
+	"log"
+	"os"
+	"os/signal"
+	"syscall"
 )
 
 var serverCmd = &cobra.Command{
@@ -29,6 +25,7 @@ func runServer(cmd *cobra.Command, args []string) {
 		handleConfigV0()
 		return
 	}
+	// 	log.Fatalf("No configuration file provided. Use --config to specify a valid configuration file.")
 }
 
 func handleConfigV0() {
@@ -51,9 +48,9 @@ func handleConfigV0() {
 
 	log.Println("Starting API server for scan functionality at port 8000...")
 	s := &restapi.Server{
-		AuthToken: cfg.APIToken,
-		Websites:  cfg.Websites,
-		Port:      8000,
+		AuthToken: cfg.Site.APIToken,
+		Websites:  cfg.Site.Host,
+		Port:      cfg.Site.Port,
 	}
 	go s.Serve()
 
@@ -64,36 +61,36 @@ func handleConfigV0() {
 
 	// Register cron jobs for each scan target
 	// Process scan targets and images
-	for _, target := range cfg.ScanTargets {
-		// Iterate over the images and scan them
-		for _, image := range target.Images {
-			if image.ScanPolicy.CronSchedule != "" {
-				schedule := image.ScanPolicy.CronSchedule
-				_, err := cronSchedule.AddFunc(schedule, func() {
-					start := time.Now()
-					log.Printf("Scheduled scan started at %v for %s:%s", start, image.Name, strings.Join(image.Tags, ", "))
-					err := utils.RunImageScan(target, image, cfg)
-					if err != nil {
-						log.Println("Error running image scan", err)
-						return
-					}
-					log.Printf("Scheduled scan completed at %v for %s:%s", time.Now(), image.Name, strings.Join(image.Tags, ", "))
-				})
-				if err != nil {
-					log.Printf("Invalid cron schedule for image %s: %v", image.Name, err)
-				} else {
-					log.Printf("Scheduled scan for image %s:%s with cron schedule %s", image.Name, strings.Join(image.Tags, ", "), schedule)
-				}
-			} else {
-				log.Printf("No cron schedule for image %s. Running scan immediately.", image.Name)
-				err := utils.RunImageScan(target, image, cfg)
-				if err != nil {
-					log.Println("Error running image scan", err)
-					return
-				}
-			}
-		}
-	}
+	//for _, target := range cfg.ScanTargets {
+	//	// Iterate over the images and scan them
+	//	for _, image := range target.Images {
+	//		if image.ScanPolicy.CronSchedule != "" {
+	//			schedule := image.ScanPolicy.CronSchedule
+	//			_, err := cronSchedule.AddFunc(schedule, func() {
+	//				start := time.Now()
+	//				log.Printf("Scheduled scan started at %v for %s:%s", start, image.Name, strings.Join(image.Tags, ", "))
+	//				err := utils.RunImageScan(target, image, cfg)
+	//				if err != nil {
+	//					log.Println("Error running image scan", err)
+	//					return
+	//				}
+	//				log.Printf("Scheduled scan completed at %v for %s:%s", time.Now(), image.Name, strings.Join(image.Tags, ", "))
+	//			})
+	//			if err != nil {
+	//				log.Printf("Invalid cron schedule for image %s: %v", image.Name, err)
+	//			} else {
+	//				log.Printf("Scheduled scan for image %s:%s with cron schedule %s", image.Name, strings.Join(image.Tags, ", "), schedule)
+	//			}
+	//		} else {
+	//			log.Printf("No cron schedule for image %s. Running scan immediately.", image.Name)
+	//			err := utils.RunImageScan(target, image, cfg)
+	//			if err != nil {
+	//				log.Println("Error running image scan", err)
+	//				return
+	//			}
+	//		}
+	//	}
+	//}
 	// Start cron scheduler
 	log.Println("Starting cron scheduler...")
 	cronSchedule.Start()

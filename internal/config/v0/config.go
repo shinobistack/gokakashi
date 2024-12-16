@@ -13,71 +13,124 @@ const ReportsRootDir = "reports/"
 // Path to store hash JSON
 const HashFilePath = "./hashes.json"
 
-type Config struct {
-	ScanTargets []ScanTarget       `yaml:"scan_targets"`
-	Websites    map[string]Website `yaml:"websites"`
-	// ToDo: To remove this and maybe validate for each webserver defined under Website
+// Integration defines the configuration for external services
+type Integration struct {
+	Name   string                 `yaml:"name"`
+	Type   string                 `yaml:"type"`
+	Config map[string]interface{} `yaml:"config"`
+}
+
+// SiteConfig defines the API server configuration
+type SiteConfig struct {
 	APIToken string `yaml:"api_token"`
+	Host     string `yaml:"host"`
+	Port     int    `yaml:"port"`
 }
 
-type ScanTarget struct {
-	Registry string    `yaml:"registry"`
-	Auth     Auth      `yaml:"auth"`
-	Images   []Image   `yaml:"images"`
-	Scanner  []Scanner `yaml:"scanner"`
+// Trigger specifies the action schedule (cron or CI-based)
+type Trigger struct {
+	Type     string `yaml:"type"`
+	Schedule string `yaml:"schedule,omitempty"`
+	// Notify
 }
 
-type Auth struct {
-	Type        string `yaml:"type"` // Types of authentication
-	Username    string `yaml:"username"`
-	Password    string `yaml:"password"`
-	JSONKeyPath string `yaml:"json_key_path"` // Optional: For GCR service account
+// ImagePolicy defines details about the image to scan
+type ImagePolicy struct {
+	Registry string   `yaml:"registry"`
+	Name     string   `yaml:"name"`
+	Tags     []string `yaml:"tags"`
+	Pattern  string   `yaml:"pattern,omitempty"`
 }
 
-type Image struct {
-	Name       string     `yaml:"name"`
-	Tags       []string   `yaml:"tags"`
-	Publish    []string   `yaml:"publish"`
-	ScanPolicy ScanPolicy `yaml:"scan_policy"`
+// CheckCondition specifies conditions and notification settings
+type CheckCondition struct {
+	Condition string   `yaml:"condition"`
+	Notify    []string `yaml:"notify"`
 }
 
-type ScanPolicy struct {
-	Severity     []string          `yaml:"severity"` // e.g. Critical, High
-	Notify       map[string]Notify `yaml:"notify"`
-	CronSchedule string            `yaml:"cron_schedule"`
+//type Notify struct {
+//	OnSuccess []string          `yaml:"on_success,omitempty"`
+//	Severity  []string          `yaml:"severity,omitempty"` // To test
+//	Labels    map[string]string `yaml:"labels,omitempty"`   // To test - to restrict image level labels at policies
+//}
+
+// Policy defines the scanning policies for specific images
+type Policy struct {
+	Name    string            `yaml:"name"`
+	Image   ImagePolicy       `yaml:"image"`
+	Trigger Trigger           `yaml:"trigger"`
+	Labels  map[string]string `yaml:"labels,omitempty"`
+	Check   CheckCondition    `yaml:"check"`
+	// Scanner []string   `yaml:"scanner"`
 }
 
-type Notify struct {
-	APIKey          string `yaml:"api_key"`
-	ProjectID       string `yaml:"project_id"`
-	IssueTitle      string `yaml:"issue_title"`
-	IssuePriority   int    `yaml:"issue_priority"`
-	IssueAssigneeID string `yaml:"issue_assignee_id"`
-	IssueLabel      string `yaml:"issue_label"`
-	IssueDueDate    string `yaml:"issue_due_date"`
-	TeamID          string `yaml:"team_id"`
-	IssueStateID    string `yaml:"issue_state_id"`
+// Config represents the complete configuration for GoKakashi
+type Config struct {
+	Integrations []Integration      `yaml:"integrations"`
+	Site         SiteConfig         `yaml:"site"`
+	Policies     []Policy           `yaml:"policies"`
+	Websites     map[string]Website `yaml:"websites"`
 }
 
-type Scanner struct {
-	Tool string `yaml:"tool"` // Example: Trivy, Synk, etc.
-}
+//
+//type Config struct {
+//	ScanTargets []ScanTarget       `yaml:"scan_targets"`
+//	Websites    map[string]Website `yaml:"websites"`
+//	// ToDo: To remove this and maybe validate for each webserver defined under Website
+//	APIToken string `yaml:"api_token"`
+//}
 
 type Website struct {
-	Hostname string `yaml:"hostname"`
-	//FilesPath string     `yaml:"files_path"`
-	Port int `yaml:"port"`
-	// ToDo: How do we validated the token string for each webserver, currently this is not being used
-	APIToken string `yaml:"api_token"`
-	// ToDo: define to which webserver config user wants to publish to
+	Hostname         string `yaml:"hostname"`
+	Port             int    `yaml:"port"`
+	APIToken         string `yaml:"api_token"`
 	Publish          string `yaml:"visibility"`
 	ReportSubDir     string `yaml:"report_sub_dir"`
 	ConfiguredDomain string `yaml:"configured_domain"`
 }
 
-//type PortConfig struct {
-//	Port int `yaml:"port"`
+//type ScanTarget struct {
+//	Registry string    `yaml:"registry"`
+//	Auth     Auth      `yaml:"auth"`
+//	Images   []Image   `yaml:"images"`
+//	Scanner  []Scanner `yaml:"scanner"`
 //}
+//
+//type Auth struct {
+//	Type        string `yaml:"type"` // Types of authentication
+//	Username    string `yaml:"username"`
+//	Password    string `yaml:"password"`
+//	JSONKeyPath string `yaml:"json_key_path"` // Optional: For GCR service account
+//}
+//
+//type Image struct {
+//	Name       string     `yaml:"name"`
+//	Tags       []string   `yaml:"tags"`
+//	Publish    []string   `yaml:"publish"`
+//	ScanPolicy ScanPolicy `yaml:"scan_policy"`
+//}
+//
+//type ScanPolicy struct {
+//	Severity     []string          `yaml:"severity"` // e.g. Critical, High
+//	Notify       map[string]Notify `yaml:"notify"`
+//	CronSchedule string            `yaml:"cron_schedule"`
+//}
+
+//type Notify struct {
+//	APIKey          string `yaml:"api_key"`
+//	ProjectID       string `yaml:"project_id"`
+//	IssueTitle      string `yaml:"issue_title"`
+//	IssuePriority   int    `yaml:"issue_priority"`
+//	IssueAssigneeID string `yaml:"issue_assignee_id"`
+//	IssueLabel      string `yaml:"issue_label"`
+//	IssueDueDate    string `yaml:"issue_due_date"`
+//	TeamID          string `yaml:"team_id"`
+//	IssueStateID    string `yaml:"issue_state_id"`
+//}
+
+type Scanner struct {
+	Tool string `yaml:"tool"` // Example: Trivy, Synk, etc.
+}
 
 func LoadConfig(configFile string) (*Config, error) {
 	config := &Config{}
@@ -96,28 +149,35 @@ func LoadConfig(configFile string) (*Config, error) {
 }
 
 // validateConfig validates the loaded configuration to ensure required fields are present
-func ValidateConfig(cfg *Config) error {
-	//Ensure the Websites fields are not empty
-	if len(cfg.Websites) == 0 {
-		return fmt.Errorf("websites cannot be empty")
+func ValidateConfig(config *Config) error {
+	if config.Site.APIToken == "" {
+		return fmt.Errorf("API token is missing")
 	}
 
-	// Validate scan targets
-	if len(cfg.ScanTargets) == 0 {
-		return fmt.Errorf("no scan targets specified in the configuration")
+	// ToDo: Minimum one integration must be provided and that needs to be ...?
+	if len(config.Integrations) == 0 {
+		return fmt.Errorf("At least one integration must be defined")
 	}
-
-	for _, target := range cfg.ScanTargets {
-		if target.Registry == "" {
-			return fmt.Errorf("registry for scan target cannot be empty")
-		}
-		if len(target.Images) == 0 {
-			return fmt.Errorf("no images specified for registry: %s", target.Registry)
+	for _, integration := range config.Integrations {
+		if integration.Name == "" || integration.Type == "" {
+			return fmt.Errorf("Integration name and type are required")
 		}
 	}
-
+	for _, policy := range config.Policies {
+		if policy.Name == "" {
+			return fmt.Errorf("Policy name is required")
+		}
+		if policy.Image.Registry == "" || policy.Image.Name == "" {
+			return fmt.Errorf("Policy image registry and name are required")
+		}
+		if policy.Trigger.Type == "cron" && policy.Trigger.Schedule == "" {
+			return fmt.Errorf("Policy with cron trigger must define a schedule")
+		}
+	}
 	return nil
+
 	// ToDo: more validations to be added as per config design
+	// ToDo: How do we validated the token string for each webserver, currently this is not being used
 }
 
 func LoadAndValidateConfig(configPath string) (*Config, error) {

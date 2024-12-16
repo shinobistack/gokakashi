@@ -5,7 +5,6 @@ import (
 	"net/http"
 	"strconv"
 
-	"github.com/shinobistack/gokakashi/internal/config/v0"
 	"github.com/shinobistack/gokakashi/internal/restapi/v0/scan"
 	"github.com/swaggest/openapi-go/openapi31"
 	"github.com/swaggest/rest/web"
@@ -15,9 +14,8 @@ import (
 
 type Server struct {
 	AuthToken string
-	Websites  map[string]config.Website
-
-	Port int
+	Websites  string
+	Port      int
 }
 
 func (srv *Server) Service() *web.Service {
