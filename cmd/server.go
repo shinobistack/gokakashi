@@ -4,7 +4,6 @@ import (
 	"github.com/robfig/cron/v3"
 	"github.com/shinobistack/gokakashi/internal/config/v0"
 	restapi "github.com/shinobistack/gokakashi/internal/restapi/server"
-	"github.com/shinobistack/gokakashi/pkg/web"
 	"github.com/spf13/cobra"
 	"log"
 	"os"
@@ -25,6 +24,7 @@ func runServer(cmd *cobra.Command, args []string) {
 		handleConfigV0()
 		return
 	}
+
 	// 	log.Fatalf("No configuration file provided. Use --config to specify a valid configuration file.")
 }
 
@@ -37,16 +37,17 @@ func handleConfigV0() {
 		log.Fatalf("Error: %v", err)
 	}
 
+	// ToDo: To implement report server logic
 	// Start web servers to serve reports
 	log.Println("Starting web servers...")
 	// Initialize web servers
-	webServer := web.NewWebServer()
-	err = webServer.StartWebServers(cfg)
-	if err != nil {
-		log.Fatalf("Failed to start web servers: %v", err)
-	}
+	//webServer := web.NewWebServer()
+	//err = webServer.StartWebServers(cfg)
+	//if err != nil {
+	//	log.Fatalf("Failed to start web servers: %v", err)
+	//}
 
-	log.Println("Starting API server for scan functionality at port 8000...")
+	log.Println("Starting API server for scan functionality...")
 	s := &restapi.Server{
 		AuthToken: cfg.Site.APIToken,
 		Websites:  cfg.Site.Host,

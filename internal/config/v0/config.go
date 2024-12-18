@@ -39,7 +39,6 @@ type ImagePolicy struct {
 	Registry string   `yaml:"registry"`
 	Name     string   `yaml:"name"`
 	Tags     []string `yaml:"tags"`
-	Pattern  string   `yaml:"pattern,omitempty"`
 }
 
 // CheckCondition specifies conditions and notification settings
@@ -66,54 +65,18 @@ type Policy struct {
 
 // Config represents the complete configuration for GoKakashi
 type Config struct {
-	Integrations []Integration      `yaml:"integrations"`
-	Site         SiteConfig         `yaml:"site"`
-	Policies     []Policy           `yaml:"policies"`
-	Websites     map[string]Website `yaml:"websites"`
+	Integrations []Integration `yaml:"integrations"`
+	Site         SiteConfig    `yaml:"site"`
+	Policies     []Policy      `yaml:"policies"`
 }
 
-//
-//type Config struct {
-//	ScanTargets []ScanTarget       `yaml:"scan_targets"`
-//	Websites    map[string]Website `yaml:"websites"`
-//	// ToDo: To remove this and maybe validate for each webserver defined under Website
-//	APIToken string `yaml:"api_token"`
-//}
-
-type Website struct {
-	Hostname         string `yaml:"hostname"`
-	Port             int    `yaml:"port"`
-	APIToken         string `yaml:"api_token"`
-	Publish          string `yaml:"visibility"`
-	ReportSubDir     string `yaml:"report_sub_dir"`
-	ConfiguredDomain string `yaml:"configured_domain"`
-}
-
-//type ScanTarget struct {
-//	Registry string    `yaml:"registry"`
-//	Auth     Auth      `yaml:"auth"`
-//	Images   []Image   `yaml:"images"`
-//	Scanner  []Scanner `yaml:"scanner"`
-//}
-//
-//type Auth struct {
-//	Type        string `yaml:"type"` // Types of authentication
-//	Username    string `yaml:"username"`
-//	Password    string `yaml:"password"`
-//	JSONKeyPath string `yaml:"json_key_path"` // Optional: For GCR service account
-//}
-//
-//type Image struct {
-//	Name       string     `yaml:"name"`
-//	Tags       []string   `yaml:"tags"`
-//	Publish    []string   `yaml:"publish"`
-//	ScanPolicy ScanPolicy `yaml:"scan_policy"`
-//}
-//
-//type ScanPolicy struct {
-//	Severity     []string          `yaml:"severity"` // e.g. Critical, High
-//	Notify       map[string]Notify `yaml:"notify"`
-//	CronSchedule string            `yaml:"cron_schedule"`
+//type Website struct {
+//	Hostname         string `yaml:"hostname"`
+//	Port             int    `yaml:"port"`
+//	APIToken         string `yaml:"api_token"`
+//	Publish          string `yaml:"visibility"`
+//	ReportSubDir     string `yaml:"report_sub_dir"`
+//	ConfiguredDomain string `yaml:"configured_domain"`
 //}
 
 //type Notify struct {
