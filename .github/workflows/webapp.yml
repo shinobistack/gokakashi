@@ -27,6 +27,7 @@ jobs:
         with:
           node-version: 18
           cache: npm
+          cache-dependency-path: webapp/package-lock.json
       - name: Install Dependencies
         run: npm ci
       - name: Lint
@@ -44,6 +45,7 @@ jobs:
         with:
           node-version: 18
           cache: npm
+          cache-dependency-path: webapp/package-lock.json
       - name: Install Dependencies
         run: npm ci
       - name: Run Tests
