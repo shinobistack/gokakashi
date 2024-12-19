@@ -9,7 +9,7 @@ import (
 
 	"github.com/shinobistack/gokakashi/notifier"
 
-	"github.com/shinobistack/gokakashi/internal/config/v0"
+	v0 "github.com/shinobistack/gokakashi/internal/config/v0"
 	"github.com/shinobistack/gokakashi/pkg/registry"
 	"github.com/shinobistack/gokakashi/pkg/scanner"
 )
@@ -19,7 +19,7 @@ const reportsRootDir = "reports/"
 // Todo: to re-arrange and restructure
 
 // InitializeRegistry initializes the Docker registry and performs login if necessary.
-func InitializeRegistry(target config.ScanTarget) (registry.Registry, error) {
+func InitializeRegistry(target v0.ScanTarget) (registry.Registry, error) {
 	log.Printf("Initializing registry: %s", target.Registry)
 	reg, err := registry.NewRegistry(target.Registry)
 	if err != nil {
@@ -35,7 +35,7 @@ func InitializeRegistry(target config.ScanTarget) (registry.Registry, error) {
 }
 
 // PullAndScanImage pulls the Docker image and runs the scan using Trivy.
-func PullAndScanImage(reg registry.Registry, image config.Image, tag string, severityLevels []string) (string, []notifier.Vulnerability, error) {
+func PullAndScanImage(reg registry.Registry, image v0.Image, tag string, severityLevels []string) (string, []notifier.Vulnerability, error) {
 	imageWithTag := fmt.Sprintf("%s:%s", image.Name, tag)
 	log.Printf("Pulling and scanning image: %s", imageWithTag)
 
@@ -59,7 +59,7 @@ func PullAndScanImage(reg registry.Registry, image config.Image, tag string, sev
 }
 
 // SaveScanReport saves the scan report to a file.
-func SaveScanReport(image config.Image, tag, report string, websites map[string]config.Website, apiPublishTarget string) ([]string, error) {
+func SaveScanReport(image v0.Image, tag, report string, websites map[string]v0.Website, apiPublishTarget string) ([]string, error) {
 	var savedPaths []string
 	restructuredImageName := strings.ReplaceAll(image.Name, "/", "_") // Replace slashes with underscores
 	// if publish != empty then go on create file path   if doesn't exists and save report'
@@ -113,7 +113,7 @@ func FilterVulnerabilitiesBySeverity(vulnerabilities []notifier.Vulnerability, s
 }
 
 // CheckAndSaveHash checks if the hash already exists and saves it if not.
-func CheckAndSaveHash(image config.Image, tag string, vulnerabilities []notifier.Vulnerability) (bool, error) {
+func CheckAndSaveHash(image v0.Image, tag string, vulnerabilities []notifier.Vulnerability) (bool, error) {
 	vulnerabilityData, vulnerabilityEntries := ConvertVulnerabilities(vulnerabilities)
 	hash := GenerateHash(image.Name, tag, vulnerabilityEntries)
 
@@ -141,7 +141,7 @@ func CheckAndSaveHash(image config.Image, tag string, vulnerabilities []notifier
 	return false, nil
 }
 
-func RunImageScan(target config.ScanTarget, image config.Image, cfg *config.Config) error {
+func RunImageScan(target v0.ScanTarget, image v0.Image, cfg *v0.Config) error {
 	log.Printf("Processing registry: %s", target.Registry)
 
 	// Initialize the registry
@@ -191,7 +191,7 @@ func RunImageScan(target config.ScanTarget, image config.Image, cfg *config.Conf
 	return nil
 }
 
-func Notify(image config.Image, tag string, vulnerabilities []notifier.Vulnerability) {
+func Notify(image v0.Image, tag string, vulnerabilities []notifier.Vulnerability) {
 	for toolName, notifyConfig := range image.ScanPolicy.Notify {
 		if toolName == "Linear" {
 			linearNotifier := notifier.NewLinearNotifier()

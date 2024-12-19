@@ -1,4 +1,4 @@
-package server
+package v1
 
 import (
 	"context"
@@ -6,7 +6,8 @@ import (
 	"fmt"
 	_ "github.com/lib/pq"
 	"github.com/shinobistack/gokakashi/ent"
-	"github.com/shinobistack/gokakashi/internal/restapi/v0/integrations"
+	"github.com/shinobistack/gokakashi/internal/restapi/server/middleware"
+	integrations2 "github.com/shinobistack/gokakashi/internal/restapi/v1/integrations"
 	"github.com/swaggest/usecase"
 	"log"
 	"net/http"
@@ -31,17 +32,14 @@ func (srv *Server) Service() *web.Service {
 	s.OpenAPISchema().SetDescription("This is the GoKakashi REST API.")
 	s.OpenAPISchema().SetVersion("v0.0.1")
 
-	bearerAuth := &BearerTokenAuth{AuthToken: srv.AuthToken}
+	bearerAuth := &middleware.BearerTokenAuth{AuthToken: srv.AuthToken}
 	s.Wrap(bearerAuth.Middleware)
 
 	// Define API endpoints
-	s.Get("/api/v0/integrations", usecase.NewInteractor(integrations.ListIntegrations(srv.DB)))
-	s.Get("/api/v0/integration/{id}", usecase.NewInteractor(integrations.GetIntegration(srv.DB)))
-	s.Post("/api/v0/integration/create", usecase.NewInteractor(integrations.CreateIntegration(srv.DB)))
-	s.Put("/api/v0/integration/update/{id}", usecase.NewInteractor(integrations.UpdateIntegration(srv.DB)))
-
-	//s.Post("/api/v0/scan", usecase.NewInteractor(scan.Post))
-	//s.Get("/api/v0/scan/{scan_id}", usecase.NewInteractor(scan.Get))
+	s.Get("/api/v0/integrations", usecase.NewInteractor(integrations2.ListIntegrations(srv.DB)))
+	s.Get("/api/v0/integration/{id}", usecase.NewInteractor(integrations2.GetIntegration(srv.DB)))
+	s.Post("/api/v0/integration/create", usecase.NewInteractor(integrations2.CreateIntegration(srv.DB)))
+	s.Put("/api/v0/integration/update/{id}", usecase.NewInteractor(integrations2.UpdateIntegration(srv.DB)))
 
 	s.Docs("/docs", swgui.New)
 	return s
