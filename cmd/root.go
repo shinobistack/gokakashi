@@ -11,6 +11,7 @@ var rootCmd = &cobra.Command{
 	Use:   "gokakashi",
 	Short: "GoKakashi - The Container image vulnerability management platform",
 	Run: func(cmd *cobra.Command, args []string) {
+		// Display help if no subcommand is provided
 		_ = cmd.Help()
 	},
 }
@@ -18,6 +19,7 @@ var rootCmd = &cobra.Command{
 func init() {
 	rootCmd.AddCommand(versionCmd)
 
+	// To independently process its own configuration file path.
 	serverConfigFilePath = serverCmd.Flags().String("config", "", "Path to the config YAML file")
 	rootCmd.AddCommand(serverCmd)
 
