@@ -23,7 +23,6 @@ type UpdateIntegrationResponse struct {
 
 func UpdateIntegration(client *ent.Client) func(ctx context.Context, req UpdateIntegrationRequest, res *UpdateIntegrationResponse) error {
 	return func(ctx context.Context, req UpdateIntegrationRequest, res *UpdateIntegrationResponse) error {
-
 		uid, err := uuid.Parse(req.ID)
 		if err != nil {
 			return status.Wrap(errors.New(fmt.Sprintf("invalid UUID format: %v", err)), status.InvalidArgument)

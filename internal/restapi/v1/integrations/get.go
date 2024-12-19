@@ -25,7 +25,6 @@ type ListIntegrationResponse struct {
 
 func GetIntegration(client *ent.Client) func(ctx context.Context, req GetIntegrationRequests, res *GetIntegrationResponse) error {
 	return func(ctx context.Context, req GetIntegrationRequests, res *GetIntegrationResponse) error {
-
 		// Convert string to uuid.UUID
 		uid, err := uuid.Parse(req.ID)
 		if err != nil {

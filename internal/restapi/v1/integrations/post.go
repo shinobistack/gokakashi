@@ -21,7 +21,6 @@ type CreateIntegrationResponse struct {
 
 func CreateIntegration(client *ent.Client) func(ctx context.Context, req CreateIntegrationRequest, res *CreateIntegrationResponse) error {
 	return func(ctx context.Context, req CreateIntegrationRequest, res *CreateIntegrationResponse) error {
-
 		integration, err := client.Integrations.Create().
 			SetName(req.Name).
 			SetType(req.Type).
