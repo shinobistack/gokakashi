@@ -2,7 +2,6 @@ package integrations
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"github.com/shinobistack/gokakashi/ent"
 	"github.com/swaggest/usecase/status"
@@ -27,7 +26,7 @@ func CreateIntegration(client *ent.Client) func(ctx context.Context, req CreateI
 			SetConfig(req.Config).
 			Save(ctx)
 		if err != nil {
-			return status.Wrap(errors.New(fmt.Sprintf("failed to create integration: %v", err)), status.Internal)
+			return status.Wrap(fmt.Errorf("failed to create integration: %v", err), status.Internal)
 		}
 
 		res.ID = integration.ID.String()

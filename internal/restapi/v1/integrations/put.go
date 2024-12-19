@@ -2,7 +2,6 @@ package integrations
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"github.com/google/uuid"
 	"github.com/shinobistack/gokakashi/ent"
@@ -25,7 +24,7 @@ func UpdateIntegration(client *ent.Client) func(ctx context.Context, req UpdateI
 	return func(ctx context.Context, req UpdateIntegrationRequest, res *UpdateIntegrationResponse) error {
 		uid, err := uuid.Parse(req.ID)
 		if err != nil {
-			return status.Wrap(errors.New(fmt.Sprintf("invalid UUID format: %v", err)), status.InvalidArgument)
+			return status.Wrap(fmt.Errorf("invalid UUID format: %v", err), status.InvalidArgument)
 		}
 
 		update := client.Integrations.UpdateOneID(uid)
@@ -38,7 +37,7 @@ func UpdateIntegration(client *ent.Client) func(ctx context.Context, req UpdateI
 
 		integration, err := update.Save(ctx)
 		if err != nil {
-			return status.Wrap(errors.New(fmt.Sprintf("failed to update integration: %v", err)), status.Internal)
+			return status.Wrap(fmt.Errorf("failed to update integration: %v", err), status.Internal)
 		}
 
 		res.ID = integration.ID.String()
