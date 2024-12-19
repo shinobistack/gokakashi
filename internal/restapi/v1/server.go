@@ -37,9 +37,9 @@ func (srv *Server) Service() *web.Service {
 
 	// Define API endpoints
 	s.Get("/api/v0/integrations", usecase.NewInteractor(integrations2.ListIntegrations(srv.DB)))
-	s.Get("/api/v0/integration/{id}", usecase.NewInteractor(integrations2.GetIntegration(srv.DB)))
-	s.Post("/api/v0/integration/create", usecase.NewInteractor(integrations2.CreateIntegration(srv.DB)))
-	s.Put("/api/v0/integration/update/{id}", usecase.NewInteractor(integrations2.UpdateIntegration(srv.DB)))
+	s.Get("/api/v0/integrations/{id}", usecase.NewInteractor(integrations2.GetIntegration(srv.DB)))
+	s.Post("/api/v0/integrations", usecase.NewInteractor(integrations2.CreateIntegration(srv.DB)))
+	s.Put("/api/v0/integrations/{id}", usecase.NewInteractor(integrations2.UpdateIntegration(srv.DB)))
 
 	s.Docs("/docs", swgui.New)
 	return s
