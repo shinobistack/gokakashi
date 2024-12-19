@@ -12,7 +12,7 @@ concurrency:
 
 defaults:
   run:
-    working-directory: web
+    working-directory: webapp
 
 jobs:
   lint:
