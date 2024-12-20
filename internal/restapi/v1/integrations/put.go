@@ -2,9 +2,11 @@ package integrations
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"github.com/google/uuid"
 	"github.com/shinobistack/gokakashi/ent"
+	"github.com/shinobistack/gokakashi/ent/integrations"
 	"github.com/swaggest/usecase/status"
 )
 
@@ -25,6 +27,15 @@ func UpdateIntegration(client *ent.Client) func(ctx context.Context, req UpdateI
 		uid, err := uuid.Parse(req.ID)
 		if err != nil {
 			return status.Wrap(fmt.Errorf("invalid UUID format: %v", err), status.InvalidArgument)
+		}
+
+		// Check if integration exists
+		exists, err := client.Integrations.Query().Where(integrations.ID(uid)).Exist(ctx)
+		if err != nil {
+			return status.Wrap(fmt.Errorf("unexpected database error: %v", err), status.Internal)
+		}
+		if !exists {
+			return status.Wrap(errors.New("integration not found"), status.NotFound)
 		}
 
 		update := client.Integrations.UpdateOneID(uid)

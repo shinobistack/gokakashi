@@ -3,6 +3,7 @@ package integrations
 import (
 	"context"
 	"errors"
+	"fmt"
 	"github.com/google/uuid"
 	"github.com/shinobistack/gokakashi/ent"
 	"github.com/swaggest/usecase/status"
@@ -31,9 +32,13 @@ func GetIntegration(client *ent.Client) func(ctx context.Context, req GetIntegra
 			return status.Wrap(errors.New("invalid UUID format"), status.InvalidArgument)
 		}
 
+		// Fetch integration by ID
 		integration, err := client.Integrations.Get(ctx, uid)
 		if err != nil {
-			return status.Wrap(errors.New("integration not found"), status.NotFound)
+			if ent.IsNotFound(err) {
+				return status.Wrap(errors.New("integration not found"), status.NotFound)
+			}
+			return status.Wrap(fmt.Errorf("unexpected error: %v", err), status.Internal)
 		}
 
 		res.ID = integration.ID.String()
