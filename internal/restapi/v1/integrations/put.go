@@ -20,8 +20,8 @@ type UpdateIntegrationResponse struct {
 	Status string `json:"status"`
 }
 
-func UpdateIntegration(client *ent.Client) func(ctx context.Context, req UpdateIntegrationRequest, res *UpdateIntegrationResponse) error {
-	return func(ctx context.Context, req UpdateIntegrationRequest, res *UpdateIntegrationResponse) error {
+func UpdateIntegration(client *ent.Client) func(ctx context.Context, req UpdateIntegrationRequest, res *GetIntegrationResponse) error {
+	return func(ctx context.Context, req UpdateIntegrationRequest, res *GetIntegrationResponse) error {
 		uid, err := uuid.Parse(req.ID)
 		if err != nil {
 			return status.Wrap(fmt.Errorf("invalid UUID format: %v", err), status.InvalidArgument)
@@ -41,7 +41,9 @@ func UpdateIntegration(client *ent.Client) func(ctx context.Context, req UpdateI
 		}
 
 		res.ID = integration.ID.String()
-		res.Status = "updated"
+		res.Name = integration.Name
+		res.Type = integration.Type
+		res.Config = integration.Config
 
 		return nil
 	}
