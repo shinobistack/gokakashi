@@ -51,11 +51,11 @@ func TestGetIntegrationType_InvalidIDFormat(t *testing.T) {
 	res := &integrationtype.GetIntegrationTypeResponse{}
 	handler := integrationtype.GetIntegrationType(client)
 	err := handler(context.Background(), req, res)
+	assert.Error(t, err)
 
 	req = integrationtype.GetIntegrationTypeRequests{ID: "Inv*ID"}
 	handler = integrationtype.GetIntegrationType(client)
 	err = handler(context.Background(), req, res)
-
 	assert.Error(t, err)
 }
 
