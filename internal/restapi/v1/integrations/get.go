@@ -46,24 +46,22 @@ func GetIntegration(client *ent.Client) func(ctx context.Context, req GetIntegra
 	}
 }
 
-func ListIntegrations(client *ent.Client) func(ctx context.Context, req struct{}, res *ListIntegrationResponse) error {
-	return func(ctx context.Context, req struct{}, res *ListIntegrationResponse) error {
+func ListIntegrations(client *ent.Client) func(ctx context.Context, req struct{}, res *[]GetIntegrationResponse) error {
+	return func(ctx context.Context, req struct{}, res *[]GetIntegrationResponse) error {
 		integrations, err := client.Integrations.Query().All(ctx)
 		if err != nil {
 			return status.Wrap(errors.New("failed to fetch integrations"), status.Internal)
 		}
 
-		responses := make([]GetIntegrationResponse, len(integrations))
+		*res = make([]GetIntegrationResponse, len(integrations))
 		for i, integration := range integrations {
-			responses[i] = GetIntegrationResponse{
+			(*res)[i] = GetIntegrationResponse{
 				ID:     integration.ID.String(),
 				Name:   integration.Name,
 				Type:   integration.Type,
 				Config: integration.Config,
 			}
 		}
-
-		res.Integrations = responses
 		return nil
 	}
 }
