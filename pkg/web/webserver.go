@@ -194,15 +194,15 @@ const directoryTemplate = `
 <!DOCTYPE html>
 <html>
 <head>
-   <title>Scan Reports - Entries</title>
+  <title>Scan Reports - Entries</title>
 </head>
 <body>
-   <h1>Scan Report Entries</h1>
-   <ul>
-       {{range .Entries}}
-       <li><a href="/reports/view?dir={{.}}">{{.}}</a></li>
-       {{end}}
-   </ul>
+  <h1>Scan Report Entries</h1>
+  <ul>
+      {{range .Entries}}
+      <li><a href="/reports/view?dir={{.}}">{{.}}</a></li>
+      {{end}}
+  </ul>
 </body>
 </html>
 `
@@ -211,15 +211,15 @@ const reportTemplate = `
 <!DOCTYPE html>
 <html>
 <head>
-   <title>Private Scan Reports - {{.Dir}}</title>
+  <title>Private Scan Reports - {{.Dir}}</title>
 </head>
 <body>
-   <h1>Reports in {{.Dir}}</h1>
-   <ul>
-       {{range .Reports}}
-       <li><a href="/reports/view/file?file={{.}}">{{.}}</a></li>
-       {{end}}
-   </ul>
+  <h1>Reports in {{.Dir}}</h1>
+  <ul>
+      {{range .Reports}}
+      <li><a href="/reports/view/file?file={{.}}">{{.}}</a></li>
+      {{end}}
+  </ul>
 </body>
 </html>
 `

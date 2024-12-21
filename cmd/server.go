@@ -1,19 +1,20 @@
 package cmd
 
 import (
+	"github.com/robfig/cron/v3"
+	config "github.com/shinobistack/gokakashi/internal/config/v0"
+	configv1 "github.com/shinobistack/gokakashi/internal/config/v1"
+	restapi "github.com/shinobistack/gokakashi/internal/restapi/v0"
+	restapiv1 "github.com/shinobistack/gokakashi/internal/restapi/v1"
+	"github.com/shinobistack/gokakashi/pkg/utils"
+	"github.com/shinobistack/gokakashi/pkg/web"
+	"github.com/spf13/cobra"
 	"log"
 	"os"
 	"os/signal"
 	"strings"
 	"syscall"
 	"time"
-
-	"github.com/robfig/cron/v3"
-	"github.com/shinobistack/gokakashi/internal/config/v0"
-	restapi "github.com/shinobistack/gokakashi/internal/restapi/server"
-	"github.com/shinobistack/gokakashi/pkg/utils"
-	"github.com/shinobistack/gokakashi/pkg/web"
-	"github.com/spf13/cobra"
 )
 
 var serverCmd = &cobra.Command{
@@ -26,11 +27,37 @@ var serverConfigFilePath *string
 
 func runServer(cmd *cobra.Command, args []string) {
 	if *serverConfigFilePath != "" {
-		handleConfigV0()
+		handleConfigV1()
 		return
 	}
+	// ToDo: To introduce config version. A way to support old and latest config
+	handleConfigV0()
 }
 
+func handleConfigV1() {
+	log.Println("=== Starting goKakashi Tool ===")
+
+	// Load and validate the configuration file
+	cfg, err := configv1.LoadAndValidateConfig(*serverConfigFilePath)
+	if err != nil {
+		log.Fatalf("Error: %v", err)
+	}
+
+	log.Println("Starting API server for scan functionality...")
+	s := &restapiv1.Server{
+		AuthToken: cfg.Site.APIToken,
+		Websites:  cfg.Site.Host,
+		Port:      cfg.Site.Port,
+	}
+	go s.Serve()
+
+	// Graceful shutdown handling
+	shutdown := make(chan os.Signal, 1)
+	signal.Notify(shutdown, syscall.SIGINT, syscall.SIGTERM)
+	<-shutdown
+
+	log.Println("Shutting down goKakashi gracefully...")
+}
 func handleConfigV0() {
 	log.Println("=== Starting goKakashi Tool ===")
 
