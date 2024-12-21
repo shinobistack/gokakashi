@@ -5,7 +5,10 @@ FROM golang:1.23-alpine AS builder
 SHELL ["/bin/ash", "-o", "pipefail", "-c"]
 
 # Install build dependencies
-RUN apk add --no-cache git bash
+RUN apk add --no-cache git bash gcc musl-dev sqlite-dev
+
+# Set CGO_ENABLED for sqlite3 compatibility
+ENV CGO_ENABLED=1
 
 # Set the working directory
 WORKDIR /app
