@@ -6,7 +6,7 @@ toolchain go1.23.1
 
 require (
 	entgo.io/ent v0.14.1
-	github.com/google/uuid v1.3.0
+	github.com/google/uuid v1.6.0
 	github.com/lib/pq v1.10.9
 	github.com/mattn/go-sqlite3 v1.14.16
 	github.com/robfig/cron/v3 v3.0.1
@@ -17,7 +17,7 @@ require (
 	github.com/swaggest/rest v0.2.68
 	github.com/swaggest/swgui v1.8.2
 	github.com/swaggest/usecase v1.3.1
-	golang.org/x/exp v0.0.0-20241009180824-f66d83c29e7c
+	golang.org/x/exp v0.0.0-20241217172543-b2144cdd0a67
 	gopkg.in/yaml.v2 v2.4.0
 )
 
@@ -43,7 +43,7 @@ require (
 	github.com/swaggest/refl v1.3.0 // indirect
 	github.com/vearutop/statigz v1.4.0 // indirect
 	github.com/zclconf/go-cty v1.8.0 // indirect
-	golang.org/x/mod v0.21.0 // indirect
+	golang.org/x/mod v0.22.0 // indirect
 	golang.org/x/text v0.13.0 // indirect
 	gopkg.in/check.v1 v1.0.0-20201130134442-10cb98267c6c // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
