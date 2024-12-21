@@ -1,13 +1,13 @@
 FROM node:21-alpine3.20 AS frontend
 
 # Set the working directory
-WORKDIR /app
+WORKDIR /webapp
 
 COPY webapp/package.json webapp/package-lock.json ./
 
 RUN npm install
 
-COPY webapp/ /app/
+COPY webapp/ /webapp/
 
 RUN npm run build
 
@@ -32,7 +32,7 @@ RUN go mod tidy
 # Copy the source code
 COPY . .
 
-COPY --from=frontend /app/dist /app/webapp/dist
+COPY --from=frontend /webapp/dist /app/webapp/dist
 
 # Run the tests
 RUN go test -v ./...
