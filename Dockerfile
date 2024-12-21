@@ -1,4 +1,4 @@
-FROM node:21-alpine3.20 AS frontend
+FROM node:18-alpine3.20 AS frontend
 
 # Set the working directory
 WORKDIR /webapp
