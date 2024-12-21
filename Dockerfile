@@ -1,3 +1,16 @@
+FROM node:21-alpine3.20 AS frontend
+
+# Set the working directory
+WORKDIR /app
+
+COPY webapp/package.json webapp/package-lock.json ./
+
+RUN npm install
+
+COPY webapp/ /app/
+
+RUN npm run build
+
 # Stage 1: Build the Go binary using Alpine
 FROM golang:1.23-alpine AS builder
 
@@ -19,13 +32,14 @@ RUN go mod tidy
 # Copy the source code
 COPY . .
 
+COPY --from=frontend /app/dist /app/webapp/dist
+
 # Run the tests
 RUN go test -v ./...
 
 # Build the Go binary for amd64
 RUN GOARCH=amd64 go build -o gokakashi
 
-# Stage 2: Final image for running the application with Alpine
 FROM alpine:3.20
 
 # Ensure the build fails on any command failure
