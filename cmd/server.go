@@ -40,7 +40,7 @@ func runServer(cmd *cobra.Command, args []string) {
 	}()
 
 	go func() {
-		if *serverConfigFilePath == "" {
+		if os.Getenv("WEB_ONLY") != "" || *serverConfigFilePath == "" {
 			return
 		}
 
@@ -57,7 +57,7 @@ func runServer(cmd *cobra.Command, args []string) {
 	}()
 
 	go func() {
-		if *serverConfigFilePath != "" {
+		if os.Getenv("WEB_ONLY") != "" || *serverConfigFilePath != "" {
 			return
 		}
 
