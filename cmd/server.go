@@ -1,6 +1,13 @@
 package cmd
 
 import (
+	"log"
+	"os"
+	"os/signal"
+	"strings"
+	"syscall"
+	"time"
+
 	"github.com/robfig/cron/v3"
 	config "github.com/shinobistack/gokakashi/internal/config/v0"
 	configv1 "github.com/shinobistack/gokakashi/internal/config/v1"
@@ -8,13 +15,8 @@ import (
 	restapiv1 "github.com/shinobistack/gokakashi/internal/restapi/v1"
 	"github.com/shinobistack/gokakashi/pkg/utils"
 	"github.com/shinobistack/gokakashi/pkg/web"
+	"github.com/shinobistack/gokakashi/webapp"
 	"github.com/spf13/cobra"
-	"log"
-	"os"
-	"os/signal"
-	"strings"
-	"syscall"
-	"time"
 )
 
 var serverCmd = &cobra.Command{
@@ -31,7 +33,14 @@ func runServer(cmd *cobra.Command, args []string) {
 		return
 	}
 	// ToDo: To introduce config version. A way to support old and latest config
-	handleConfigV0()
+	// handleConfigV0()
+
+	webServerAddr := ":5555" // TODO make this come from a config
+	log.Println("Starting webapp server at", webServerAddr)
+	webServer := webapp.New(webServerAddr)
+	if err := webServer.ListenAndServe(); err != nil {
+		log.Fatalln("Error starting web server", err)
+	}
 }
 
 func handleConfigV1() {
