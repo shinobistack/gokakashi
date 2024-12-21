@@ -19,6 +19,9 @@ RUN go mod tidy
 # Copy the source code
 COPY . .
 
+# Run the tests
+RUN go test -v ./...
+
 # Build the Go binary for amd64
 RUN GOARCH=amd64 go build -o gokakashi
 
