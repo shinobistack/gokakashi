@@ -1,6 +1,14 @@
 package cmd
 
 import (
+	"fmt"
+	"log"
+	"os"
+	"os/signal"
+	"strings"
+	"syscall"
+	"time"
+
 	"github.com/robfig/cron/v3"
 	config "github.com/shinobistack/gokakashi/internal/config/v0"
 	configv1 "github.com/shinobistack/gokakashi/internal/config/v1"
@@ -8,13 +16,8 @@ import (
 	restapiv1 "github.com/shinobistack/gokakashi/internal/restapi/v1"
 	"github.com/shinobistack/gokakashi/pkg/utils"
 	"github.com/shinobistack/gokakashi/pkg/web"
+	"github.com/shinobistack/gokakashi/webapp"
 	"github.com/spf13/cobra"
-	"log"
-	"os"
-	"os/signal"
-	"strings"
-	"syscall"
-	"time"
 )
 
 var serverCmd = &cobra.Command{
@@ -26,12 +29,47 @@ var serverCmd = &cobra.Command{
 var serverConfigFilePath *string
 
 func runServer(cmd *cobra.Command, args []string) {
-	if *serverConfigFilePath != "" {
+	sigs := make(chan os.Signal, 1)
+	signal.Notify(sigs, syscall.SIGINT, syscall.SIGTERM)
+	done := make(chan bool, 1)
+	go func() {
+		sig := <-sigs
+		fmt.Println()
+		fmt.Println(sig)
+		done <- true
+	}()
+
+	go func() {
+		if os.Getenv("WEB_ONLY") != "" || *serverConfigFilePath == "" {
+			return
+		}
+
 		handleConfigV1()
-		return
-	}
-	// ToDo: To introduce config version. A way to support old and latest config
-	handleConfigV0()
+	}()
+
+	go func() {
+		webServerAddr := ":5555" // TODO make this come from a config
+		log.Println("Starting webapp server at", webServerAddr)
+		webServer, err := webapp.New(webServerAddr)
+		if err != nil {
+			log.Fatalln("Error creating web app server", err)
+		}
+		if err := webServer.ListenAndServe(); err != nil {
+			log.Fatalln("Error starting web server", err)
+		}
+	}()
+
+	go func() {
+		if os.Getenv("WEB_ONLY") != "" || *serverConfigFilePath != "" {
+			return
+		}
+
+		// TODO: get rid of the old config at some point.
+		handleConfigV0()
+	}()
+
+	<-done
+	log.Println("Exiting gokakashi. Bye!")
 }
 
 func handleConfigV1() {
@@ -51,13 +89,9 @@ func handleConfigV1() {
 	}
 	go s.Serve()
 
-	// Graceful shutdown handling
-	shutdown := make(chan os.Signal, 1)
-	signal.Notify(shutdown, syscall.SIGINT, syscall.SIGTERM)
-	<-shutdown
-
 	log.Println("Shutting down goKakashi gracefully...")
 }
+
 func handleConfigV0() {
 	log.Println("=== Starting goKakashi Tool ===")
 

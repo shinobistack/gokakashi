@@ -45,7 +45,6 @@ hashes.json
 config/*.json
 scan_policy_curl.sh
 *.yaml
-*.html
 
 # TODO: figure out what this is and get rid of it
 listdirectory.go
