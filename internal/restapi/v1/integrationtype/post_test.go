@@ -53,7 +53,7 @@ func TestCreateIntegrationType_InvalidIDFormat(t *testing.T) {
 	assert.Error(t, err)
 
 	req = integrationtype.CreateIntegrationTypeRequest{
-		ID:          "invalid",
+		ID:          "invalid*#",
 		DisplayName: "Valid Format ",
 	}
 	handler = integrationtype.CreateIntegrationType(client)
