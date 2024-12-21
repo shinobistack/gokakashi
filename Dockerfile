@@ -1,5 +1,5 @@
 # Stage 1: Build the Go binary using Alpine
-FROM golang:1.22-alpine AS builder
+FROM golang:1.23-alpine AS builder
 
 # Ensure the build fails on any command failure
 SHELL ["/bin/ash", "-o", "pipefail", "-c"]
@@ -18,6 +18,9 @@ RUN go mod tidy
 
 # Copy the source code
 COPY . .
+
+# Run the tests
+RUN go test -v ./...
 
 # Build the Go binary for amd64
 RUN GOARCH=amd64 go build -o gokakashi
