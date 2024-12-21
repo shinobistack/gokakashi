@@ -1,12 +1,12 @@
-package tests
+package integrations_test
 
 import (
 	"context"
+	"github.com/shinobistack/gokakashi/internal/restapi/v1/integrations"
 	"testing"
 
 	"github.com/google/uuid"
 	"github.com/shinobistack/gokakashi/ent/enttest"
-	"github.com/shinobistack/gokakashi/internal/restapi/v1/integrations"
 	"github.com/stretchr/testify/assert"
 )
 
