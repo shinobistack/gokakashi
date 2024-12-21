@@ -50,7 +50,10 @@ func runServer(cmd *cobra.Command, args []string) {
 	go func() {
 		webServerAddr := ":5555" // TODO make this come from a config
 		log.Println("Starting webapp server at", webServerAddr)
-		webServer := webapp.New(webServerAddr)
+		webServer, err := webapp.New(webServerAddr)
+		if err != nil {
+			log.Fatalln("Error creating web app server", err)
+		}
 		if err := webServer.ListenAndServe(); err != nil {
 			log.Fatalln("Error starting web server", err)
 		}
