@@ -1,5 +1,5 @@
 # Stage 1: Build the Go binary using Alpine
-FROM golang:1.22-alpine AS builder
+FROM golang:1.23-alpine AS builder
 
 # Ensure the build fails on any command failure
 SHELL ["/bin/ash", "-o", "pipefail", "-c"]
