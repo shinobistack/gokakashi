@@ -1,6 +1,6 @@
 # gokakashi - The Centralized Image Vulnerability Platform 🔍🚀
 
-[![golangci-lint](https://github.com/gokakashi/gokakashi/actions/workflows/lint.yml/badge.svg?branch=main)](https://github.com/gokakashi/gokakashi/actions/workflows/lint.yml)
+[![Build](https://github.com/shinobistack/gokakashi/actions/workflows/build.yml/badge.svg)](https://github.com/shinobistack/gokakashi/actions/workflows/build.yml)
 
 🚧 Heavy work in progress 🚧
 
