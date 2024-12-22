@@ -9,6 +9,7 @@ import (
 	"github.com/shinobistack/gokakashi/ent"
 	"github.com/shinobistack/gokakashi/internal/restapi/server/middleware"
 	integrations1 "github.com/shinobistack/gokakashi/internal/restapi/v1/integrations"
+	policies1 "github.com/shinobistack/gokakashi/internal/restapi/v1/policies"
 	"github.com/swaggest/openapi-go/openapi31"
 	"github.com/swaggest/rest/web"
 	swg "github.com/swaggest/swgui"
@@ -48,6 +49,12 @@ func (srv *Server) Service() *web.Service {
 	apiV1.Get("/integrations/{id}", usecase.NewInteractor(integrations1.GetIntegration(srv.DB)))
 	apiV1.Post("/integrations", usecase.NewInteractor(integrations1.CreateIntegration(srv.DB)))
 	apiV1.Put("/integrations/{id}", usecase.NewInteractor(integrations1.UpdateIntegration(srv.DB)))
+
+	apiV1.Post("/policies", usecase.NewInteractor(policies1.CreatePolicy(srv.DB)))
+	apiV1.Get("/policies", usecase.NewInteractor(policies1.ListPolicies(srv.DB)))
+	apiV1.Get("/policies/{id}", usecase.NewInteractor(policies1.GetPolicy(srv.DB)))
+	apiV1.Put("/policies/{id}", usecase.NewInteractor(policies1.UpdatePolicy(srv.DB)))
+	apiV1.Delete("/policies/{id}", usecase.NewInteractor(policies1.DeletePolicy(srv.DB)))
 
 	s.Mount("/api/v1/openapi.json", specHandler(apiV1.OpenAPICollector.SpecSchema().(*openapi31.Spec)))
 	s.Mount("/api/v1", apiV1)
