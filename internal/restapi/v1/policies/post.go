@@ -6,8 +6,11 @@ import (
 	"fmt"
 	"github.com/google/uuid"
 	"github.com/shinobistack/gokakashi/ent"
+	"github.com/shinobistack/gokakashi/ent/policies"
 	"github.com/shinobistack/gokakashi/ent/schema"
 	"github.com/swaggest/usecase/status"
+	"regexp"
+	"strings"
 )
 
 type CreatePolicyRequest struct {
@@ -29,6 +32,21 @@ func CreatePolicy(client *ent.Client) func(ctx context.Context, req CreatePolicy
 		// Validate image fields
 		if req.Image.Registry == "" || req.Image.Name == "" || len(req.Image.Tags) == 0 {
 			return status.Wrap(errors.New("invalid image: missing required fields"), status.InvalidArgument)
+		}
+
+		if !isValidID(req.Name) {
+			return status.Wrap(errors.New("invalid id format; must be lowercase, alphanumeric, or dashes"), status.InvalidArgument)
+		}
+
+		// Check for duplicate name
+		exists, err := client.Policies.Query().
+			Where(policies.Name(req.Name)).
+			Exist(ctx)
+		if err != nil {
+			return status.Wrap(fmt.Errorf("failed to check for duplicate policies name: %v", err), status.Internal)
+		}
+		if exists {
+			return status.Wrap(errors.New("policy with the same name already exists"), status.AlreadyExists)
 		}
 
 		// Validate trigger
@@ -58,4 +76,15 @@ func CreatePolicy(client *ent.Client) func(ctx context.Context, req CreatePolicy
 		res.Status = "created"
 		return nil
 	}
+}
+
+// isValidID validates the ID format:
+// - All lowercase letters.
+// - Multiple words separated by dashes (`-`).
+// - No spaces at the beginning or end.
+// - No special characters other than hyphen.
+func isValidID(id string) bool {
+	id = strings.TrimSpace(id)
+	regex := regexp.MustCompile(`^[a-z]+(-[a-z]+)*$`)
+	return regex.MatchString(id)
 }

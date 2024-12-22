@@ -10,7 +10,6 @@ import (
 )
 
 type UpdateIntegrationRequest struct {
-	// ToDo: convert to UUID
 	ID     uuid.UUID               `path:"id"`
 	Name   *string                 `json:"name"`
 	Type   *string                 `json:"type"`
