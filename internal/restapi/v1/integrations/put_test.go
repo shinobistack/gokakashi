@@ -26,7 +26,7 @@ func TestUpdateIntegration(t *testing.T) {
 
 	// Test case: Valid update
 	req := integrations.UpdateIntegrationRequest{
-		ID:   id.String(),
+		ID:   id,
 		Name: stringPointer("Updated Integration"),
 	}
 	var res integrations.GetIntegrationResponse
@@ -48,15 +48,17 @@ func TestUpdateIntegration(t *testing.T) {
 func TestUpdateIntegration_InvalidUUID(t *testing.T) {
 	client := enttest.Open(t, "sqlite3", "file:ent?mode=memory&cache=shared&_fk=1")
 	defer client.Close()
+	invalidUUID := "c60c700e-3dd9-4059-8372-f77235"
+	parsedUUID, err := uuid.Parse(invalidUUID)
 
 	req := integrations.UpdateIntegrationRequest{
-		ID:   "invalid-uuid",
+		ID:   parsedUUID,
 		Name: stringPointer("Invalid Update"),
 	}
 	var res integrations.GetIntegrationResponse
 
 	handler := integrations.UpdateIntegration(client)
-	err := handler(context.Background(), req, &res)
+	err = handler(context.Background(), req, &res)
 
 	assert.Error(t, err)
 }
@@ -66,7 +68,7 @@ func TestUpdateIntegration_NonExistentID(t *testing.T) {
 	defer client.Close()
 
 	req := integrations.UpdateIntegrationRequest{
-		ID:   uuid.New().String(),
+		ID:   uuid.New(),
 		Name: stringPointer("Non-existent ID"),
 	}
 	var res integrations.GetIntegrationResponse
@@ -93,7 +95,7 @@ func TestUpdateIntegration_NoChanges(t *testing.T) {
 
 	// Test case: No changes
 	req := integrations.UpdateIntegrationRequest{
-		ID: id.String(),
+		ID: id,
 	}
 	var res integrations.GetIntegrationResponse
 

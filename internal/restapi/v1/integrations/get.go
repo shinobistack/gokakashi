@@ -10,11 +10,11 @@ import (
 )
 
 type GetIntegrationRequests struct {
-	ID string `path:"id"`
+	ID uuid.UUID `path:"id"`
 }
 
 type GetIntegrationResponse struct {
-	ID     string                 `json:"id"`
+	ID     uuid.UUID              `json:"id"`
 	Name   string                 `json:"name"`
 	Type   string                 `json:"type"`
 	Config map[string]interface{} `json:"config"`
@@ -26,14 +26,13 @@ type ListIntegrationResponse struct {
 
 func GetIntegration(client *ent.Client) func(ctx context.Context, req GetIntegrationRequests, res *GetIntegrationResponse) error {
 	return func(ctx context.Context, req GetIntegrationRequests, res *GetIntegrationResponse) error {
-		// Convert string to uuid.UUID
-		uid, err := uuid.Parse(req.ID)
-		if err != nil {
-			return status.Wrap(errors.New("invalid UUID format"), status.InvalidArgument)
+		// Validate ID
+		if req.ID == uuid.Nil {
+			return status.Wrap(errors.New("invalid UUID: cannot be nil"), status.InvalidArgument)
 		}
 
 		// Fetch integration by ID
-		integration, err := client.Integrations.Get(ctx, uid)
+		integration, err := client.Integrations.Get(ctx, req.ID)
 		if err != nil {
 			if ent.IsNotFound(err) {
 				return status.Wrap(errors.New("integration not found"), status.NotFound)
@@ -41,7 +40,7 @@ func GetIntegration(client *ent.Client) func(ctx context.Context, req GetIntegra
 			return status.Wrap(fmt.Errorf("unexpected error: %v", err), status.Internal)
 		}
 
-		res.ID = integration.ID.String()
+		res.ID = integration.ID
 		res.Name = integration.Name
 		res.Type = integration.Type
 		res.Config = integration.Config
@@ -61,7 +60,7 @@ func ListIntegrations(client *ent.Client) func(ctx context.Context, req struct{}
 		*res = make([]GetIntegrationResponse, len(integrations))
 		for i, integration := range integrations {
 			(*res)[i] = GetIntegrationResponse{
-				ID:     integration.ID.String(),
+				ID:     integration.ID,
 				Name:   integration.Name,
 				Type:   integration.Type,
 				Config: integration.Config,

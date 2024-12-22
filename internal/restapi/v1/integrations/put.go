@@ -6,39 +6,39 @@ import (
 	"fmt"
 	"github.com/google/uuid"
 	"github.com/shinobistack/gokakashi/ent"
-	"github.com/shinobistack/gokakashi/ent/integrations"
 	"github.com/swaggest/usecase/status"
 )
 
 type UpdateIntegrationRequest struct {
-	ID     string                  `path:"id"`
+	// ToDo: convert to UUID
+	ID     uuid.UUID               `path:"id"`
 	Name   *string                 `json:"name"`
 	Type   *string                 `json:"type"`
 	Config *map[string]interface{} `json:"config"`
 }
 
 type UpdateIntegrationResponse struct {
-	ID     string `json:"id"`
-	Status string `json:"status"`
+	ID     uuid.UUID `json:"id"`
+	Status string    `json:"status"`
 }
 
 func UpdateIntegration(client *ent.Client) func(ctx context.Context, req UpdateIntegrationRequest, res *GetIntegrationResponse) error {
 	return func(ctx context.Context, req UpdateIntegrationRequest, res *GetIntegrationResponse) error {
-		uid, err := uuid.Parse(req.ID)
-		if err != nil {
-			return status.Wrap(fmt.Errorf("invalid UUID format: %v", err), status.InvalidArgument)
+		// Validate ID
+		if req.ID == uuid.Nil {
+			return status.Wrap(errors.New("invalid UUID: cannot be nil"), status.InvalidArgument)
 		}
 
 		// Check if integration exists
-		exists, err := client.Integrations.Query().Where(integrations.ID(uid)).Exist(ctx)
+		integrationID, err := client.Integrations.Get(ctx, req.ID)
 		if err != nil {
-			return status.Wrap(fmt.Errorf("unexpected database error: %v", err), status.Internal)
-		}
-		if !exists {
-			return status.Wrap(errors.New("integration not found"), status.NotFound)
+			if ent.IsNotFound(err) {
+				return status.Wrap(errors.New("policy not found"), status.NotFound)
+			}
+			return status.Wrap(fmt.Errorf("unexpected error: %v", err), status.Internal)
 		}
 
-		update := client.Integrations.UpdateOneID(uid)
+		update := client.Integrations.UpdateOne(integrationID)
 		if req.Name != nil {
 			update = update.SetName(*req.Name)
 		}
@@ -51,7 +51,7 @@ func UpdateIntegration(client *ent.Client) func(ctx context.Context, req UpdateI
 			return status.Wrap(fmt.Errorf("failed to update integration: %v", err), status.Internal)
 		}
 
-		res.ID = integration.ID.String()
+		res.ID = integration.ID
 		res.Name = integration.Name
 		res.Type = integration.Type
 		res.Config = integration.Config
