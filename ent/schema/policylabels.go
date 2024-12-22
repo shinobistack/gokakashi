@@ -16,7 +16,7 @@ type PolicyLabels struct {
 func (PolicyLabels) Fields() []ent.Field {
 	return []ent.Field{
 		field.UUID("policy_id", uuid.UUID{}).
-			Comment("Foreign key to Policies"),
+			Comment("Foreign key to policies"),
 		field.String("key").
 			NotEmpty(),
 		field.String("value").
@@ -26,7 +26,7 @@ func (PolicyLabels) Fields() []ent.Field {
 
 // Edges of the PolicyLabels.
 func (PolicyLabels) Edges() []ent.Edge {
-	// many-to-one relationship back to Policies.
+	// many-to-one relationship back to policies.
 	return []ent.Edge{
 		edge.From("policy", Policies.Type).
 			Ref("policy_labels").

@@ -18,7 +18,7 @@ type PolicyLabels struct {
 	config `json:"-"`
 	// ID of the ent.
 	ID int `json:"id,omitempty"`
-	// Foreign key to Policies
+	// Foreign key to policies
 	PolicyID uuid.UUID `json:"policy_id,omitempty"`
 	// Key holds the value of the "key" field.
 	Key string `json:"key,omitempty"`
