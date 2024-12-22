@@ -18,7 +18,11 @@ FROM golang:1.23-alpine AS builder
 SHELL ["/bin/ash", "-o", "pipefail", "-c"]
 
 # Install build dependencies
-RUN apk add --no-cache git bash
+RUN apk add --no-cache git bash gcc sqlite-dev musl-dev libc-dev
+
+# Set CGO_ENABLED for sqlite3 compatibility
+# ENV CGO_ENABLED=1
+ENV CGO_CFLAGS="-D_LARGEFILE64_SOURCE"
 
 # Set the working directory
 WORKDIR /app

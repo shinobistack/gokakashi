@@ -2,9 +2,11 @@ package integrations
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"github.com/google/uuid"
 	"github.com/shinobistack/gokakashi/ent"
+	"github.com/shinobistack/gokakashi/ent/integrations"
 	"github.com/swaggest/usecase/status"
 )
 
@@ -20,11 +22,20 @@ type UpdateIntegrationResponse struct {
 	Status string `json:"status"`
 }
 
-func UpdateIntegration(client *ent.Client) func(ctx context.Context, req UpdateIntegrationRequest, res *UpdateIntegrationResponse) error {
-	return func(ctx context.Context, req UpdateIntegrationRequest, res *UpdateIntegrationResponse) error {
+func UpdateIntegration(client *ent.Client) func(ctx context.Context, req UpdateIntegrationRequest, res *GetIntegrationResponse) error {
+	return func(ctx context.Context, req UpdateIntegrationRequest, res *GetIntegrationResponse) error {
 		uid, err := uuid.Parse(req.ID)
 		if err != nil {
 			return status.Wrap(fmt.Errorf("invalid UUID format: %v", err), status.InvalidArgument)
+		}
+
+		// Check if integration exists
+		exists, err := client.Integrations.Query().Where(integrations.ID(uid)).Exist(ctx)
+		if err != nil {
+			return status.Wrap(fmt.Errorf("unexpected database error: %v", err), status.Internal)
+		}
+		if !exists {
+			return status.Wrap(errors.New("integration not found"), status.NotFound)
 		}
 
 		update := client.Integrations.UpdateOneID(uid)
@@ -41,7 +52,9 @@ func UpdateIntegration(client *ent.Client) func(ctx context.Context, req UpdateI
 		}
 
 		res.ID = integration.ID.String()
-		res.Status = "updated"
+		res.Name = integration.Name
+		res.Type = integration.Type
+		res.Config = integration.Config
 
 		return nil
 	}

@@ -3,6 +3,7 @@ package integrations
 import (
 	"context"
 	"errors"
+	"fmt"
 	"github.com/google/uuid"
 	"github.com/shinobistack/gokakashi/ent"
 	"github.com/swaggest/usecase/status"
@@ -31,9 +32,13 @@ func GetIntegration(client *ent.Client) func(ctx context.Context, req GetIntegra
 			return status.Wrap(errors.New("invalid UUID format"), status.InvalidArgument)
 		}
 
+		// Fetch integration by ID
 		integration, err := client.Integrations.Get(ctx, uid)
 		if err != nil {
-			return status.Wrap(errors.New("integration not found"), status.NotFound)
+			if ent.IsNotFound(err) {
+				return status.Wrap(errors.New("integration not found"), status.NotFound)
+			}
+			return status.Wrap(fmt.Errorf("unexpected error: %v", err), status.Internal)
 		}
 
 		res.ID = integration.ID.String()
@@ -46,24 +51,22 @@ func GetIntegration(client *ent.Client) func(ctx context.Context, req GetIntegra
 	}
 }
 
-func ListIntegrations(client *ent.Client) func(ctx context.Context, req struct{}, res *ListIntegrationResponse) error {
-	return func(ctx context.Context, req struct{}, res *ListIntegrationResponse) error {
+func ListIntegrations(client *ent.Client) func(ctx context.Context, req struct{}, res *[]GetIntegrationResponse) error {
+	return func(ctx context.Context, req struct{}, res *[]GetIntegrationResponse) error {
 		integrations, err := client.Integrations.Query().All(ctx)
 		if err != nil {
 			return status.Wrap(errors.New("failed to fetch integrations"), status.Internal)
 		}
 
-		responses := make([]GetIntegrationResponse, len(integrations))
+		*res = make([]GetIntegrationResponse, len(integrations))
 		for i, integration := range integrations {
-			responses[i] = GetIntegrationResponse{
+			(*res)[i] = GetIntegrationResponse{
 				ID:     integration.ID.String(),
 				Name:   integration.Name,
 				Type:   integration.Type,
 				Config: integration.Config,
 			}
 		}
-
-		res.Integrations = responses
 		return nil
 	}
 }
