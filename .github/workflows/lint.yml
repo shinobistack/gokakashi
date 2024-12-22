@@ -20,9 +20,9 @@ jobs:
       - uses: actions/setup-node@v3
         with:
           node-version: "18.x"
-      - name: Install dependencies
+      - name: Build webapp
         working-directory: ./webapp
-        run: npm ci
+        run: npm ci && npm run build
       - name: golangci-lint
         uses: golangci/golangci-lint-action@v6
         with:
