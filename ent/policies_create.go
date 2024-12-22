@@ -34,6 +34,20 @@ func (pc *PoliciesCreate) SetImage(s schema.Image) *PoliciesCreate {
 	return pc
 }
 
+// SetLabels sets the "labels" field.
+func (pc *PoliciesCreate) SetLabels(sl schema.PolicyLabels) *PoliciesCreate {
+	pc.mutation.SetLabels(sl)
+	return pc
+}
+
+// SetNillableLabels sets the "labels" field if the given value is not nil.
+func (pc *PoliciesCreate) SetNillableLabels(sl *schema.PolicyLabels) *PoliciesCreate {
+	if sl != nil {
+		pc.SetLabels(*sl)
+	}
+	return pc
+}
+
 // SetTrigger sets the "trigger" field.
 func (pc *PoliciesCreate) SetTrigger(m map[string]interface{}) *PoliciesCreate {
 	pc.mutation.SetTrigger(m)
@@ -179,6 +193,10 @@ func (pc *PoliciesCreate) createSpec() (*Policies, *sqlgraph.CreateSpec) {
 	if value, ok := pc.mutation.Image(); ok {
 		_spec.SetField(policies.FieldImage, field.TypeJSON, value)
 		_node.Image = value
+	}
+	if value, ok := pc.mutation.Labels(); ok {
+		_spec.SetField(policies.FieldLabels, field.TypeJSON, value)
+		_node.Labels = value
 	}
 	if value, ok := pc.mutation.Trigger(); ok {
 		_spec.SetField(policies.FieldTrigger, field.TypeJSON, value)

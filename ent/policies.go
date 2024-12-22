@@ -24,6 +24,8 @@ type Policies struct {
 	Name string `json:"name,omitempty"`
 	// Stores image details like registry, tags.
 	Image schema.Image `json:"image,omitempty"`
+	// Policies labels key:value
+	Labels schema.PolicyLabels `json:"labels,omitempty"`
 	// Stores trigger details (e.g., cron schedule).
 	Trigger map[string]interface{} `json:"trigger,omitempty"`
 	// Stores conditions for evaluation.
@@ -57,7 +59,7 @@ func (*Policies) scanValues(columns []string) ([]any, error) {
 	values := make([]any, len(columns))
 	for i := range columns {
 		switch columns[i] {
-		case policies.FieldImage, policies.FieldTrigger, policies.FieldCheck:
+		case policies.FieldImage, policies.FieldLabels, policies.FieldTrigger, policies.FieldCheck:
 			values[i] = new([]byte)
 		case policies.FieldName:
 			values[i] = new(sql.NullString)
@@ -96,6 +98,14 @@ func (po *Policies) assignValues(columns []string, values []any) error {
 			} else if value != nil && len(*value) > 0 {
 				if err := json.Unmarshal(*value, &po.Image); err != nil {
 					return fmt.Errorf("unmarshal field image: %w", err)
+				}
+			}
+		case policies.FieldLabels:
+			if value, ok := values[i].(*[]byte); !ok {
+				return fmt.Errorf("unexpected type %T for field labels", values[i])
+			} else if value != nil && len(*value) > 0 {
+				if err := json.Unmarshal(*value, &po.Labels); err != nil {
+					return fmt.Errorf("unmarshal field labels: %w", err)
 				}
 			}
 		case policies.FieldTrigger:
@@ -160,6 +170,9 @@ func (po *Policies) String() string {
 	builder.WriteString(", ")
 	builder.WriteString("image=")
 	builder.WriteString(fmt.Sprintf("%v", po.Image))
+	builder.WriteString(", ")
+	builder.WriteString("labels=")
+	builder.WriteString(fmt.Sprintf("%v", po.Labels))
 	builder.WriteString(", ")
 	builder.WriteString("trigger=")
 	builder.WriteString(fmt.Sprintf("%v", po.Trigger))

@@ -907,6 +907,7 @@ type PoliciesMutation struct {
 	id                   *uuid.UUID
 	name                 *string
 	image                *schema.Image
+	labels               *schema.PolicyLabels
 	trigger              *map[string]interface{}
 	check                *schema.Check
 	clearedFields        map[string]struct{}
@@ -1092,6 +1093,55 @@ func (m *PoliciesMutation) OldImage(ctx context.Context) (v schema.Image, err er
 // ResetImage resets all changes to the "image" field.
 func (m *PoliciesMutation) ResetImage() {
 	m.image = nil
+}
+
+// SetLabels sets the "labels" field.
+func (m *PoliciesMutation) SetLabels(sl schema.PolicyLabels) {
+	m.labels = &sl
+}
+
+// Labels returns the value of the "labels" field in the mutation.
+func (m *PoliciesMutation) Labels() (r schema.PolicyLabels, exists bool) {
+	v := m.labels
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldLabels returns the old "labels" field's value of the Policies entity.
+// If the Policies object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *PoliciesMutation) OldLabels(ctx context.Context) (v schema.PolicyLabels, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldLabels is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldLabels requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldLabels: %w", err)
+	}
+	return oldValue.Labels, nil
+}
+
+// ClearLabels clears the value of the "labels" field.
+func (m *PoliciesMutation) ClearLabels() {
+	m.labels = nil
+	m.clearedFields[policies.FieldLabels] = struct{}{}
+}
+
+// LabelsCleared returns if the "labels" field was cleared in this mutation.
+func (m *PoliciesMutation) LabelsCleared() bool {
+	_, ok := m.clearedFields[policies.FieldLabels]
+	return ok
+}
+
+// ResetLabels resets all changes to the "labels" field.
+func (m *PoliciesMutation) ResetLabels() {
+	m.labels = nil
+	delete(m.clearedFields, policies.FieldLabels)
 }
 
 // SetTrigger sets the "trigger" field.
@@ -1280,12 +1330,15 @@ func (m *PoliciesMutation) Type() string {
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
 func (m *PoliciesMutation) Fields() []string {
-	fields := make([]string, 0, 4)
+	fields := make([]string, 0, 5)
 	if m.name != nil {
 		fields = append(fields, policies.FieldName)
 	}
 	if m.image != nil {
 		fields = append(fields, policies.FieldImage)
+	}
+	if m.labels != nil {
+		fields = append(fields, policies.FieldLabels)
 	}
 	if m.trigger != nil {
 		fields = append(fields, policies.FieldTrigger)
@@ -1305,6 +1358,8 @@ func (m *PoliciesMutation) Field(name string) (ent.Value, bool) {
 		return m.Name()
 	case policies.FieldImage:
 		return m.Image()
+	case policies.FieldLabels:
+		return m.Labels()
 	case policies.FieldTrigger:
 		return m.Trigger()
 	case policies.FieldCheck:
@@ -1322,6 +1377,8 @@ func (m *PoliciesMutation) OldField(ctx context.Context, name string) (ent.Value
 		return m.OldName(ctx)
 	case policies.FieldImage:
 		return m.OldImage(ctx)
+	case policies.FieldLabels:
+		return m.OldLabels(ctx)
 	case policies.FieldTrigger:
 		return m.OldTrigger(ctx)
 	case policies.FieldCheck:
@@ -1348,6 +1405,13 @@ func (m *PoliciesMutation) SetField(name string, value ent.Value) error {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetImage(v)
+		return nil
+	case policies.FieldLabels:
+		v, ok := value.(schema.PolicyLabels)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetLabels(v)
 		return nil
 	case policies.FieldTrigger:
 		v, ok := value.(map[string]interface{})
@@ -1393,6 +1457,9 @@ func (m *PoliciesMutation) AddField(name string, value ent.Value) error {
 // mutation.
 func (m *PoliciesMutation) ClearedFields() []string {
 	var fields []string
+	if m.FieldCleared(policies.FieldLabels) {
+		fields = append(fields, policies.FieldLabels)
+	}
 	if m.FieldCleared(policies.FieldTrigger) {
 		fields = append(fields, policies.FieldTrigger)
 	}
@@ -1413,6 +1480,9 @@ func (m *PoliciesMutation) FieldCleared(name string) bool {
 // error if the field is not defined in the schema.
 func (m *PoliciesMutation) ClearField(name string) error {
 	switch name {
+	case policies.FieldLabels:
+		m.ClearLabels()
+		return nil
 	case policies.FieldTrigger:
 		m.ClearTrigger()
 		return nil
@@ -1432,6 +1502,9 @@ func (m *PoliciesMutation) ResetField(name string) error {
 		return nil
 	case policies.FieldImage:
 		m.ResetImage()
+		return nil
+	case policies.FieldLabels:
+		m.ResetLabels()
 		return nil
 	case policies.FieldTrigger:
 		m.ResetTrigger()
