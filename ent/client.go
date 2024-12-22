@@ -18,6 +18,8 @@ import (
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"github.com/shinobistack/gokakashi/ent/integrations"
 	"github.com/shinobistack/gokakashi/ent/integrationtype"
+	"github.com/shinobistack/gokakashi/ent/policies"
+	"github.com/shinobistack/gokakashi/ent/policylabels"
 )
 
 // Client is the client that holds all ent builders.
@@ -29,6 +31,10 @@ type Client struct {
 	IntegrationType *IntegrationTypeClient
 	// Integrations is the client for interacting with the Integrations builders.
 	Integrations *IntegrationsClient
+	// Policies is the client for interacting with the Policies builders.
+	Policies *PoliciesClient
+	// PolicyLabels is the client for interacting with the PolicyLabels builders.
+	PolicyLabels *PolicyLabelsClient
 }
 
 // NewClient creates a new client configured with the given options.
@@ -42,6 +48,8 @@ func (c *Client) init() {
 	c.Schema = migrate.NewSchema(c.driver)
 	c.IntegrationType = NewIntegrationTypeClient(c.config)
 	c.Integrations = NewIntegrationsClient(c.config)
+	c.Policies = NewPoliciesClient(c.config)
+	c.PolicyLabels = NewPolicyLabelsClient(c.config)
 }
 
 type (
@@ -136,6 +144,8 @@ func (c *Client) Tx(ctx context.Context) (*Tx, error) {
 		config:          cfg,
 		IntegrationType: NewIntegrationTypeClient(cfg),
 		Integrations:    NewIntegrationsClient(cfg),
+		Policies:        NewPoliciesClient(cfg),
+		PolicyLabels:    NewPolicyLabelsClient(cfg),
 	}, nil
 }
 
@@ -157,6 +167,8 @@ func (c *Client) BeginTx(ctx context.Context, opts *sql.TxOptions) (*Tx, error) 
 		config:          cfg,
 		IntegrationType: NewIntegrationTypeClient(cfg),
 		Integrations:    NewIntegrationsClient(cfg),
+		Policies:        NewPoliciesClient(cfg),
+		PolicyLabels:    NewPolicyLabelsClient(cfg),
 	}, nil
 }
 
@@ -187,6 +199,8 @@ func (c *Client) Close() error {
 func (c *Client) Use(hooks ...Hook) {
 	c.IntegrationType.Use(hooks...)
 	c.Integrations.Use(hooks...)
+	c.Policies.Use(hooks...)
+	c.PolicyLabels.Use(hooks...)
 }
 
 // Intercept adds the query interceptors to all the entity clients.
@@ -194,6 +208,8 @@ func (c *Client) Use(hooks ...Hook) {
 func (c *Client) Intercept(interceptors ...Interceptor) {
 	c.IntegrationType.Intercept(interceptors...)
 	c.Integrations.Intercept(interceptors...)
+	c.Policies.Intercept(interceptors...)
+	c.PolicyLabels.Intercept(interceptors...)
 }
 
 // Mutate implements the ent.Mutator interface.
@@ -203,6 +219,10 @@ func (c *Client) Mutate(ctx context.Context, m Mutation) (Value, error) {
 		return c.IntegrationType.mutate(ctx, m)
 	case *IntegrationsMutation:
 		return c.Integrations.mutate(ctx, m)
+	case *PoliciesMutation:
+		return c.Policies.mutate(ctx, m)
+	case *PolicyLabelsMutation:
+		return c.PolicyLabels.mutate(ctx, m)
 	default:
 		return nil, fmt.Errorf("ent: unknown mutation type %T", m)
 	}
@@ -490,12 +510,310 @@ func (c *IntegrationsClient) mutate(ctx context.Context, m *IntegrationsMutation
 	}
 }
 
+// PoliciesClient is a client for the Policies schema.
+type PoliciesClient struct {
+	config
+}
+
+// NewPoliciesClient returns a client for the Policies from the given config.
+func NewPoliciesClient(c config) *PoliciesClient {
+	return &PoliciesClient{config: c}
+}
+
+// Use adds a list of mutation hooks to the hooks stack.
+// A call to `Use(f, g, h)` equals to `policies.Hooks(f(g(h())))`.
+func (c *PoliciesClient) Use(hooks ...Hook) {
+	c.hooks.Policies = append(c.hooks.Policies, hooks...)
+}
+
+// Intercept adds a list of query interceptors to the interceptors stack.
+// A call to `Intercept(f, g, h)` equals to `policies.Intercept(f(g(h())))`.
+func (c *PoliciesClient) Intercept(interceptors ...Interceptor) {
+	c.inters.Policies = append(c.inters.Policies, interceptors...)
+}
+
+// Create returns a builder for creating a Policies entity.
+func (c *PoliciesClient) Create() *PoliciesCreate {
+	mutation := newPoliciesMutation(c.config, OpCreate)
+	return &PoliciesCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// CreateBulk returns a builder for creating a bulk of Policies entities.
+func (c *PoliciesClient) CreateBulk(builders ...*PoliciesCreate) *PoliciesCreateBulk {
+	return &PoliciesCreateBulk{config: c.config, builders: builders}
+}
+
+// MapCreateBulk creates a bulk creation builder from the given slice. For each item in the slice, the function creates
+// a builder and applies setFunc on it.
+func (c *PoliciesClient) MapCreateBulk(slice any, setFunc func(*PoliciesCreate, int)) *PoliciesCreateBulk {
+	rv := reflect.ValueOf(slice)
+	if rv.Kind() != reflect.Slice {
+		return &PoliciesCreateBulk{err: fmt.Errorf("calling to PoliciesClient.MapCreateBulk with wrong type %T, need slice", slice)}
+	}
+	builders := make([]*PoliciesCreate, rv.Len())
+	for i := 0; i < rv.Len(); i++ {
+		builders[i] = c.Create()
+		setFunc(builders[i], i)
+	}
+	return &PoliciesCreateBulk{config: c.config, builders: builders}
+}
+
+// Update returns an update builder for Policies.
+func (c *PoliciesClient) Update() *PoliciesUpdate {
+	mutation := newPoliciesMutation(c.config, OpUpdate)
+	return &PoliciesUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOne returns an update builder for the given entity.
+func (c *PoliciesClient) UpdateOne(po *Policies) *PoliciesUpdateOne {
+	mutation := newPoliciesMutation(c.config, OpUpdateOne, withPolicies(po))
+	return &PoliciesUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOneID returns an update builder for the given id.
+func (c *PoliciesClient) UpdateOneID(id uuid.UUID) *PoliciesUpdateOne {
+	mutation := newPoliciesMutation(c.config, OpUpdateOne, withPoliciesID(id))
+	return &PoliciesUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// Delete returns a delete builder for Policies.
+func (c *PoliciesClient) Delete() *PoliciesDelete {
+	mutation := newPoliciesMutation(c.config, OpDelete)
+	return &PoliciesDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// DeleteOne returns a builder for deleting the given entity.
+func (c *PoliciesClient) DeleteOne(po *Policies) *PoliciesDeleteOne {
+	return c.DeleteOneID(po.ID)
+}
+
+// DeleteOneID returns a builder for deleting the given entity by its id.
+func (c *PoliciesClient) DeleteOneID(id uuid.UUID) *PoliciesDeleteOne {
+	builder := c.Delete().Where(policies.ID(id))
+	builder.mutation.id = &id
+	builder.mutation.op = OpDeleteOne
+	return &PoliciesDeleteOne{builder}
+}
+
+// Query returns a query builder for Policies.
+func (c *PoliciesClient) Query() *PoliciesQuery {
+	return &PoliciesQuery{
+		config: c.config,
+		ctx:    &QueryContext{Type: TypePolicies},
+		inters: c.Interceptors(),
+	}
+}
+
+// Get returns a Policies entity by its id.
+func (c *PoliciesClient) Get(ctx context.Context, id uuid.UUID) (*Policies, error) {
+	return c.Query().Where(policies.ID(id)).Only(ctx)
+}
+
+// GetX is like Get, but panics if an error occurs.
+func (c *PoliciesClient) GetX(ctx context.Context, id uuid.UUID) *Policies {
+	obj, err := c.Get(ctx, id)
+	if err != nil {
+		panic(err)
+	}
+	return obj
+}
+
+// QueryPolicyLabels queries the policy_labels edge of a Policies.
+func (c *PoliciesClient) QueryPolicyLabels(po *Policies) *PolicyLabelsQuery {
+	query := (&PolicyLabelsClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := po.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(policies.Table, policies.FieldID, id),
+			sqlgraph.To(policylabels.Table, policylabels.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, policies.PolicyLabelsTable, policies.PolicyLabelsColumn),
+		)
+		fromV = sqlgraph.Neighbors(po.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// Hooks returns the client hooks.
+func (c *PoliciesClient) Hooks() []Hook {
+	return c.hooks.Policies
+}
+
+// Interceptors returns the client interceptors.
+func (c *PoliciesClient) Interceptors() []Interceptor {
+	return c.inters.Policies
+}
+
+func (c *PoliciesClient) mutate(ctx context.Context, m *PoliciesMutation) (Value, error) {
+	switch m.Op() {
+	case OpCreate:
+		return (&PoliciesCreate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdate:
+		return (&PoliciesUpdate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdateOne:
+		return (&PoliciesUpdateOne{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpDelete, OpDeleteOne:
+		return (&PoliciesDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
+	default:
+		return nil, fmt.Errorf("ent: unknown Policies mutation op: %q", m.Op())
+	}
+}
+
+// PolicyLabelsClient is a client for the PolicyLabels schema.
+type PolicyLabelsClient struct {
+	config
+}
+
+// NewPolicyLabelsClient returns a client for the PolicyLabels from the given config.
+func NewPolicyLabelsClient(c config) *PolicyLabelsClient {
+	return &PolicyLabelsClient{config: c}
+}
+
+// Use adds a list of mutation hooks to the hooks stack.
+// A call to `Use(f, g, h)` equals to `policylabels.Hooks(f(g(h())))`.
+func (c *PolicyLabelsClient) Use(hooks ...Hook) {
+	c.hooks.PolicyLabels = append(c.hooks.PolicyLabels, hooks...)
+}
+
+// Intercept adds a list of query interceptors to the interceptors stack.
+// A call to `Intercept(f, g, h)` equals to `policylabels.Intercept(f(g(h())))`.
+func (c *PolicyLabelsClient) Intercept(interceptors ...Interceptor) {
+	c.inters.PolicyLabels = append(c.inters.PolicyLabels, interceptors...)
+}
+
+// Create returns a builder for creating a PolicyLabels entity.
+func (c *PolicyLabelsClient) Create() *PolicyLabelsCreate {
+	mutation := newPolicyLabelsMutation(c.config, OpCreate)
+	return &PolicyLabelsCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// CreateBulk returns a builder for creating a bulk of PolicyLabels entities.
+func (c *PolicyLabelsClient) CreateBulk(builders ...*PolicyLabelsCreate) *PolicyLabelsCreateBulk {
+	return &PolicyLabelsCreateBulk{config: c.config, builders: builders}
+}
+
+// MapCreateBulk creates a bulk creation builder from the given slice. For each item in the slice, the function creates
+// a builder and applies setFunc on it.
+func (c *PolicyLabelsClient) MapCreateBulk(slice any, setFunc func(*PolicyLabelsCreate, int)) *PolicyLabelsCreateBulk {
+	rv := reflect.ValueOf(slice)
+	if rv.Kind() != reflect.Slice {
+		return &PolicyLabelsCreateBulk{err: fmt.Errorf("calling to PolicyLabelsClient.MapCreateBulk with wrong type %T, need slice", slice)}
+	}
+	builders := make([]*PolicyLabelsCreate, rv.Len())
+	for i := 0; i < rv.Len(); i++ {
+		builders[i] = c.Create()
+		setFunc(builders[i], i)
+	}
+	return &PolicyLabelsCreateBulk{config: c.config, builders: builders}
+}
+
+// Update returns an update builder for PolicyLabels.
+func (c *PolicyLabelsClient) Update() *PolicyLabelsUpdate {
+	mutation := newPolicyLabelsMutation(c.config, OpUpdate)
+	return &PolicyLabelsUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOne returns an update builder for the given entity.
+func (c *PolicyLabelsClient) UpdateOne(pl *PolicyLabels) *PolicyLabelsUpdateOne {
+	mutation := newPolicyLabelsMutation(c.config, OpUpdateOne, withPolicyLabels(pl))
+	return &PolicyLabelsUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOneID returns an update builder for the given id.
+func (c *PolicyLabelsClient) UpdateOneID(id int) *PolicyLabelsUpdateOne {
+	mutation := newPolicyLabelsMutation(c.config, OpUpdateOne, withPolicyLabelsID(id))
+	return &PolicyLabelsUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// Delete returns a delete builder for PolicyLabels.
+func (c *PolicyLabelsClient) Delete() *PolicyLabelsDelete {
+	mutation := newPolicyLabelsMutation(c.config, OpDelete)
+	return &PolicyLabelsDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// DeleteOne returns a builder for deleting the given entity.
+func (c *PolicyLabelsClient) DeleteOne(pl *PolicyLabels) *PolicyLabelsDeleteOne {
+	return c.DeleteOneID(pl.ID)
+}
+
+// DeleteOneID returns a builder for deleting the given entity by its id.
+func (c *PolicyLabelsClient) DeleteOneID(id int) *PolicyLabelsDeleteOne {
+	builder := c.Delete().Where(policylabels.ID(id))
+	builder.mutation.id = &id
+	builder.mutation.op = OpDeleteOne
+	return &PolicyLabelsDeleteOne{builder}
+}
+
+// Query returns a query builder for PolicyLabels.
+func (c *PolicyLabelsClient) Query() *PolicyLabelsQuery {
+	return &PolicyLabelsQuery{
+		config: c.config,
+		ctx:    &QueryContext{Type: TypePolicyLabels},
+		inters: c.Interceptors(),
+	}
+}
+
+// Get returns a PolicyLabels entity by its id.
+func (c *PolicyLabelsClient) Get(ctx context.Context, id int) (*PolicyLabels, error) {
+	return c.Query().Where(policylabels.ID(id)).Only(ctx)
+}
+
+// GetX is like Get, but panics if an error occurs.
+func (c *PolicyLabelsClient) GetX(ctx context.Context, id int) *PolicyLabels {
+	obj, err := c.Get(ctx, id)
+	if err != nil {
+		panic(err)
+	}
+	return obj
+}
+
+// QueryPolicy queries the policy edge of a PolicyLabels.
+func (c *PolicyLabelsClient) QueryPolicy(pl *PolicyLabels) *PoliciesQuery {
+	query := (&PoliciesClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := pl.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(policylabels.Table, policylabels.FieldID, id),
+			sqlgraph.To(policies.Table, policies.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, true, policylabels.PolicyTable, policylabels.PolicyColumn),
+		)
+		fromV = sqlgraph.Neighbors(pl.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// Hooks returns the client hooks.
+func (c *PolicyLabelsClient) Hooks() []Hook {
+	return c.hooks.PolicyLabels
+}
+
+// Interceptors returns the client interceptors.
+func (c *PolicyLabelsClient) Interceptors() []Interceptor {
+	return c.inters.PolicyLabels
+}
+
+func (c *PolicyLabelsClient) mutate(ctx context.Context, m *PolicyLabelsMutation) (Value, error) {
+	switch m.Op() {
+	case OpCreate:
+		return (&PolicyLabelsCreate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdate:
+		return (&PolicyLabelsUpdate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdateOne:
+		return (&PolicyLabelsUpdateOne{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpDelete, OpDeleteOne:
+		return (&PolicyLabelsDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
+	default:
+		return nil, fmt.Errorf("ent: unknown PolicyLabels mutation op: %q", m.Op())
+	}
+}
+
 // hooks and interceptors per client, for fast access.
 type (
 	hooks struct {
-		IntegrationType, Integrations []ent.Hook
+		IntegrationType, Integrations, Policies, PolicyLabels []ent.Hook
 	}
 	inters struct {
-		IntegrationType, Integrations []ent.Interceptor
+		IntegrationType, Integrations, Policies, PolicyLabels []ent.Interceptor
 	}
 )

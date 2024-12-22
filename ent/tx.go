@@ -16,6 +16,10 @@ type Tx struct {
 	IntegrationType *IntegrationTypeClient
 	// Integrations is the client for interacting with the Integrations builders.
 	Integrations *IntegrationsClient
+	// Policies is the client for interacting with the Policies builders.
+	Policies *PoliciesClient
+	// PolicyLabels is the client for interacting with the PolicyLabels builders.
+	PolicyLabels *PolicyLabelsClient
 
 	// lazily loaded.
 	client     *Client
@@ -149,6 +153,8 @@ func (tx *Tx) Client() *Client {
 func (tx *Tx) init() {
 	tx.IntegrationType = NewIntegrationTypeClient(tx.config)
 	tx.Integrations = NewIntegrationsClient(tx.config)
+	tx.Policies = NewPoliciesClient(tx.config)
+	tx.PolicyLabels = NewPolicyLabelsClient(tx.config)
 }
 
 // txDriver wraps the given dialect.Tx with a nop dialect.Driver implementation.
