@@ -90,7 +90,9 @@ func UpdatePolicyLabels(client *ent.Client) func(ctx context.Context, req Update
 
 			createdLabels, err := tx.PolicyLabels.CreateBulk(bulk...).Save(ctx)
 			if err != nil {
-				tx.Rollback()
+				if rollbackErr := tx.Rollback(); rollbackErr != nil {
+					fmt.Printf("rollback failed: %v\n", rollbackErr)
+				}
 				return status.Wrap(err, status.Internal)
 			}
 

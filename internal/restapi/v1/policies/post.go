@@ -74,7 +74,9 @@ func CreatePolicy(client *ent.Client) func(ctx context.Context, req CreatePolicy
 			SetNillableCheck(req.Check).
 			Save(ctx)
 		if err != nil {
-			tx.Rollback()
+			if rollbackErr := tx.Rollback(); rollbackErr != nil {
+				fmt.Printf("rollback failed: %v\n", rollbackErr)
+			}
 			return status.Wrap(err, status.Internal)
 		}
 

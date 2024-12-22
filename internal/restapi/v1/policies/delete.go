@@ -62,7 +62,9 @@ func DeletePolicy(client *ent.Client) func(ctx context.Context, req DeletePolicy
 		// Delete the policy
 		err = tx.Policies.DeleteOneID(req.ID).Exec(ctx)
 		if err != nil {
-			tx.Rollback()
+			if rollbackErr := tx.Rollback(); rollbackErr != nil {
+				fmt.Printf("rollback failed: %v\n", rollbackErr)
+			}
 			return status.Wrap(fmt.Errorf("failed to delete policy: %v", err), status.Internal)
 		}
 
