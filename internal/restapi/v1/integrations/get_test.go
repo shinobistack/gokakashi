@@ -39,8 +39,7 @@ func TestGetIntegration(t *testing.T) {
 	assert.Equal(t, "linear", res.Type)
 
 	// Test case: Invalid UUID
-	invalidUUID := "c60c700e-3dd9-4059-8372-f772358c"
-	parsedUUID, err := uuid.Parse(invalidUUID)
+	parsedUUID, _ := uuid.Parse("c60c700e-3dd9-4059-8372-f772358c")
 	req = integrations.GetIntegrationRequests{parsedUUID}
 	err = handler(context.Background(), req, res)
 	assert.Error(t, err)

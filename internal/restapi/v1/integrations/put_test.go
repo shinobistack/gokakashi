@@ -2,6 +2,7 @@ package integrations_test
 
 import (
 	"context"
+	"fmt"
 	"github.com/shinobistack/gokakashi/internal/restapi/v1/integrations"
 	"testing"
 
@@ -48,8 +49,7 @@ func TestUpdateIntegration(t *testing.T) {
 func TestUpdateIntegration_InvalidUUID(t *testing.T) {
 	client := enttest.Open(t, "sqlite3", "file:ent?mode=memory&cache=shared&_fk=1")
 	defer client.Close()
-	invalidUUID := "c60c700e-3dd9-4059-8372-f77235"
-	parsedUUID, err := uuid.Parse(invalidUUID)
+	parsedUUID, _ := uuid.Parse("c60c700e-3dd9-4059-8372-f77235")
 
 	req := integrations.UpdateIntegrationRequest{
 		ID:   parsedUUID,
@@ -58,8 +58,8 @@ func TestUpdateIntegration_InvalidUUID(t *testing.T) {
 	var res integrations.GetIntegrationResponse
 
 	handler := integrations.UpdateIntegration(client)
-	err = handler(context.Background(), req, &res)
-
+	err := handler(context.Background(), req, &res)
+	fmt.Println(err)
 	assert.Error(t, err)
 }
 
