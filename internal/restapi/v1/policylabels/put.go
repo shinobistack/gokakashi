@@ -3,6 +3,7 @@ package policylabels
 import (
 	"context"
 	"errors"
+	"fmt"
 	"github.com/google/uuid"
 	"github.com/shinobistack/gokakashi/ent"
 	"github.com/shinobistack/gokakashi/ent/policylabels"
@@ -72,7 +73,9 @@ func UpdatePolicyLabels(client *ent.Client) func(ctx context.Context, req Update
 				Where(policylabels.PolicyID(req.PolicyID)).
 				Exec(ctx)
 			if err != nil {
-				tx.Rollback()
+				if rollbackErr := tx.Rollback(); rollbackErr != nil {
+					fmt.Printf("rollback failed: %v\n", rollbackErr)
+				}
 				return status.Wrap(err, status.Internal)
 			}
 

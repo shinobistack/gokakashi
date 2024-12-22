@@ -36,11 +36,15 @@ func DeletePolicy(client *ent.Client) func(ctx context.Context, req DeletePolicy
 		// Check if the policy exists
 		exists, err := tx.Policies.Query().Where(policies.ID(req.ID)).Exist(ctx)
 		if err != nil {
-			tx.Rollback()
+			if rollbackErr := tx.Rollback(); rollbackErr != nil {
+				fmt.Printf("rollback failed: %v\n", rollbackErr)
+			}
 			return status.Wrap(fmt.Errorf("failed to query policy: %v", err), status.Internal)
 		}
 		if !exists {
-			tx.Rollback()
+			if rollbackErr := tx.Rollback(); rollbackErr != nil {
+				fmt.Printf("rollback failed: %v\n", rollbackErr)
+			}
 			return status.Wrap(errors.New("policy not found"), status.NotFound)
 		}
 
@@ -49,7 +53,9 @@ func DeletePolicy(client *ent.Client) func(ctx context.Context, req DeletePolicy
 			Where(policylabels.PolicyID(req.ID)).
 			Exec(ctx)
 		if err != nil {
-			tx.Rollback()
+			if rollbackErr := tx.Rollback(); rollbackErr != nil {
+				fmt.Printf("rollback failed: %v\n", rollbackErr)
+			}
 			return status.Wrap(fmt.Errorf("failed to delete policy labels: %v", err), status.Internal)
 		}
 
