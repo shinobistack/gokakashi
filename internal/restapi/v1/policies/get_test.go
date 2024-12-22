@@ -28,18 +28,20 @@ func TestListPolicies(t *testing.T) {
 	defer client.Close()
 
 	// Create test data
-	client.Policies.Create().
+	_, err := client.Policies.Create().
 		SetName("test-policy1").
 		SetImage(schema.Image{Registry: "example-registry", Name: "example-name", Tags: []string{"v1.0"}}).
 		Save(context.Background())
-	client.Policies.Create().
+	assert.NoError(t, err)
+	_, err = client.Policies.Create().
 		SetName("test-policy2").
 		SetImage(schema.Image{Registry: "example-registry", Name: "example-name", Tags: []string{"v1.0"}}).
 		Save(context.Background())
+	assert.NoError(t, err)
 
 	req := policies.ListPoliciesRequest{}
 	res := &[]policies.GetPolicyResponse{}
-	err := policies.ListPolicies(client)(context.Background(), req, res)
+	err = policies.ListPolicies(client)(context.Background(), req, res)
 
 	assert.NoError(t, err)
 	assert.Equal(t, 2, len(*res))
