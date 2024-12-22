@@ -91,7 +91,9 @@ func CreatePolicy(client *ent.Client) func(ctx context.Context, req CreatePolicy
 			}
 
 			if _, err := tx.PolicyLabels.CreateBulk(bulk...).Save(ctx); err != nil {
-				tx.Rollback()
+				if rollbackErr := tx.Rollback(); rollbackErr != nil {
+					fmt.Printf("rollback failed: %v\n", rollbackErr)
+				}
 				return status.Wrap(err, status.Internal)
 			}
 		}
