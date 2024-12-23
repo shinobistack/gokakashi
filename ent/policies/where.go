@@ -124,6 +124,16 @@ func NameContainsFold(v string) predicate.Policies {
 	return predicate.Policies(sql.FieldContainsFold(FieldName, v))
 }
 
+// LabelsIsNil applies the IsNil predicate on the "labels" field.
+func LabelsIsNil() predicate.Policies {
+	return predicate.Policies(sql.FieldIsNull(FieldLabels))
+}
+
+// LabelsNotNil applies the NotNil predicate on the "labels" field.
+func LabelsNotNil() predicate.Policies {
+	return predicate.Policies(sql.FieldNotNull(FieldLabels))
+}
+
 // TriggerIsNil applies the IsNil predicate on the "trigger" field.
 func TriggerIsNil() predicate.Policies {
 	return predicate.Policies(sql.FieldIsNull(FieldTrigger))

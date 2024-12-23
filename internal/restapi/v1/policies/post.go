@@ -14,8 +14,9 @@ import (
 )
 
 type CreatePolicyRequest struct {
-	Name  string       `json:"name"`
-	Image schema.Image `json:"image"`
+	Name   string               `json:"name"`
+	Image  schema.Image         `json:"image"`
+	Labels []schema.PolicyLabel `json:"labels"`
 	// Todo: Implement the logic of Type:cron etc
 	Trigger map[string]interface{} `json:"trigger"`
 	Check   *schema.Check          `json:"check"`
@@ -28,7 +29,6 @@ type CreatePolicyResponse struct {
 
 func CreatePolicy(client *ent.Client) func(ctx context.Context, req CreatePolicyRequest, res *CreatePolicyResponse) error {
 	return func(ctx context.Context, req CreatePolicyRequest, res *CreatePolicyResponse) error {
-		// Todo: Name validation
 		// Validate image fields
 		if req.Image.Registry == "" || req.Image.Name == "" || len(req.Image.Tags) == 0 {
 			return status.Wrap(errors.New("invalid image: missing required fields"), status.InvalidArgument)
@@ -61,15 +61,45 @@ func CreatePolicy(client *ent.Client) func(ctx context.Context, req CreatePolicy
 			return status.Wrap(errors.New("invalid check: missing required fields"), status.InvalidArgument)
 		}
 
-		// Save policy to database
-		policy, err := client.Policies.Create().
+		tx, err := client.Tx(ctx)
+		if err != nil {
+			return status.Wrap(err, status.Internal)
+		}
+
+		// Save the policy
+		policy, err := tx.Policies.Create().
 			SetName(req.Name).
 			SetImage(req.Image).
 			SetTrigger(req.Trigger).
 			SetNillableCheck(req.Check).
 			Save(ctx)
 		if err != nil {
-			return status.Wrap(fmt.Errorf("failed to create policy: %v", err), status.Internal)
+			if rollbackErr := tx.Rollback(); rollbackErr != nil {
+				fmt.Printf("rollback failed: %v\n", rollbackErr)
+			}
+			return status.Wrap(err, status.Internal)
+		}
+
+		// Save policy labels
+		if len(req.Labels) > 0 {
+			bulk := make([]*ent.PolicyLabelsCreate, len(req.Labels))
+			for i, label := range req.Labels {
+				bulk[i] = tx.PolicyLabels.Create().
+					SetPolicyID(policy.ID).
+					SetKey(label.Key).
+					SetValue(label.Value)
+			}
+
+			if _, err := tx.PolicyLabels.CreateBulk(bulk...).Save(ctx); err != nil {
+				if rollbackErr := tx.Rollback(); rollbackErr != nil {
+					fmt.Printf("rollback failed: %v\n", rollbackErr)
+				}
+				return status.Wrap(err, status.Internal)
+			}
+		}
+
+		if err := tx.Commit(); err != nil {
+			return status.Wrap(err, status.Internal)
 		}
 
 		res.ID = policy.ID

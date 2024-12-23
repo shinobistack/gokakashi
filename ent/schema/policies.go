@@ -12,6 +12,11 @@ type Policies struct {
 	ent.Schema
 }
 
+type PolicyLabel struct {
+	Key   string `json:"key"`
+	Value string `json:"value"`
+}
+
 type Image struct {
 	Registry string   `json:"registry"`
 	Name     string   `json:"name"`
@@ -37,6 +42,9 @@ func (Policies) Fields() []ent.Field {
 			Comment("Policy name."),
 		field.JSON("image", Image{}).
 			Comment("Stores image details like registry, tags."),
+		field.JSON("labels", PolicyLabels{}).
+			Optional().
+			Comment("Policies labels key:value"),
 		// Todo: Trigger is optional
 		field.JSON("trigger", map[string]interface{}{}).
 			Optional().

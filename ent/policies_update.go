@@ -57,6 +57,26 @@ func (pu *PoliciesUpdate) SetNillableImage(s *schema.Image) *PoliciesUpdate {
 	return pu
 }
 
+// SetLabels sets the "labels" field.
+func (pu *PoliciesUpdate) SetLabels(sl schema.PolicyLabels) *PoliciesUpdate {
+	pu.mutation.SetLabels(sl)
+	return pu
+}
+
+// SetNillableLabels sets the "labels" field if the given value is not nil.
+func (pu *PoliciesUpdate) SetNillableLabels(sl *schema.PolicyLabels) *PoliciesUpdate {
+	if sl != nil {
+		pu.SetLabels(*sl)
+	}
+	return pu
+}
+
+// ClearLabels clears the value of the "labels" field.
+func (pu *PoliciesUpdate) ClearLabels() *PoliciesUpdate {
+	pu.mutation.ClearLabels()
+	return pu
+}
+
 // SetTrigger sets the "trigger" field.
 func (pu *PoliciesUpdate) SetTrigger(m map[string]interface{}) *PoliciesUpdate {
 	pu.mutation.SetTrigger(m)
@@ -185,6 +205,12 @@ func (pu *PoliciesUpdate) sqlSave(ctx context.Context) (n int, err error) {
 	if value, ok := pu.mutation.Image(); ok {
 		_spec.SetField(policies.FieldImage, field.TypeJSON, value)
 	}
+	if value, ok := pu.mutation.Labels(); ok {
+		_spec.SetField(policies.FieldLabels, field.TypeJSON, value)
+	}
+	if pu.mutation.LabelsCleared() {
+		_spec.ClearField(policies.FieldLabels, field.TypeJSON)
+	}
 	if value, ok := pu.mutation.Trigger(); ok {
 		_spec.SetField(policies.FieldTrigger, field.TypeJSON, value)
 	}
@@ -287,6 +313,26 @@ func (puo *PoliciesUpdateOne) SetNillableImage(s *schema.Image) *PoliciesUpdateO
 	if s != nil {
 		puo.SetImage(*s)
 	}
+	return puo
+}
+
+// SetLabels sets the "labels" field.
+func (puo *PoliciesUpdateOne) SetLabels(sl schema.PolicyLabels) *PoliciesUpdateOne {
+	puo.mutation.SetLabels(sl)
+	return puo
+}
+
+// SetNillableLabels sets the "labels" field if the given value is not nil.
+func (puo *PoliciesUpdateOne) SetNillableLabels(sl *schema.PolicyLabels) *PoliciesUpdateOne {
+	if sl != nil {
+		puo.SetLabels(*sl)
+	}
+	return puo
+}
+
+// ClearLabels clears the value of the "labels" field.
+func (puo *PoliciesUpdateOne) ClearLabels() *PoliciesUpdateOne {
+	puo.mutation.ClearLabels()
 	return puo
 }
 
@@ -447,6 +493,12 @@ func (puo *PoliciesUpdateOne) sqlSave(ctx context.Context) (_node *Policies, err
 	}
 	if value, ok := puo.mutation.Image(); ok {
 		_spec.SetField(policies.FieldImage, field.TypeJSON, value)
+	}
+	if value, ok := puo.mutation.Labels(); ok {
+		_spec.SetField(policies.FieldLabels, field.TypeJSON, value)
+	}
+	if puo.mutation.LabelsCleared() {
+		_spec.ClearField(policies.FieldLabels, field.TypeJSON)
 	}
 	if value, ok := puo.mutation.Trigger(); ok {
 		_spec.SetField(policies.FieldTrigger, field.TypeJSON, value)

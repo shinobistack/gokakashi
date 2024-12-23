@@ -17,6 +17,8 @@ const (
 	FieldName = "name"
 	// FieldImage holds the string denoting the image field in the database.
 	FieldImage = "image"
+	// FieldLabels holds the string denoting the labels field in the database.
+	FieldLabels = "labels"
 	// FieldTrigger holds the string denoting the trigger field in the database.
 	FieldTrigger = "trigger"
 	// FieldCheck holds the string denoting the check field in the database.
@@ -39,6 +41,7 @@ var Columns = []string{
 	FieldID,
 	FieldName,
 	FieldImage,
+	FieldLabels,
 	FieldTrigger,
 	FieldCheck,
 }
