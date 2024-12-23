@@ -16,7 +16,7 @@ type IntegrationType struct {
 	config `json:"-"`
 	// ID of the ent.
 	ID string `json:"id,omitempty"`
-	// Types of Integration e.g., linear,jira
+	// Human-readable name for the integration type
 	DisplayName string `json:"display_name,omitempty"`
 	// Edges holds the relations/edges for other nodes in the graph.
 	// The values are being populated by the IntegrationTypeQuery when eager-loading is set.
