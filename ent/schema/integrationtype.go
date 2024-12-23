@@ -15,7 +15,7 @@ type IntegrationType struct {
 func (IntegrationType) Fields() []ent.Field {
 	return []ent.Field{
 		field.String("id").Unique().Immutable(),
-		field.String("display_name").NotEmpty().Unique().Comment("Types of Integration e.g., linear,jira"),
+		field.String("display_name").NotEmpty().Unique().Comment("Human-readable name for the integration type"),
 	}
 }
 

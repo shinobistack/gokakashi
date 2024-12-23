@@ -9,8 +9,12 @@ import (
 	"github.com/shinobistack/gokakashi/ent"
 	"github.com/shinobistack/gokakashi/internal/restapi/server/middleware"
 	integrations1 "github.com/shinobistack/gokakashi/internal/restapi/v1/integrations"
+<<<<<<< HEAD
 	policies1 "github.com/shinobistack/gokakashi/internal/restapi/v1/policies"
 	policylabels1 "github.com/shinobistack/gokakashi/internal/restapi/v1/policylabels"
+=======
+	integrationtype1 "github.com/shinobistack/gokakashi/internal/restapi/v1/integrationtype"
+>>>>>>> main
 	"github.com/swaggest/openapi-go/openapi31"
 	"github.com/swaggest/rest/web"
 	swg "github.com/swaggest/swgui"
@@ -50,6 +54,11 @@ func (srv *Server) Service() *web.Service {
 	apiV1.Get("/integrations/{id}", usecase.NewInteractor(integrations1.GetIntegration(srv.DB)))
 	apiV1.Post("/integrations", usecase.NewInteractor(integrations1.CreateIntegration(srv.DB)))
 	apiV1.Put("/integrations/{id}", usecase.NewInteractor(integrations1.UpdateIntegration(srv.DB)))
+
+	apiV1.Get("/integrationtypes", usecase.NewInteractor(integrationtype1.ListIntegrationType(srv.DB)))
+	apiV1.Get("/integrationtypes/{id}", usecase.NewInteractor(integrationtype1.GetIntegrationType(srv.DB)))
+	apiV1.Post("/integrationtypes", usecase.NewInteractor(integrationtype1.CreateIntegrationType(srv.DB)))
+	apiV1.Put("/integrationtypes/{id}", usecase.NewInteractor(integrationtype1.UpdateIntegrationType(srv.DB)))
 
 	apiV1.Post("/policies", usecase.NewInteractor(policies1.CreatePolicy(srv.DB)))
 	apiV1.Get("/policies", usecase.NewInteractor(policies1.ListPolicies(srv.DB)))

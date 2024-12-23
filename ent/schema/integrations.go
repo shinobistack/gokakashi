@@ -32,7 +32,7 @@ func (Integrations) Fields() []ent.Field {
 // Edges of the Integrations.
 func (Integrations) Edges() []ent.Edge {
 	// Many to one
-	edge.From("id", Integrations.Type).
+	edge.From("integrations_type", Integrations.Type).
 		// Reference the "integrations" edge in IntegrationType
 		Ref("integrations").
 		// Use as foreign key
