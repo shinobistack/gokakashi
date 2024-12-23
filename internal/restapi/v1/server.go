@@ -9,12 +9,9 @@ import (
 	"github.com/shinobistack/gokakashi/ent"
 	"github.com/shinobistack/gokakashi/internal/restapi/server/middleware"
 	integrations1 "github.com/shinobistack/gokakashi/internal/restapi/v1/integrations"
-<<<<<<< HEAD
+	integrationtype1 "github.com/shinobistack/gokakashi/internal/restapi/v1/integrationtype"
 	policies1 "github.com/shinobistack/gokakashi/internal/restapi/v1/policies"
 	policylabels1 "github.com/shinobistack/gokakashi/internal/restapi/v1/policylabels"
-=======
-	integrationtype1 "github.com/shinobistack/gokakashi/internal/restapi/v1/integrationtype"
->>>>>>> main
 	"github.com/swaggest/openapi-go/openapi31"
 	"github.com/swaggest/rest/web"
 	swg "github.com/swaggest/swgui"
