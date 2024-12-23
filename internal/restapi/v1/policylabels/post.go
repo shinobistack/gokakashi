@@ -5,6 +5,7 @@ import (
 	"errors"
 	"github.com/google/uuid"
 	"github.com/shinobistack/gokakashi/ent"
+	"github.com/shinobistack/gokakashi/ent/policylabels"
 	"github.com/swaggest/usecase/status"
 )
 
@@ -15,8 +16,8 @@ type CreatePolicyLabelRequest struct {
 }
 
 type CreatePolicyLabelResponse struct {
-	ID     uuid.UUID `json:"id"`
-	Status string    `json:"status"`
+	ID     uuid.UUID     `json:"policy_id"`
+	Labels []PolicyLabel `json:"labels"`
 }
 
 // ToDO: When extra fields are passed?
@@ -38,6 +39,17 @@ func CreatePolicyLabel(client *ent.Client) func(ctx context.Context, req CreateP
 			}
 			return status.Wrap(err, status.Internal)
 		}
+		// Validate of if label exists
+		// Query the label
+		exists, _ := client.PolicyLabels.Query().
+			Where(policylabels.PolicyID(req.PolicyID), policylabels.Key(req.Key)).
+			Exist(ctx)
+		if err != nil {
+			return status.Wrap(err, status.Internal)
+		}
+		if exists {
+			return status.Wrap(errors.New("label with the same key already exists"), status.AlreadyExists)
+		}
 
 		// Create the policy label
 		// ToDo: append the key
@@ -51,7 +63,12 @@ func CreatePolicyLabel(client *ent.Client) func(ctx context.Context, req CreateP
 		}
 
 		res.ID = label.PolicyID
-		res.Status = "created"
+		res.Labels = []PolicyLabel{
+			{
+				Key:   label.Key,
+				Value: label.Value,
+			},
+		}
 		return nil
 	}
 }
