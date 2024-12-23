@@ -2,7 +2,6 @@ package integrations_test
 
 import (
 	"context"
-	"github.com/google/uuid"
 	"github.com/shinobistack/gokakashi/internal/restapi/v1/integrations"
 	"testing"
 
@@ -29,9 +28,7 @@ func TestCreateIntegration_ValidInput(t *testing.T) {
 	assert.Equal(t, "created", res.Status)
 
 	// Verify database
-	integrationID, err := uuid.Parse(res.ID)
-	assert.NoError(t, err)
-	integration, err := client.Integrations.Get(context.Background(), integrationID)
+	integration, err := client.Integrations.Get(context.Background(), res.ID)
 	assert.NoError(t, err)
 	assert.Equal(t, "Valid Integration", integration.Name)
 	assert.Equal(t, "linear", integration.Type)
@@ -112,9 +109,7 @@ func TestCreateIntegration_EmptyConfig(t *testing.T) {
 	assert.NotEmpty(t, res.ID)
 
 	// Verify database
-	integrationID, err := uuid.Parse(res.ID)
-	assert.NoError(t, err)
-	integration, err := client.Integrations.Get(context.Background(), integrationID)
+	integration, err := client.Integrations.Get(context.Background(), res.ID)
 	assert.NoError(t, err)
 	assert.Equal(t, 0, len(integration.Config))
 }
