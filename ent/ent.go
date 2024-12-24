@@ -14,6 +14,8 @@ import (
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"github.com/shinobistack/gokakashi/ent/integrations"
 	"github.com/shinobistack/gokakashi/ent/integrationtype"
+	"github.com/shinobistack/gokakashi/ent/policies"
+	"github.com/shinobistack/gokakashi/ent/policylabels"
 )
 
 // ent aliases to avoid import conflicts in user's code.
@@ -76,6 +78,8 @@ func checkColumn(table, column string) error {
 		columnCheck = sql.NewColumnCheck(map[string]func(string) bool{
 			integrationtype.Table: integrationtype.ValidColumn,
 			integrations.Table:    integrations.ValidColumn,
+			policies.Table:        policies.ValidColumn,
+			policylabels.Table:    policylabels.ValidColumn,
 		})
 	})
 	return columnCheck(table, column)

@@ -6,6 +6,8 @@ import (
 	"github.com/google/uuid"
 	"github.com/shinobistack/gokakashi/ent/integrations"
 	"github.com/shinobistack/gokakashi/ent/integrationtype"
+	"github.com/shinobistack/gokakashi/ent/policies"
+	"github.com/shinobistack/gokakashi/ent/policylabels"
 	"github.com/shinobistack/gokakashi/ent/schema"
 )
 
@@ -33,4 +35,38 @@ func init() {
 	integrationsDescID := integrationsFields[0].Descriptor()
 	// integrations.DefaultID holds the default value on creation for the id field.
 	integrations.DefaultID = integrationsDescID.Default.(func() uuid.UUID)
+	policiesFields := schema.Policies{}.Fields()
+	_ = policiesFields
+	// policiesDescName is the schema descriptor for name field.
+	policiesDescName := policiesFields[1].Descriptor()
+	// policies.NameValidator is a validator for the "name" field. It is called by the builders before save.
+	policies.NameValidator = func() func(string) error {
+		validators := policiesDescName.Validators
+		fns := [...]func(string) error{
+			validators[0].(func(string) error),
+			validators[1].(func(string) error),
+		}
+		return func(name string) error {
+			for _, fn := range fns {
+				if err := fn(name); err != nil {
+					return err
+				}
+			}
+			return nil
+		}
+	}()
+	// policiesDescID is the schema descriptor for id field.
+	policiesDescID := policiesFields[0].Descriptor()
+	// policies.DefaultID holds the default value on creation for the id field.
+	policies.DefaultID = policiesDescID.Default.(func() uuid.UUID)
+	policylabelsFields := schema.PolicyLabels{}.Fields()
+	_ = policylabelsFields
+	// policylabelsDescKey is the schema descriptor for key field.
+	policylabelsDescKey := policylabelsFields[1].Descriptor()
+	// policylabels.KeyValidator is a validator for the "key" field. It is called by the builders before save.
+	policylabels.KeyValidator = policylabelsDescKey.Validators[0].(func(string) error)
+	// policylabelsDescValue is the schema descriptor for value field.
+	policylabelsDescValue := policylabelsFields[2].Descriptor()
+	// policylabels.ValueValidator is a validator for the "value" field. It is called by the builders before save.
+	policylabels.ValueValidator = policylabelsDescValue.Validators[0].(func(string) error)
 }

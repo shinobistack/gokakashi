@@ -15,9 +15,16 @@ type Integrations struct {
 // Fields of the Integrations.
 func (Integrations) Fields() []ent.Field {
 	return []ent.Field{
-		field.UUID("id", uuid.UUID{}).Default(uuid.New).Unique().Immutable().Comment("UUID for unique identification"),
-		field.String("name").NotEmpty().Unique().Comment("Integration name"),
-		field.String("type").NotEmpty().Comment("Foreign key to IntegrationType.id"),
+		field.UUID("id", uuid.UUID{}).
+			Default(uuid.New).Unique().
+			Immutable().
+			Comment("UUID for unique identification"),
+		field.String("name").
+			NotEmpty().Unique().
+			Comment("Integration name"),
+		field.String("type").
+			NotEmpty().
+			Comment("Foreign key to IntegrationType.id"),
 		field.JSON("config", map[string]interface{}{}).Comment("Integrations Configurations stored as JSONB"),
 	}
 }
@@ -25,7 +32,7 @@ func (Integrations) Fields() []ent.Field {
 // Edges of the Integrations.
 func (Integrations) Edges() []ent.Edge {
 	// Many to one
-	edge.From("id", Integrations.Type).
+	edge.From("integrations_type", Integrations.Type).
 		// Reference the "integrations" edge in IntegrationType
 		Ref("integrations").
 		// Use as foreign key

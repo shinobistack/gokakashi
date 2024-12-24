@@ -33,6 +33,30 @@ func (f IntegrationsFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value
 	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.IntegrationsMutation", m)
 }
 
+// The PoliciesFunc type is an adapter to allow the use of ordinary
+// function as Policies mutator.
+type PoliciesFunc func(context.Context, *ent.PoliciesMutation) (ent.Value, error)
+
+// Mutate calls f(ctx, m).
+func (f PoliciesFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error) {
+	if mv, ok := m.(*ent.PoliciesMutation); ok {
+		return f(ctx, mv)
+	}
+	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.PoliciesMutation", m)
+}
+
+// The PolicyLabelsFunc type is an adapter to allow the use of ordinary
+// function as PolicyLabels mutator.
+type PolicyLabelsFunc func(context.Context, *ent.PolicyLabelsMutation) (ent.Value, error)
+
+// Mutate calls f(ctx, m).
+func (f PolicyLabelsFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error) {
+	if mv, ok := m.(*ent.PolicyLabelsMutation); ok {
+		return f(ctx, mv)
+	}
+	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.PolicyLabelsMutation", m)
+}
+
 // Condition is a hook condition function.
 type Condition func(context.Context, ent.Mutation) bool
 

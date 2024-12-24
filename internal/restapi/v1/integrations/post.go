@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"github.com/google/uuid"
 	"github.com/shinobistack/gokakashi/ent"
 	"github.com/shinobistack/gokakashi/ent/integrations"
 	"github.com/swaggest/usecase/status"
@@ -16,8 +17,8 @@ type CreateIntegrationRequest struct {
 }
 
 type CreateIntegrationResponse struct {
-	ID     string `json:"id"`
-	Status string `json:"status"`
+	ID     uuid.UUID `json:"id"`
+	Status string    `json:"status"`
 }
 
 func CreateIntegration(client *ent.Client) func(ctx context.Context, req CreateIntegrationRequest, res *CreateIntegrationResponse) error {
@@ -47,7 +48,7 @@ func CreateIntegration(client *ent.Client) func(ctx context.Context, req CreateI
 			return status.Wrap(fmt.Errorf("failed to create integration: %v", err), status.Internal)
 		}
 
-		res.ID = integration.ID.String()
+		res.ID = integration.ID
 		res.Status = "created"
 		return nil
 

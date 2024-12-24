@@ -41,13 +41,52 @@ var (
 			},
 		},
 	}
+	// PoliciesColumns holds the columns for the "policies" table.
+	PoliciesColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeUUID, Unique: true},
+		{Name: "name", Type: field.TypeString, Unique: true},
+		{Name: "image", Type: field.TypeJSON},
+		{Name: "labels", Type: field.TypeJSON, Nullable: true},
+		{Name: "trigger", Type: field.TypeJSON, Nullable: true},
+		{Name: "check", Type: field.TypeJSON, Nullable: true},
+	}
+	// PoliciesTable holds the schema information for the "policies" table.
+	PoliciesTable = &schema.Table{
+		Name:       "policies",
+		Columns:    PoliciesColumns,
+		PrimaryKey: []*schema.Column{PoliciesColumns[0]},
+	}
+	// PolicyLabelsColumns holds the columns for the "policy_labels" table.
+	PolicyLabelsColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeInt, Increment: true},
+		{Name: "key", Type: field.TypeString},
+		{Name: "value", Type: field.TypeString},
+		{Name: "policy_id", Type: field.TypeUUID},
+	}
+	// PolicyLabelsTable holds the schema information for the "policy_labels" table.
+	PolicyLabelsTable = &schema.Table{
+		Name:       "policy_labels",
+		Columns:    PolicyLabelsColumns,
+		PrimaryKey: []*schema.Column{PolicyLabelsColumns[0]},
+		ForeignKeys: []*schema.ForeignKey{
+			{
+				Symbol:     "policy_labels_policies_policy_labels",
+				Columns:    []*schema.Column{PolicyLabelsColumns[3]},
+				RefColumns: []*schema.Column{PoliciesColumns[0]},
+				OnDelete:   schema.NoAction,
+			},
+		},
+	}
 	// Tables holds all the tables in the schema.
 	Tables = []*schema.Table{
 		IntegrationTypesTable,
 		IntegrationsTable,
+		PoliciesTable,
+		PolicyLabelsTable,
 	}
 )
 
 func init() {
 	IntegrationsTable.ForeignKeys[0].RefTable = IntegrationTypesTable
+	PolicyLabelsTable.ForeignKeys[0].RefTable = PoliciesTable
 }

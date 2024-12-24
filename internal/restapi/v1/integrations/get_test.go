@@ -29,7 +29,7 @@ func TestGetIntegration(t *testing.T) {
 	assert.NoError(t, err)
 
 	// Test case: Valid ID
-	req := integrations.GetIntegrationRequests{ID: id.String()}
+	req := integrations.GetIntegrationRequests{ID: id}
 	res := &integrations.GetIntegrationResponse{}
 	handler := integrations.GetIntegration(client)
 	err = handler(context.Background(), req, res)
@@ -39,12 +39,13 @@ func TestGetIntegration(t *testing.T) {
 	assert.Equal(t, "linear", res.Type)
 
 	// Test case: Invalid UUID
-	req = integrations.GetIntegrationRequests{ID: "invalid-uuid"}
+	parsedUUID, _ := uuid.Parse("c60c700e-3dd9-4059-8372-f772358c")
+	req = integrations.GetIntegrationRequests{parsedUUID}
 	err = handler(context.Background(), req, res)
 	assert.Error(t, err)
 
 	// Test case: Non-existent ID
-	req = integrations.GetIntegrationRequests{ID: uuid.New().String()}
+	req = integrations.GetIntegrationRequests{ID: uuid.New()}
 	err = handler(context.Background(), req, res)
 	assert.Error(t, err)
 
