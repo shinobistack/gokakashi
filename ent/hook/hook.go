@@ -57,6 +57,30 @@ func (f PolicyLabelsFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value
 	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.PolicyLabelsMutation", m)
 }
 
+// The ScanLabelsFunc type is an adapter to allow the use of ordinary
+// function as ScanLabels mutator.
+type ScanLabelsFunc func(context.Context, *ent.ScanLabelsMutation) (ent.Value, error)
+
+// Mutate calls f(ctx, m).
+func (f ScanLabelsFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error) {
+	if mv, ok := m.(*ent.ScanLabelsMutation); ok {
+		return f(ctx, mv)
+	}
+	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.ScanLabelsMutation", m)
+}
+
+// The ScansFunc type is an adapter to allow the use of ordinary
+// function as Scans mutator.
+type ScansFunc func(context.Context, *ent.ScansMutation) (ent.Value, error)
+
+// Mutate calls f(ctx, m).
+func (f ScansFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error) {
+	if mv, ok := m.(*ent.ScansMutation); ok {
+		return f(ctx, mv)
+	}
+	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.ScansMutation", m)
+}
+
 // Condition is a hook condition function.
 type Condition func(context.Context, ent.Mutation) bool
 

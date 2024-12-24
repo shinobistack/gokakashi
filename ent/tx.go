@@ -20,6 +20,10 @@ type Tx struct {
 	Policies *PoliciesClient
 	// PolicyLabels is the client for interacting with the PolicyLabels builders.
 	PolicyLabels *PolicyLabelsClient
+	// ScanLabels is the client for interacting with the ScanLabels builders.
+	ScanLabels *ScanLabelsClient
+	// Scans is the client for interacting with the Scans builders.
+	Scans *ScansClient
 
 	// lazily loaded.
 	client     *Client
@@ -155,6 +159,8 @@ func (tx *Tx) init() {
 	tx.Integrations = NewIntegrationsClient(tx.config)
 	tx.Policies = NewPoliciesClient(tx.config)
 	tx.PolicyLabels = NewPolicyLabelsClient(tx.config)
+	tx.ScanLabels = NewScanLabelsClient(tx.config)
+	tx.Scans = NewScansClient(tx.config)
 }
 
 // txDriver wraps the given dialect.Tx with a nop dialect.Driver implementation.

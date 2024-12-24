@@ -59,5 +59,7 @@ func (Policies) Edges() []ent.Edge {
 	// a one-to-many relationship with PolicyLabels.
 	return []ent.Edge{
 		edge.To("policy_labels", PolicyLabels.Type),
+		// A policy can have multiple scans.
+		edge.To("scans", Scans.Type),
 	}
 }

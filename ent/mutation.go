@@ -16,6 +16,8 @@ import (
 	"github.com/shinobistack/gokakashi/ent/policies"
 	"github.com/shinobistack/gokakashi/ent/policylabels"
 	"github.com/shinobistack/gokakashi/ent/predicate"
+	"github.com/shinobistack/gokakashi/ent/scanlabels"
+	"github.com/shinobistack/gokakashi/ent/scans"
 	"github.com/shinobistack/gokakashi/ent/schema"
 )
 
@@ -32,6 +34,8 @@ const (
 	TypeIntegrations    = "Integrations"
 	TypePolicies        = "Policies"
 	TypePolicyLabels    = "PolicyLabels"
+	TypeScanLabels      = "ScanLabels"
+	TypeScans           = "Scans"
 )
 
 // IntegrationTypeMutation represents an operation that mutates the IntegrationType nodes in the graph.
@@ -914,6 +918,9 @@ type PoliciesMutation struct {
 	policy_labels        map[int]struct{}
 	removedpolicy_labels map[int]struct{}
 	clearedpolicy_labels bool
+	scans                map[uuid.UUID]struct{}
+	removedscans         map[uuid.UUID]struct{}
+	clearedscans         bool
 	done                 bool
 	oldValue             func(context.Context) (*Policies, error)
 	predicates           []predicate.Policies
@@ -1296,6 +1303,60 @@ func (m *PoliciesMutation) ResetPolicyLabels() {
 	m.removedpolicy_labels = nil
 }
 
+// AddScanIDs adds the "scans" edge to the Scans entity by ids.
+func (m *PoliciesMutation) AddScanIDs(ids ...uuid.UUID) {
+	if m.scans == nil {
+		m.scans = make(map[uuid.UUID]struct{})
+	}
+	for i := range ids {
+		m.scans[ids[i]] = struct{}{}
+	}
+}
+
+// ClearScans clears the "scans" edge to the Scans entity.
+func (m *PoliciesMutation) ClearScans() {
+	m.clearedscans = true
+}
+
+// ScansCleared reports if the "scans" edge to the Scans entity was cleared.
+func (m *PoliciesMutation) ScansCleared() bool {
+	return m.clearedscans
+}
+
+// RemoveScanIDs removes the "scans" edge to the Scans entity by IDs.
+func (m *PoliciesMutation) RemoveScanIDs(ids ...uuid.UUID) {
+	if m.removedscans == nil {
+		m.removedscans = make(map[uuid.UUID]struct{})
+	}
+	for i := range ids {
+		delete(m.scans, ids[i])
+		m.removedscans[ids[i]] = struct{}{}
+	}
+}
+
+// RemovedScans returns the removed IDs of the "scans" edge to the Scans entity.
+func (m *PoliciesMutation) RemovedScansIDs() (ids []uuid.UUID) {
+	for id := range m.removedscans {
+		ids = append(ids, id)
+	}
+	return
+}
+
+// ScansIDs returns the "scans" edge IDs in the mutation.
+func (m *PoliciesMutation) ScansIDs() (ids []uuid.UUID) {
+	for id := range m.scans {
+		ids = append(ids, id)
+	}
+	return
+}
+
+// ResetScans resets all changes to the "scans" edge.
+func (m *PoliciesMutation) ResetScans() {
+	m.scans = nil
+	m.clearedscans = false
+	m.removedscans = nil
+}
+
 // Where appends a list predicates to the PoliciesMutation builder.
 func (m *PoliciesMutation) Where(ps ...predicate.Policies) {
 	m.predicates = append(m.predicates, ps...)
@@ -1518,9 +1579,12 @@ func (m *PoliciesMutation) ResetField(name string) error {
 
 // AddedEdges returns all edge names that were set/added in this mutation.
 func (m *PoliciesMutation) AddedEdges() []string {
-	edges := make([]string, 0, 1)
+	edges := make([]string, 0, 2)
 	if m.policy_labels != nil {
 		edges = append(edges, policies.EdgePolicyLabels)
+	}
+	if m.scans != nil {
+		edges = append(edges, policies.EdgeScans)
 	}
 	return edges
 }
@@ -1535,15 +1599,24 @@ func (m *PoliciesMutation) AddedIDs(name string) []ent.Value {
 			ids = append(ids, id)
 		}
 		return ids
+	case policies.EdgeScans:
+		ids := make([]ent.Value, 0, len(m.scans))
+		for id := range m.scans {
+			ids = append(ids, id)
+		}
+		return ids
 	}
 	return nil
 }
 
 // RemovedEdges returns all edge names that were removed in this mutation.
 func (m *PoliciesMutation) RemovedEdges() []string {
-	edges := make([]string, 0, 1)
+	edges := make([]string, 0, 2)
 	if m.removedpolicy_labels != nil {
 		edges = append(edges, policies.EdgePolicyLabels)
+	}
+	if m.removedscans != nil {
+		edges = append(edges, policies.EdgeScans)
 	}
 	return edges
 }
@@ -1558,15 +1631,24 @@ func (m *PoliciesMutation) RemovedIDs(name string) []ent.Value {
 			ids = append(ids, id)
 		}
 		return ids
+	case policies.EdgeScans:
+		ids := make([]ent.Value, 0, len(m.removedscans))
+		for id := range m.removedscans {
+			ids = append(ids, id)
+		}
+		return ids
 	}
 	return nil
 }
 
 // ClearedEdges returns all edge names that were cleared in this mutation.
 func (m *PoliciesMutation) ClearedEdges() []string {
-	edges := make([]string, 0, 1)
+	edges := make([]string, 0, 2)
 	if m.clearedpolicy_labels {
 		edges = append(edges, policies.EdgePolicyLabels)
+	}
+	if m.clearedscans {
+		edges = append(edges, policies.EdgeScans)
 	}
 	return edges
 }
@@ -1577,6 +1659,8 @@ func (m *PoliciesMutation) EdgeCleared(name string) bool {
 	switch name {
 	case policies.EdgePolicyLabels:
 		return m.clearedpolicy_labels
+	case policies.EdgeScans:
+		return m.clearedscans
 	}
 	return false
 }
@@ -1595,6 +1679,9 @@ func (m *PoliciesMutation) ResetEdge(name string) error {
 	switch name {
 	case policies.EdgePolicyLabels:
 		m.ResetPolicyLabels()
+		return nil
+	case policies.EdgeScans:
+		m.ResetScans()
 		return nil
 	}
 	return fmt.Errorf("unknown Policies edge %s", name)
@@ -2086,4 +2173,1220 @@ func (m *PolicyLabelsMutation) ResetEdge(name string) error {
 		return nil
 	}
 	return fmt.Errorf("unknown PolicyLabels edge %s", name)
+}
+
+// ScanLabelsMutation represents an operation that mutates the ScanLabels nodes in the graph.
+type ScanLabelsMutation struct {
+	config
+	op            Op
+	typ           string
+	id            *int
+	key           *string
+	value         *string
+	clearedFields map[string]struct{}
+	scan          *uuid.UUID
+	clearedscan   bool
+	done          bool
+	oldValue      func(context.Context) (*ScanLabels, error)
+	predicates    []predicate.ScanLabels
+}
+
+var _ ent.Mutation = (*ScanLabelsMutation)(nil)
+
+// scanlabelsOption allows management of the mutation configuration using functional options.
+type scanlabelsOption func(*ScanLabelsMutation)
+
+// newScanLabelsMutation creates new mutation for the ScanLabels entity.
+func newScanLabelsMutation(c config, op Op, opts ...scanlabelsOption) *ScanLabelsMutation {
+	m := &ScanLabelsMutation{
+		config:        c,
+		op:            op,
+		typ:           TypeScanLabels,
+		clearedFields: make(map[string]struct{}),
+	}
+	for _, opt := range opts {
+		opt(m)
+	}
+	return m
+}
+
+// withScanLabelsID sets the ID field of the mutation.
+func withScanLabelsID(id int) scanlabelsOption {
+	return func(m *ScanLabelsMutation) {
+		var (
+			err   error
+			once  sync.Once
+			value *ScanLabels
+		)
+		m.oldValue = func(ctx context.Context) (*ScanLabels, error) {
+			once.Do(func() {
+				if m.done {
+					err = errors.New("querying old values post mutation is not allowed")
+				} else {
+					value, err = m.Client().ScanLabels.Get(ctx, id)
+				}
+			})
+			return value, err
+		}
+		m.id = &id
+	}
+}
+
+// withScanLabels sets the old ScanLabels of the mutation.
+func withScanLabels(node *ScanLabels) scanlabelsOption {
+	return func(m *ScanLabelsMutation) {
+		m.oldValue = func(context.Context) (*ScanLabels, error) {
+			return node, nil
+		}
+		m.id = &node.ID
+	}
+}
+
+// Client returns a new `ent.Client` from the mutation. If the mutation was
+// executed in a transaction (ent.Tx), a transactional client is returned.
+func (m ScanLabelsMutation) Client() *Client {
+	client := &Client{config: m.config}
+	client.init()
+	return client
+}
+
+// Tx returns an `ent.Tx` for mutations that were executed in transactions;
+// it returns an error otherwise.
+func (m ScanLabelsMutation) Tx() (*Tx, error) {
+	if _, ok := m.driver.(*txDriver); !ok {
+		return nil, errors.New("ent: mutation is not running in a transaction")
+	}
+	tx := &Tx{config: m.config}
+	tx.init()
+	return tx, nil
+}
+
+// ID returns the ID value in the mutation. Note that the ID is only available
+// if it was provided to the builder or after it was returned from the database.
+func (m *ScanLabelsMutation) ID() (id int, exists bool) {
+	if m.id == nil {
+		return
+	}
+	return *m.id, true
+}
+
+// IDs queries the database and returns the entity ids that match the mutation's predicate.
+// That means, if the mutation is applied within a transaction with an isolation level such
+// as sql.LevelSerializable, the returned ids match the ids of the rows that will be updated
+// or updated by the mutation.
+func (m *ScanLabelsMutation) IDs(ctx context.Context) ([]int, error) {
+	switch {
+	case m.op.Is(OpUpdateOne | OpDeleteOne):
+		id, exists := m.ID()
+		if exists {
+			return []int{id}, nil
+		}
+		fallthrough
+	case m.op.Is(OpUpdate | OpDelete):
+		return m.Client().ScanLabels.Query().Where(m.predicates...).IDs(ctx)
+	default:
+		return nil, fmt.Errorf("IDs is not allowed on %s operations", m.op)
+	}
+}
+
+// SetScanID sets the "scan_id" field.
+func (m *ScanLabelsMutation) SetScanID(u uuid.UUID) {
+	m.scan = &u
+}
+
+// ScanID returns the value of the "scan_id" field in the mutation.
+func (m *ScanLabelsMutation) ScanID() (r uuid.UUID, exists bool) {
+	v := m.scan
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldScanID returns the old "scan_id" field's value of the ScanLabels entity.
+// If the ScanLabels object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *ScanLabelsMutation) OldScanID(ctx context.Context) (v uuid.UUID, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldScanID is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldScanID requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldScanID: %w", err)
+	}
+	return oldValue.ScanID, nil
+}
+
+// ResetScanID resets all changes to the "scan_id" field.
+func (m *ScanLabelsMutation) ResetScanID() {
+	m.scan = nil
+}
+
+// SetKey sets the "key" field.
+func (m *ScanLabelsMutation) SetKey(s string) {
+	m.key = &s
+}
+
+// Key returns the value of the "key" field in the mutation.
+func (m *ScanLabelsMutation) Key() (r string, exists bool) {
+	v := m.key
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldKey returns the old "key" field's value of the ScanLabels entity.
+// If the ScanLabels object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *ScanLabelsMutation) OldKey(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldKey is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldKey requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldKey: %w", err)
+	}
+	return oldValue.Key, nil
+}
+
+// ResetKey resets all changes to the "key" field.
+func (m *ScanLabelsMutation) ResetKey() {
+	m.key = nil
+}
+
+// SetValue sets the "value" field.
+func (m *ScanLabelsMutation) SetValue(s string) {
+	m.value = &s
+}
+
+// Value returns the value of the "value" field in the mutation.
+func (m *ScanLabelsMutation) Value() (r string, exists bool) {
+	v := m.value
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldValue returns the old "value" field's value of the ScanLabels entity.
+// If the ScanLabels object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *ScanLabelsMutation) OldValue(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldValue is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldValue requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldValue: %w", err)
+	}
+	return oldValue.Value, nil
+}
+
+// ResetValue resets all changes to the "value" field.
+func (m *ScanLabelsMutation) ResetValue() {
+	m.value = nil
+}
+
+// ClearScan clears the "scan" edge to the Scans entity.
+func (m *ScanLabelsMutation) ClearScan() {
+	m.clearedscan = true
+	m.clearedFields[scanlabels.FieldScanID] = struct{}{}
+}
+
+// ScanCleared reports if the "scan" edge to the Scans entity was cleared.
+func (m *ScanLabelsMutation) ScanCleared() bool {
+	return m.clearedscan
+}
+
+// ScanIDs returns the "scan" edge IDs in the mutation.
+// Note that IDs always returns len(IDs) <= 1 for unique edges, and you should use
+// ScanID instead. It exists only for internal usage by the builders.
+func (m *ScanLabelsMutation) ScanIDs() (ids []uuid.UUID) {
+	if id := m.scan; id != nil {
+		ids = append(ids, *id)
+	}
+	return
+}
+
+// ResetScan resets all changes to the "scan" edge.
+func (m *ScanLabelsMutation) ResetScan() {
+	m.scan = nil
+	m.clearedscan = false
+}
+
+// Where appends a list predicates to the ScanLabelsMutation builder.
+func (m *ScanLabelsMutation) Where(ps ...predicate.ScanLabels) {
+	m.predicates = append(m.predicates, ps...)
+}
+
+// WhereP appends storage-level predicates to the ScanLabelsMutation builder. Using this method,
+// users can use type-assertion to append predicates that do not depend on any generated package.
+func (m *ScanLabelsMutation) WhereP(ps ...func(*sql.Selector)) {
+	p := make([]predicate.ScanLabels, len(ps))
+	for i := range ps {
+		p[i] = ps[i]
+	}
+	m.Where(p...)
+}
+
+// Op returns the operation name.
+func (m *ScanLabelsMutation) Op() Op {
+	return m.op
+}
+
+// SetOp allows setting the mutation operation.
+func (m *ScanLabelsMutation) SetOp(op Op) {
+	m.op = op
+}
+
+// Type returns the node type of this mutation (ScanLabels).
+func (m *ScanLabelsMutation) Type() string {
+	return m.typ
+}
+
+// Fields returns all fields that were changed during this mutation. Note that in
+// order to get all numeric fields that were incremented/decremented, call
+// AddedFields().
+func (m *ScanLabelsMutation) Fields() []string {
+	fields := make([]string, 0, 3)
+	if m.scan != nil {
+		fields = append(fields, scanlabels.FieldScanID)
+	}
+	if m.key != nil {
+		fields = append(fields, scanlabels.FieldKey)
+	}
+	if m.value != nil {
+		fields = append(fields, scanlabels.FieldValue)
+	}
+	return fields
+}
+
+// Field returns the value of a field with the given name. The second boolean
+// return value indicates that this field was not set, or was not defined in the
+// schema.
+func (m *ScanLabelsMutation) Field(name string) (ent.Value, bool) {
+	switch name {
+	case scanlabels.FieldScanID:
+		return m.ScanID()
+	case scanlabels.FieldKey:
+		return m.Key()
+	case scanlabels.FieldValue:
+		return m.Value()
+	}
+	return nil, false
+}
+
+// OldField returns the old value of the field from the database. An error is
+// returned if the mutation operation is not UpdateOne, or the query to the
+// database failed.
+func (m *ScanLabelsMutation) OldField(ctx context.Context, name string) (ent.Value, error) {
+	switch name {
+	case scanlabels.FieldScanID:
+		return m.OldScanID(ctx)
+	case scanlabels.FieldKey:
+		return m.OldKey(ctx)
+	case scanlabels.FieldValue:
+		return m.OldValue(ctx)
+	}
+	return nil, fmt.Errorf("unknown ScanLabels field %s", name)
+}
+
+// SetField sets the value of a field with the given name. It returns an error if
+// the field is not defined in the schema, or if the type mismatched the field
+// type.
+func (m *ScanLabelsMutation) SetField(name string, value ent.Value) error {
+	switch name {
+	case scanlabels.FieldScanID:
+		v, ok := value.(uuid.UUID)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetScanID(v)
+		return nil
+	case scanlabels.FieldKey:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetKey(v)
+		return nil
+	case scanlabels.FieldValue:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetValue(v)
+		return nil
+	}
+	return fmt.Errorf("unknown ScanLabels field %s", name)
+}
+
+// AddedFields returns all numeric fields that were incremented/decremented during
+// this mutation.
+func (m *ScanLabelsMutation) AddedFields() []string {
+	return nil
+}
+
+// AddedField returns the numeric value that was incremented/decremented on a field
+// with the given name. The second boolean return value indicates that this field
+// was not set, or was not defined in the schema.
+func (m *ScanLabelsMutation) AddedField(name string) (ent.Value, bool) {
+	return nil, false
+}
+
+// AddField adds the value to the field with the given name. It returns an error if
+// the field is not defined in the schema, or if the type mismatched the field
+// type.
+func (m *ScanLabelsMutation) AddField(name string, value ent.Value) error {
+	switch name {
+	}
+	return fmt.Errorf("unknown ScanLabels numeric field %s", name)
+}
+
+// ClearedFields returns all nullable fields that were cleared during this
+// mutation.
+func (m *ScanLabelsMutation) ClearedFields() []string {
+	return nil
+}
+
+// FieldCleared returns a boolean indicating if a field with the given name was
+// cleared in this mutation.
+func (m *ScanLabelsMutation) FieldCleared(name string) bool {
+	_, ok := m.clearedFields[name]
+	return ok
+}
+
+// ClearField clears the value of the field with the given name. It returns an
+// error if the field is not defined in the schema.
+func (m *ScanLabelsMutation) ClearField(name string) error {
+	return fmt.Errorf("unknown ScanLabels nullable field %s", name)
+}
+
+// ResetField resets all changes in the mutation for the field with the given name.
+// It returns an error if the field is not defined in the schema.
+func (m *ScanLabelsMutation) ResetField(name string) error {
+	switch name {
+	case scanlabels.FieldScanID:
+		m.ResetScanID()
+		return nil
+	case scanlabels.FieldKey:
+		m.ResetKey()
+		return nil
+	case scanlabels.FieldValue:
+		m.ResetValue()
+		return nil
+	}
+	return fmt.Errorf("unknown ScanLabels field %s", name)
+}
+
+// AddedEdges returns all edge names that were set/added in this mutation.
+func (m *ScanLabelsMutation) AddedEdges() []string {
+	edges := make([]string, 0, 1)
+	if m.scan != nil {
+		edges = append(edges, scanlabels.EdgeScan)
+	}
+	return edges
+}
+
+// AddedIDs returns all IDs (to other nodes) that were added for the given edge
+// name in this mutation.
+func (m *ScanLabelsMutation) AddedIDs(name string) []ent.Value {
+	switch name {
+	case scanlabels.EdgeScan:
+		if id := m.scan; id != nil {
+			return []ent.Value{*id}
+		}
+	}
+	return nil
+}
+
+// RemovedEdges returns all edge names that were removed in this mutation.
+func (m *ScanLabelsMutation) RemovedEdges() []string {
+	edges := make([]string, 0, 1)
+	return edges
+}
+
+// RemovedIDs returns all IDs (to other nodes) that were removed for the edge with
+// the given name in this mutation.
+func (m *ScanLabelsMutation) RemovedIDs(name string) []ent.Value {
+	return nil
+}
+
+// ClearedEdges returns all edge names that were cleared in this mutation.
+func (m *ScanLabelsMutation) ClearedEdges() []string {
+	edges := make([]string, 0, 1)
+	if m.clearedscan {
+		edges = append(edges, scanlabels.EdgeScan)
+	}
+	return edges
+}
+
+// EdgeCleared returns a boolean which indicates if the edge with the given name
+// was cleared in this mutation.
+func (m *ScanLabelsMutation) EdgeCleared(name string) bool {
+	switch name {
+	case scanlabels.EdgeScan:
+		return m.clearedscan
+	}
+	return false
+}
+
+// ClearEdge clears the value of the edge with the given name. It returns an error
+// if that edge is not defined in the schema.
+func (m *ScanLabelsMutation) ClearEdge(name string) error {
+	switch name {
+	case scanlabels.EdgeScan:
+		m.ClearScan()
+		return nil
+	}
+	return fmt.Errorf("unknown ScanLabels unique edge %s", name)
+}
+
+// ResetEdge resets all changes to the edge with the given name in this mutation.
+// It returns an error if the edge is not defined in the schema.
+func (m *ScanLabelsMutation) ResetEdge(name string) error {
+	switch name {
+	case scanlabels.EdgeScan:
+		m.ResetScan()
+		return nil
+	}
+	return fmt.Errorf("unknown ScanLabels edge %s", name)
+}
+
+// ScansMutation represents an operation that mutates the Scans nodes in the graph.
+type ScansMutation struct {
+	config
+	op                 Op
+	typ                string
+	id                 *uuid.UUID
+	status             *string
+	image              *map[string]interface{}
+	check              *map[string]interface{}
+	report             *map[string]interface{}
+	clearedFields      map[string]struct{}
+	policy             *uuid.UUID
+	clearedpolicy      bool
+	scan_labels        map[int]struct{}
+	removedscan_labels map[int]struct{}
+	clearedscan_labels bool
+	done               bool
+	oldValue           func(context.Context) (*Scans, error)
+	predicates         []predicate.Scans
+}
+
+var _ ent.Mutation = (*ScansMutation)(nil)
+
+// scansOption allows management of the mutation configuration using functional options.
+type scansOption func(*ScansMutation)
+
+// newScansMutation creates new mutation for the Scans entity.
+func newScansMutation(c config, op Op, opts ...scansOption) *ScansMutation {
+	m := &ScansMutation{
+		config:        c,
+		op:            op,
+		typ:           TypeScans,
+		clearedFields: make(map[string]struct{}),
+	}
+	for _, opt := range opts {
+		opt(m)
+	}
+	return m
+}
+
+// withScansID sets the ID field of the mutation.
+func withScansID(id uuid.UUID) scansOption {
+	return func(m *ScansMutation) {
+		var (
+			err   error
+			once  sync.Once
+			value *Scans
+		)
+		m.oldValue = func(ctx context.Context) (*Scans, error) {
+			once.Do(func() {
+				if m.done {
+					err = errors.New("querying old values post mutation is not allowed")
+				} else {
+					value, err = m.Client().Scans.Get(ctx, id)
+				}
+			})
+			return value, err
+		}
+		m.id = &id
+	}
+}
+
+// withScans sets the old Scans of the mutation.
+func withScans(node *Scans) scansOption {
+	return func(m *ScansMutation) {
+		m.oldValue = func(context.Context) (*Scans, error) {
+			return node, nil
+		}
+		m.id = &node.ID
+	}
+}
+
+// Client returns a new `ent.Client` from the mutation. If the mutation was
+// executed in a transaction (ent.Tx), a transactional client is returned.
+func (m ScansMutation) Client() *Client {
+	client := &Client{config: m.config}
+	client.init()
+	return client
+}
+
+// Tx returns an `ent.Tx` for mutations that were executed in transactions;
+// it returns an error otherwise.
+func (m ScansMutation) Tx() (*Tx, error) {
+	if _, ok := m.driver.(*txDriver); !ok {
+		return nil, errors.New("ent: mutation is not running in a transaction")
+	}
+	tx := &Tx{config: m.config}
+	tx.init()
+	return tx, nil
+}
+
+// SetID sets the value of the id field. Note that this
+// operation is only accepted on creation of Scans entities.
+func (m *ScansMutation) SetID(id uuid.UUID) {
+	m.id = &id
+}
+
+// ID returns the ID value in the mutation. Note that the ID is only available
+// if it was provided to the builder or after it was returned from the database.
+func (m *ScansMutation) ID() (id uuid.UUID, exists bool) {
+	if m.id == nil {
+		return
+	}
+	return *m.id, true
+}
+
+// IDs queries the database and returns the entity ids that match the mutation's predicate.
+// That means, if the mutation is applied within a transaction with an isolation level such
+// as sql.LevelSerializable, the returned ids match the ids of the rows that will be updated
+// or updated by the mutation.
+func (m *ScansMutation) IDs(ctx context.Context) ([]uuid.UUID, error) {
+	switch {
+	case m.op.Is(OpUpdateOne | OpDeleteOne):
+		id, exists := m.ID()
+		if exists {
+			return []uuid.UUID{id}, nil
+		}
+		fallthrough
+	case m.op.Is(OpUpdate | OpDelete):
+		return m.Client().Scans.Query().Where(m.predicates...).IDs(ctx)
+	default:
+		return nil, fmt.Errorf("IDs is not allowed on %s operations", m.op)
+	}
+}
+
+// SetPolicyID sets the "policy_id" field.
+func (m *ScansMutation) SetPolicyID(u uuid.UUID) {
+	m.policy = &u
+}
+
+// PolicyID returns the value of the "policy_id" field in the mutation.
+func (m *ScansMutation) PolicyID() (r uuid.UUID, exists bool) {
+	v := m.policy
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldPolicyID returns the old "policy_id" field's value of the Scans entity.
+// If the Scans object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *ScansMutation) OldPolicyID(ctx context.Context) (v uuid.UUID, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldPolicyID is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldPolicyID requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldPolicyID: %w", err)
+	}
+	return oldValue.PolicyID, nil
+}
+
+// ResetPolicyID resets all changes to the "policy_id" field.
+func (m *ScansMutation) ResetPolicyID() {
+	m.policy = nil
+}
+
+// SetStatus sets the "status" field.
+func (m *ScansMutation) SetStatus(s string) {
+	m.status = &s
+}
+
+// Status returns the value of the "status" field in the mutation.
+func (m *ScansMutation) Status() (r string, exists bool) {
+	v := m.status
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldStatus returns the old "status" field's value of the Scans entity.
+// If the Scans object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *ScansMutation) OldStatus(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldStatus is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldStatus requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldStatus: %w", err)
+	}
+	return oldValue.Status, nil
+}
+
+// ResetStatus resets all changes to the "status" field.
+func (m *ScansMutation) ResetStatus() {
+	m.status = nil
+}
+
+// SetImage sets the "image" field.
+func (m *ScansMutation) SetImage(value map[string]interface{}) {
+	m.image = &value
+}
+
+// Image returns the value of the "image" field in the mutation.
+func (m *ScansMutation) Image() (r map[string]interface{}, exists bool) {
+	v := m.image
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldImage returns the old "image" field's value of the Scans entity.
+// If the Scans object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *ScansMutation) OldImage(ctx context.Context) (v map[string]interface{}, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldImage is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldImage requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldImage: %w", err)
+	}
+	return oldValue.Image, nil
+}
+
+// ResetImage resets all changes to the "image" field.
+func (m *ScansMutation) ResetImage() {
+	m.image = nil
+}
+
+// SetCheck sets the "check" field.
+func (m *ScansMutation) SetCheck(value map[string]interface{}) {
+	m.check = &value
+}
+
+// Check returns the value of the "check" field in the mutation.
+func (m *ScansMutation) Check() (r map[string]interface{}, exists bool) {
+	v := m.check
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldCheck returns the old "check" field's value of the Scans entity.
+// If the Scans object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *ScansMutation) OldCheck(ctx context.Context) (v map[string]interface{}, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldCheck is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldCheck requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldCheck: %w", err)
+	}
+	return oldValue.Check, nil
+}
+
+// ClearCheck clears the value of the "check" field.
+func (m *ScansMutation) ClearCheck() {
+	m.check = nil
+	m.clearedFields[scans.FieldCheck] = struct{}{}
+}
+
+// CheckCleared returns if the "check" field was cleared in this mutation.
+func (m *ScansMutation) CheckCleared() bool {
+	_, ok := m.clearedFields[scans.FieldCheck]
+	return ok
+}
+
+// ResetCheck resets all changes to the "check" field.
+func (m *ScansMutation) ResetCheck() {
+	m.check = nil
+	delete(m.clearedFields, scans.FieldCheck)
+}
+
+// SetReport sets the "report" field.
+func (m *ScansMutation) SetReport(value map[string]interface{}) {
+	m.report = &value
+}
+
+// Report returns the value of the "report" field in the mutation.
+func (m *ScansMutation) Report() (r map[string]interface{}, exists bool) {
+	v := m.report
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldReport returns the old "report" field's value of the Scans entity.
+// If the Scans object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *ScansMutation) OldReport(ctx context.Context) (v map[string]interface{}, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldReport is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldReport requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldReport: %w", err)
+	}
+	return oldValue.Report, nil
+}
+
+// ClearReport clears the value of the "report" field.
+func (m *ScansMutation) ClearReport() {
+	m.report = nil
+	m.clearedFields[scans.FieldReport] = struct{}{}
+}
+
+// ReportCleared returns if the "report" field was cleared in this mutation.
+func (m *ScansMutation) ReportCleared() bool {
+	_, ok := m.clearedFields[scans.FieldReport]
+	return ok
+}
+
+// ResetReport resets all changes to the "report" field.
+func (m *ScansMutation) ResetReport() {
+	m.report = nil
+	delete(m.clearedFields, scans.FieldReport)
+}
+
+// ClearPolicy clears the "policy" edge to the Policies entity.
+func (m *ScansMutation) ClearPolicy() {
+	m.clearedpolicy = true
+	m.clearedFields[scans.FieldPolicyID] = struct{}{}
+}
+
+// PolicyCleared reports if the "policy" edge to the Policies entity was cleared.
+func (m *ScansMutation) PolicyCleared() bool {
+	return m.clearedpolicy
+}
+
+// PolicyIDs returns the "policy" edge IDs in the mutation.
+// Note that IDs always returns len(IDs) <= 1 for unique edges, and you should use
+// PolicyID instead. It exists only for internal usage by the builders.
+func (m *ScansMutation) PolicyIDs() (ids []uuid.UUID) {
+	if id := m.policy; id != nil {
+		ids = append(ids, *id)
+	}
+	return
+}
+
+// ResetPolicy resets all changes to the "policy" edge.
+func (m *ScansMutation) ResetPolicy() {
+	m.policy = nil
+	m.clearedpolicy = false
+}
+
+// AddScanLabelIDs adds the "scan_labels" edge to the ScanLabels entity by ids.
+func (m *ScansMutation) AddScanLabelIDs(ids ...int) {
+	if m.scan_labels == nil {
+		m.scan_labels = make(map[int]struct{})
+	}
+	for i := range ids {
+		m.scan_labels[ids[i]] = struct{}{}
+	}
+}
+
+// ClearScanLabels clears the "scan_labels" edge to the ScanLabels entity.
+func (m *ScansMutation) ClearScanLabels() {
+	m.clearedscan_labels = true
+}
+
+// ScanLabelsCleared reports if the "scan_labels" edge to the ScanLabels entity was cleared.
+func (m *ScansMutation) ScanLabelsCleared() bool {
+	return m.clearedscan_labels
+}
+
+// RemoveScanLabelIDs removes the "scan_labels" edge to the ScanLabels entity by IDs.
+func (m *ScansMutation) RemoveScanLabelIDs(ids ...int) {
+	if m.removedscan_labels == nil {
+		m.removedscan_labels = make(map[int]struct{})
+	}
+	for i := range ids {
+		delete(m.scan_labels, ids[i])
+		m.removedscan_labels[ids[i]] = struct{}{}
+	}
+}
+
+// RemovedScanLabels returns the removed IDs of the "scan_labels" edge to the ScanLabels entity.
+func (m *ScansMutation) RemovedScanLabelsIDs() (ids []int) {
+	for id := range m.removedscan_labels {
+		ids = append(ids, id)
+	}
+	return
+}
+
+// ScanLabelsIDs returns the "scan_labels" edge IDs in the mutation.
+func (m *ScansMutation) ScanLabelsIDs() (ids []int) {
+	for id := range m.scan_labels {
+		ids = append(ids, id)
+	}
+	return
+}
+
+// ResetScanLabels resets all changes to the "scan_labels" edge.
+func (m *ScansMutation) ResetScanLabels() {
+	m.scan_labels = nil
+	m.clearedscan_labels = false
+	m.removedscan_labels = nil
+}
+
+// Where appends a list predicates to the ScansMutation builder.
+func (m *ScansMutation) Where(ps ...predicate.Scans) {
+	m.predicates = append(m.predicates, ps...)
+}
+
+// WhereP appends storage-level predicates to the ScansMutation builder. Using this method,
+// users can use type-assertion to append predicates that do not depend on any generated package.
+func (m *ScansMutation) WhereP(ps ...func(*sql.Selector)) {
+	p := make([]predicate.Scans, len(ps))
+	for i := range ps {
+		p[i] = ps[i]
+	}
+	m.Where(p...)
+}
+
+// Op returns the operation name.
+func (m *ScansMutation) Op() Op {
+	return m.op
+}
+
+// SetOp allows setting the mutation operation.
+func (m *ScansMutation) SetOp(op Op) {
+	m.op = op
+}
+
+// Type returns the node type of this mutation (Scans).
+func (m *ScansMutation) Type() string {
+	return m.typ
+}
+
+// Fields returns all fields that were changed during this mutation. Note that in
+// order to get all numeric fields that were incremented/decremented, call
+// AddedFields().
+func (m *ScansMutation) Fields() []string {
+	fields := make([]string, 0, 5)
+	if m.policy != nil {
+		fields = append(fields, scans.FieldPolicyID)
+	}
+	if m.status != nil {
+		fields = append(fields, scans.FieldStatus)
+	}
+	if m.image != nil {
+		fields = append(fields, scans.FieldImage)
+	}
+	if m.check != nil {
+		fields = append(fields, scans.FieldCheck)
+	}
+	if m.report != nil {
+		fields = append(fields, scans.FieldReport)
+	}
+	return fields
+}
+
+// Field returns the value of a field with the given name. The second boolean
+// return value indicates that this field was not set, or was not defined in the
+// schema.
+func (m *ScansMutation) Field(name string) (ent.Value, bool) {
+	switch name {
+	case scans.FieldPolicyID:
+		return m.PolicyID()
+	case scans.FieldStatus:
+		return m.Status()
+	case scans.FieldImage:
+		return m.Image()
+	case scans.FieldCheck:
+		return m.Check()
+	case scans.FieldReport:
+		return m.Report()
+	}
+	return nil, false
+}
+
+// OldField returns the old value of the field from the database. An error is
+// returned if the mutation operation is not UpdateOne, or the query to the
+// database failed.
+func (m *ScansMutation) OldField(ctx context.Context, name string) (ent.Value, error) {
+	switch name {
+	case scans.FieldPolicyID:
+		return m.OldPolicyID(ctx)
+	case scans.FieldStatus:
+		return m.OldStatus(ctx)
+	case scans.FieldImage:
+		return m.OldImage(ctx)
+	case scans.FieldCheck:
+		return m.OldCheck(ctx)
+	case scans.FieldReport:
+		return m.OldReport(ctx)
+	}
+	return nil, fmt.Errorf("unknown Scans field %s", name)
+}
+
+// SetField sets the value of a field with the given name. It returns an error if
+// the field is not defined in the schema, or if the type mismatched the field
+// type.
+func (m *ScansMutation) SetField(name string, value ent.Value) error {
+	switch name {
+	case scans.FieldPolicyID:
+		v, ok := value.(uuid.UUID)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetPolicyID(v)
+		return nil
+	case scans.FieldStatus:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetStatus(v)
+		return nil
+	case scans.FieldImage:
+		v, ok := value.(map[string]interface{})
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetImage(v)
+		return nil
+	case scans.FieldCheck:
+		v, ok := value.(map[string]interface{})
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetCheck(v)
+		return nil
+	case scans.FieldReport:
+		v, ok := value.(map[string]interface{})
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetReport(v)
+		return nil
+	}
+	return fmt.Errorf("unknown Scans field %s", name)
+}
+
+// AddedFields returns all numeric fields that were incremented/decremented during
+// this mutation.
+func (m *ScansMutation) AddedFields() []string {
+	return nil
+}
+
+// AddedField returns the numeric value that was incremented/decremented on a field
+// with the given name. The second boolean return value indicates that this field
+// was not set, or was not defined in the schema.
+func (m *ScansMutation) AddedField(name string) (ent.Value, bool) {
+	return nil, false
+}
+
+// AddField adds the value to the field with the given name. It returns an error if
+// the field is not defined in the schema, or if the type mismatched the field
+// type.
+func (m *ScansMutation) AddField(name string, value ent.Value) error {
+	switch name {
+	}
+	return fmt.Errorf("unknown Scans numeric field %s", name)
+}
+
+// ClearedFields returns all nullable fields that were cleared during this
+// mutation.
+func (m *ScansMutation) ClearedFields() []string {
+	var fields []string
+	if m.FieldCleared(scans.FieldCheck) {
+		fields = append(fields, scans.FieldCheck)
+	}
+	if m.FieldCleared(scans.FieldReport) {
+		fields = append(fields, scans.FieldReport)
+	}
+	return fields
+}
+
+// FieldCleared returns a boolean indicating if a field with the given name was
+// cleared in this mutation.
+func (m *ScansMutation) FieldCleared(name string) bool {
+	_, ok := m.clearedFields[name]
+	return ok
+}
+
+// ClearField clears the value of the field with the given name. It returns an
+// error if the field is not defined in the schema.
+func (m *ScansMutation) ClearField(name string) error {
+	switch name {
+	case scans.FieldCheck:
+		m.ClearCheck()
+		return nil
+	case scans.FieldReport:
+		m.ClearReport()
+		return nil
+	}
+	return fmt.Errorf("unknown Scans nullable field %s", name)
+}
+
+// ResetField resets all changes in the mutation for the field with the given name.
+// It returns an error if the field is not defined in the schema.
+func (m *ScansMutation) ResetField(name string) error {
+	switch name {
+	case scans.FieldPolicyID:
+		m.ResetPolicyID()
+		return nil
+	case scans.FieldStatus:
+		m.ResetStatus()
+		return nil
+	case scans.FieldImage:
+		m.ResetImage()
+		return nil
+	case scans.FieldCheck:
+		m.ResetCheck()
+		return nil
+	case scans.FieldReport:
+		m.ResetReport()
+		return nil
+	}
+	return fmt.Errorf("unknown Scans field %s", name)
+}
+
+// AddedEdges returns all edge names that were set/added in this mutation.
+func (m *ScansMutation) AddedEdges() []string {
+	edges := make([]string, 0, 2)
+	if m.policy != nil {
+		edges = append(edges, scans.EdgePolicy)
+	}
+	if m.scan_labels != nil {
+		edges = append(edges, scans.EdgeScanLabels)
+	}
+	return edges
+}
+
+// AddedIDs returns all IDs (to other nodes) that were added for the given edge
+// name in this mutation.
+func (m *ScansMutation) AddedIDs(name string) []ent.Value {
+	switch name {
+	case scans.EdgePolicy:
+		if id := m.policy; id != nil {
+			return []ent.Value{*id}
+		}
+	case scans.EdgeScanLabels:
+		ids := make([]ent.Value, 0, len(m.scan_labels))
+		for id := range m.scan_labels {
+			ids = append(ids, id)
+		}
+		return ids
+	}
+	return nil
+}
+
+// RemovedEdges returns all edge names that were removed in this mutation.
+func (m *ScansMutation) RemovedEdges() []string {
+	edges := make([]string, 0, 2)
+	if m.removedscan_labels != nil {
+		edges = append(edges, scans.EdgeScanLabels)
+	}
+	return edges
+}
+
+// RemovedIDs returns all IDs (to other nodes) that were removed for the edge with
+// the given name in this mutation.
+func (m *ScansMutation) RemovedIDs(name string) []ent.Value {
+	switch name {
+	case scans.EdgeScanLabels:
+		ids := make([]ent.Value, 0, len(m.removedscan_labels))
+		for id := range m.removedscan_labels {
+			ids = append(ids, id)
+		}
+		return ids
+	}
+	return nil
+}
+
+// ClearedEdges returns all edge names that were cleared in this mutation.
+func (m *ScansMutation) ClearedEdges() []string {
+	edges := make([]string, 0, 2)
+	if m.clearedpolicy {
+		edges = append(edges, scans.EdgePolicy)
+	}
+	if m.clearedscan_labels {
+		edges = append(edges, scans.EdgeScanLabels)
+	}
+	return edges
+}
+
+// EdgeCleared returns a boolean which indicates if the edge with the given name
+// was cleared in this mutation.
+func (m *ScansMutation) EdgeCleared(name string) bool {
+	switch name {
+	case scans.EdgePolicy:
+		return m.clearedpolicy
+	case scans.EdgeScanLabels:
+		return m.clearedscan_labels
+	}
+	return false
+}
+
+// ClearEdge clears the value of the edge with the given name. It returns an error
+// if that edge is not defined in the schema.
+func (m *ScansMutation) ClearEdge(name string) error {
+	switch name {
+	case scans.EdgePolicy:
+		m.ClearPolicy()
+		return nil
+	}
+	return fmt.Errorf("unknown Scans unique edge %s", name)
+}
+
+// ResetEdge resets all changes to the edge with the given name in this mutation.
+// It returns an error if the edge is not defined in the schema.
+func (m *ScansMutation) ResetEdge(name string) error {
+	switch name {
+	case scans.EdgePolicy:
+		m.ResetPolicy()
+		return nil
+	case scans.EdgeScanLabels:
+		m.ResetScanLabels()
+		return nil
+	}
+	return fmt.Errorf("unknown Scans edge %s", name)
 }

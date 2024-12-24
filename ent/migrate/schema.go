@@ -77,16 +77,64 @@ var (
 			},
 		},
 	}
+	// ScanLabelsColumns holds the columns for the "scan_labels" table.
+	ScanLabelsColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeInt, Increment: true},
+		{Name: "key", Type: field.TypeString},
+		{Name: "value", Type: field.TypeString},
+		{Name: "scan_id", Type: field.TypeUUID},
+	}
+	// ScanLabelsTable holds the schema information for the "scan_labels" table.
+	ScanLabelsTable = &schema.Table{
+		Name:       "scan_labels",
+		Columns:    ScanLabelsColumns,
+		PrimaryKey: []*schema.Column{ScanLabelsColumns[0]},
+		ForeignKeys: []*schema.ForeignKey{
+			{
+				Symbol:     "scan_labels_scans_scan_labels",
+				Columns:    []*schema.Column{ScanLabelsColumns[3]},
+				RefColumns: []*schema.Column{ScansColumns[0]},
+				OnDelete:   schema.NoAction,
+			},
+		},
+	}
+	// ScansColumns holds the columns for the "scans" table.
+	ScansColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeUUID, Unique: true},
+		{Name: "status", Type: field.TypeString, Default: "scan_pending"},
+		{Name: "image", Type: field.TypeJSON},
+		{Name: "check", Type: field.TypeJSON, Nullable: true},
+		{Name: "report", Type: field.TypeJSON, Nullable: true},
+		{Name: "policy_id", Type: field.TypeUUID},
+	}
+	// ScansTable holds the schema information for the "scans" table.
+	ScansTable = &schema.Table{
+		Name:       "scans",
+		Columns:    ScansColumns,
+		PrimaryKey: []*schema.Column{ScansColumns[0]},
+		ForeignKeys: []*schema.ForeignKey{
+			{
+				Symbol:     "scans_policies_scans",
+				Columns:    []*schema.Column{ScansColumns[5]},
+				RefColumns: []*schema.Column{PoliciesColumns[0]},
+				OnDelete:   schema.NoAction,
+			},
+		},
+	}
 	// Tables holds all the tables in the schema.
 	Tables = []*schema.Table{
 		IntegrationTypesTable,
 		IntegrationsTable,
 		PoliciesTable,
 		PolicyLabelsTable,
+		ScanLabelsTable,
+		ScansTable,
 	}
 )
 
 func init() {
 	IntegrationsTable.ForeignKeys[0].RefTable = IntegrationTypesTable
 	PolicyLabelsTable.ForeignKeys[0].RefTable = PoliciesTable
+	ScanLabelsTable.ForeignKeys[0].RefTable = ScansTable
+	ScansTable.ForeignKeys[0].RefTable = PoliciesTable
 }

@@ -25,6 +25,8 @@ const (
 	FieldCheck = "check"
 	// EdgePolicyLabels holds the string denoting the policy_labels edge name in mutations.
 	EdgePolicyLabels = "policy_labels"
+	// EdgeScans holds the string denoting the scans edge name in mutations.
+	EdgeScans = "scans"
 	// Table holds the table name of the policies in the database.
 	Table = "policies"
 	// PolicyLabelsTable is the table that holds the policy_labels relation/edge.
@@ -34,6 +36,13 @@ const (
 	PolicyLabelsInverseTable = "policy_labels"
 	// PolicyLabelsColumn is the table column denoting the policy_labels relation/edge.
 	PolicyLabelsColumn = "policy_id"
+	// ScansTable is the table that holds the scans relation/edge.
+	ScansTable = "scans"
+	// ScansInverseTable is the table name for the Scans entity.
+	// It exists in this package in order to avoid circular dependency with the "scans" package.
+	ScansInverseTable = "scans"
+	// ScansColumn is the table column denoting the scans relation/edge.
+	ScansColumn = "policy_id"
 )
 
 // Columns holds all SQL columns for policies fields.
@@ -89,10 +98,31 @@ func ByPolicyLabels(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
 		sqlgraph.OrderByNeighborTerms(s, newPolicyLabelsStep(), append([]sql.OrderTerm{term}, terms...)...)
 	}
 }
+
+// ByScansCount orders the results by scans count.
+func ByScansCount(opts ...sql.OrderTermOption) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborsCount(s, newScansStep(), opts...)
+	}
+}
+
+// ByScans orders the results by scans terms.
+func ByScans(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborTerms(s, newScansStep(), append([]sql.OrderTerm{term}, terms...)...)
+	}
+}
 func newPolicyLabelsStep() *sqlgraph.Step {
 	return sqlgraph.NewStep(
 		sqlgraph.From(Table, FieldID),
 		sqlgraph.To(PolicyLabelsInverseTable, FieldID),
 		sqlgraph.Edge(sqlgraph.O2M, false, PolicyLabelsTable, PolicyLabelsColumn),
+	)
+}
+func newScansStep() *sqlgraph.Step {
+	return sqlgraph.NewStep(
+		sqlgraph.From(Table, FieldID),
+		sqlgraph.To(ScansInverseTable, FieldID),
+		sqlgraph.Edge(sqlgraph.O2M, false, ScansTable, ScansColumn),
 	)
 }

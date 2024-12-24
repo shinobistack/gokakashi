@@ -12,6 +12,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/shinobistack/gokakashi/ent/policies"
 	"github.com/shinobistack/gokakashi/ent/policylabels"
+	"github.com/shinobistack/gokakashi/ent/scans"
 	"github.com/shinobistack/gokakashi/ent/schema"
 )
 
@@ -95,6 +96,21 @@ func (pc *PoliciesCreate) AddPolicyLabels(p ...*PolicyLabels) *PoliciesCreate {
 		ids[i] = p[i].ID
 	}
 	return pc.AddPolicyLabelIDs(ids...)
+}
+
+// AddScanIDs adds the "scans" edge to the Scans entity by IDs.
+func (pc *PoliciesCreate) AddScanIDs(ids ...uuid.UUID) *PoliciesCreate {
+	pc.mutation.AddScanIDs(ids...)
+	return pc
+}
+
+// AddScans adds the "scans" edges to the Scans entity.
+func (pc *PoliciesCreate) AddScans(s ...*Scans) *PoliciesCreate {
+	ids := make([]uuid.UUID, len(s))
+	for i := range s {
+		ids[i] = s[i].ID
+	}
+	return pc.AddScanIDs(ids...)
 }
 
 // Mutation returns the PoliciesMutation object of the builder.
@@ -215,6 +231,22 @@ func (pc *PoliciesCreate) createSpec() (*Policies, *sqlgraph.CreateSpec) {
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(policylabels.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges = append(_spec.Edges, edge)
+	}
+	if nodes := pc.mutation.ScansIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   policies.ScansTable,
+			Columns: []string{policies.ScansColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(scans.FieldID, field.TypeUUID),
 			},
 		}
 		for _, k := range nodes {
