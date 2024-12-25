@@ -12,6 +12,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/shinobistack/gokakashi/ent/policies"
 	"github.com/shinobistack/gokakashi/ent/scans"
+	"github.com/shinobistack/gokakashi/ent/schema"
 )
 
 // Scans is the model entity for the Scans schema.
@@ -25,11 +26,11 @@ type Scans struct {
 	// Enum: { scan_pending, scan_in_progress, check_pending, check_in_progress,  success, error }.
 	Status string `json:"status,omitempty"`
 	// Details of the image being scanned.
-	Image map[string]interface{} `json:"image,omitempty"`
+	Image string `json:"image,omitempty"`
 	// Conditions checked during the scan.
-	Check map[string]interface{} `json:"check,omitempty"`
+	Check schema.Check `json:"check,omitempty"`
 	// Stores the scan results or report.
-	Report map[string]interface{} `json:"report,omitempty"`
+	Report string `json:"report,omitempty"`
 	// Edges holds the relations/edges for other nodes in the graph.
 	// The values are being populated by the ScansQuery when eager-loading is set.
 	Edges        ScansEdges `json:"edges"`
@@ -72,9 +73,9 @@ func (*Scans) scanValues(columns []string) ([]any, error) {
 	values := make([]any, len(columns))
 	for i := range columns {
 		switch columns[i] {
-		case scans.FieldImage, scans.FieldCheck, scans.FieldReport:
+		case scans.FieldCheck:
 			values[i] = new([]byte)
-		case scans.FieldStatus:
+		case scans.FieldStatus, scans.FieldImage, scans.FieldReport:
 			values[i] = new(sql.NullString)
 		case scans.FieldID, scans.FieldPolicyID:
 			values[i] = new(uuid.UUID)
@@ -112,12 +113,10 @@ func (s *Scans) assignValues(columns []string, values []any) error {
 				s.Status = value.String
 			}
 		case scans.FieldImage:
-			if value, ok := values[i].(*[]byte); !ok {
+			if value, ok := values[i].(*sql.NullString); !ok {
 				return fmt.Errorf("unexpected type %T for field image", values[i])
-			} else if value != nil && len(*value) > 0 {
-				if err := json.Unmarshal(*value, &s.Image); err != nil {
-					return fmt.Errorf("unmarshal field image: %w", err)
-				}
+			} else if value.Valid {
+				s.Image = value.String
 			}
 		case scans.FieldCheck:
 			if value, ok := values[i].(*[]byte); !ok {
@@ -128,12 +127,10 @@ func (s *Scans) assignValues(columns []string, values []any) error {
 				}
 			}
 		case scans.FieldReport:
-			if value, ok := values[i].(*[]byte); !ok {
+			if value, ok := values[i].(*sql.NullString); !ok {
 				return fmt.Errorf("unexpected type %T for field report", values[i])
-			} else if value != nil && len(*value) > 0 {
-				if err := json.Unmarshal(*value, &s.Report); err != nil {
-					return fmt.Errorf("unmarshal field report: %w", err)
-				}
+			} else if value.Valid {
+				s.Report = value.String
 			}
 		default:
 			s.selectValues.Set(columns[i], values[i])
@@ -188,13 +185,13 @@ func (s *Scans) String() string {
 	builder.WriteString(s.Status)
 	builder.WriteString(", ")
 	builder.WriteString("image=")
-	builder.WriteString(fmt.Sprintf("%v", s.Image))
+	builder.WriteString(s.Image)
 	builder.WriteString(", ")
 	builder.WriteString("check=")
 	builder.WriteString(fmt.Sprintf("%v", s.Check))
 	builder.WriteString(", ")
 	builder.WriteString("report=")
-	builder.WriteString(fmt.Sprintf("%v", s.Report))
+	builder.WriteString(s.Report)
 	builder.WriteByte(')')
 	return builder.String()
 }

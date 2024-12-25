@@ -90,6 +90,16 @@ func ByStatus(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldStatus, opts...).ToFunc()
 }
 
+// ByImage orders the results by the image field.
+func ByImage(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldImage, opts...).ToFunc()
+}
+
+// ByReport orders the results by the report field.
+func ByReport(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldReport, opts...).ToFunc()
+}
+
 // ByPolicyField orders the results by policy field.
 func ByPolicyField(field string, opts ...sql.OrderTermOption) OrderOption {
 	return func(s *sql.Selector) {

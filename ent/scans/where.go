@@ -64,6 +64,16 @@ func Status(v string) predicate.Scans {
 	return predicate.Scans(sql.FieldEQ(FieldStatus, v))
 }
 
+// Image applies equality check predicate on the "image" field. It's identical to ImageEQ.
+func Image(v string) predicate.Scans {
+	return predicate.Scans(sql.FieldEQ(FieldImage, v))
+}
+
+// Report applies equality check predicate on the "report" field. It's identical to ReportEQ.
+func Report(v string) predicate.Scans {
+	return predicate.Scans(sql.FieldEQ(FieldReport, v))
+}
+
 // PolicyIDEQ applies the EQ predicate on the "policy_id" field.
 func PolicyIDEQ(v uuid.UUID) predicate.Scans {
 	return predicate.Scans(sql.FieldEQ(FieldPolicyID, v))
@@ -149,6 +159,71 @@ func StatusContainsFold(v string) predicate.Scans {
 	return predicate.Scans(sql.FieldContainsFold(FieldStatus, v))
 }
 
+// ImageEQ applies the EQ predicate on the "image" field.
+func ImageEQ(v string) predicate.Scans {
+	return predicate.Scans(sql.FieldEQ(FieldImage, v))
+}
+
+// ImageNEQ applies the NEQ predicate on the "image" field.
+func ImageNEQ(v string) predicate.Scans {
+	return predicate.Scans(sql.FieldNEQ(FieldImage, v))
+}
+
+// ImageIn applies the In predicate on the "image" field.
+func ImageIn(vs ...string) predicate.Scans {
+	return predicate.Scans(sql.FieldIn(FieldImage, vs...))
+}
+
+// ImageNotIn applies the NotIn predicate on the "image" field.
+func ImageNotIn(vs ...string) predicate.Scans {
+	return predicate.Scans(sql.FieldNotIn(FieldImage, vs...))
+}
+
+// ImageGT applies the GT predicate on the "image" field.
+func ImageGT(v string) predicate.Scans {
+	return predicate.Scans(sql.FieldGT(FieldImage, v))
+}
+
+// ImageGTE applies the GTE predicate on the "image" field.
+func ImageGTE(v string) predicate.Scans {
+	return predicate.Scans(sql.FieldGTE(FieldImage, v))
+}
+
+// ImageLT applies the LT predicate on the "image" field.
+func ImageLT(v string) predicate.Scans {
+	return predicate.Scans(sql.FieldLT(FieldImage, v))
+}
+
+// ImageLTE applies the LTE predicate on the "image" field.
+func ImageLTE(v string) predicate.Scans {
+	return predicate.Scans(sql.FieldLTE(FieldImage, v))
+}
+
+// ImageContains applies the Contains predicate on the "image" field.
+func ImageContains(v string) predicate.Scans {
+	return predicate.Scans(sql.FieldContains(FieldImage, v))
+}
+
+// ImageHasPrefix applies the HasPrefix predicate on the "image" field.
+func ImageHasPrefix(v string) predicate.Scans {
+	return predicate.Scans(sql.FieldHasPrefix(FieldImage, v))
+}
+
+// ImageHasSuffix applies the HasSuffix predicate on the "image" field.
+func ImageHasSuffix(v string) predicate.Scans {
+	return predicate.Scans(sql.FieldHasSuffix(FieldImage, v))
+}
+
+// ImageEqualFold applies the EqualFold predicate on the "image" field.
+func ImageEqualFold(v string) predicate.Scans {
+	return predicate.Scans(sql.FieldEqualFold(FieldImage, v))
+}
+
+// ImageContainsFold applies the ContainsFold predicate on the "image" field.
+func ImageContainsFold(v string) predicate.Scans {
+	return predicate.Scans(sql.FieldContainsFold(FieldImage, v))
+}
+
 // CheckIsNil applies the IsNil predicate on the "check" field.
 func CheckIsNil() predicate.Scans {
 	return predicate.Scans(sql.FieldIsNull(FieldCheck))
@@ -159,6 +234,61 @@ func CheckNotNil() predicate.Scans {
 	return predicate.Scans(sql.FieldNotNull(FieldCheck))
 }
 
+// ReportEQ applies the EQ predicate on the "report" field.
+func ReportEQ(v string) predicate.Scans {
+	return predicate.Scans(sql.FieldEQ(FieldReport, v))
+}
+
+// ReportNEQ applies the NEQ predicate on the "report" field.
+func ReportNEQ(v string) predicate.Scans {
+	return predicate.Scans(sql.FieldNEQ(FieldReport, v))
+}
+
+// ReportIn applies the In predicate on the "report" field.
+func ReportIn(vs ...string) predicate.Scans {
+	return predicate.Scans(sql.FieldIn(FieldReport, vs...))
+}
+
+// ReportNotIn applies the NotIn predicate on the "report" field.
+func ReportNotIn(vs ...string) predicate.Scans {
+	return predicate.Scans(sql.FieldNotIn(FieldReport, vs...))
+}
+
+// ReportGT applies the GT predicate on the "report" field.
+func ReportGT(v string) predicate.Scans {
+	return predicate.Scans(sql.FieldGT(FieldReport, v))
+}
+
+// ReportGTE applies the GTE predicate on the "report" field.
+func ReportGTE(v string) predicate.Scans {
+	return predicate.Scans(sql.FieldGTE(FieldReport, v))
+}
+
+// ReportLT applies the LT predicate on the "report" field.
+func ReportLT(v string) predicate.Scans {
+	return predicate.Scans(sql.FieldLT(FieldReport, v))
+}
+
+// ReportLTE applies the LTE predicate on the "report" field.
+func ReportLTE(v string) predicate.Scans {
+	return predicate.Scans(sql.FieldLTE(FieldReport, v))
+}
+
+// ReportContains applies the Contains predicate on the "report" field.
+func ReportContains(v string) predicate.Scans {
+	return predicate.Scans(sql.FieldContains(FieldReport, v))
+}
+
+// ReportHasPrefix applies the HasPrefix predicate on the "report" field.
+func ReportHasPrefix(v string) predicate.Scans {
+	return predicate.Scans(sql.FieldHasPrefix(FieldReport, v))
+}
+
+// ReportHasSuffix applies the HasSuffix predicate on the "report" field.
+func ReportHasSuffix(v string) predicate.Scans {
+	return predicate.Scans(sql.FieldHasSuffix(FieldReport, v))
+}
+
 // ReportIsNil applies the IsNil predicate on the "report" field.
 func ReportIsNil() predicate.Scans {
 	return predicate.Scans(sql.FieldIsNull(FieldReport))
@@ -167,6 +297,16 @@ func ReportIsNil() predicate.Scans {
 // ReportNotNil applies the NotNil predicate on the "report" field.
 func ReportNotNil() predicate.Scans {
 	return predicate.Scans(sql.FieldNotNull(FieldReport))
+}
+
+// ReportEqualFold applies the EqualFold predicate on the "report" field.
+func ReportEqualFold(v string) predicate.Scans {
+	return predicate.Scans(sql.FieldEqualFold(FieldReport, v))
+}
+
+// ReportContainsFold applies the ContainsFold predicate on the "report" field.
+func ReportContainsFold(v string) predicate.Scans {
+	return predicate.Scans(sql.FieldContainsFold(FieldReport, v))
 }
 
 // HasPolicy applies the HasEdge predicate on the "policy" edge.

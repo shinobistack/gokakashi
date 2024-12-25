@@ -15,6 +15,7 @@ import (
 	"github.com/shinobistack/gokakashi/ent/predicate"
 	"github.com/shinobistack/gokakashi/ent/scanlabels"
 	"github.com/shinobistack/gokakashi/ent/scans"
+	"github.com/shinobistack/gokakashi/ent/schema"
 )
 
 // ScansUpdate is the builder for updating Scans entities.
@@ -59,14 +60,30 @@ func (su *ScansUpdate) SetNillableStatus(s *string) *ScansUpdate {
 }
 
 // SetImage sets the "image" field.
-func (su *ScansUpdate) SetImage(m map[string]interface{}) *ScansUpdate {
-	su.mutation.SetImage(m)
+func (su *ScansUpdate) SetImage(s string) *ScansUpdate {
+	su.mutation.SetImage(s)
+	return su
+}
+
+// SetNillableImage sets the "image" field if the given value is not nil.
+func (su *ScansUpdate) SetNillableImage(s *string) *ScansUpdate {
+	if s != nil {
+		su.SetImage(*s)
+	}
 	return su
 }
 
 // SetCheck sets the "check" field.
-func (su *ScansUpdate) SetCheck(m map[string]interface{}) *ScansUpdate {
-	su.mutation.SetCheck(m)
+func (su *ScansUpdate) SetCheck(s schema.Check) *ScansUpdate {
+	su.mutation.SetCheck(s)
+	return su
+}
+
+// SetNillableCheck sets the "check" field if the given value is not nil.
+func (su *ScansUpdate) SetNillableCheck(s *schema.Check) *ScansUpdate {
+	if s != nil {
+		su.SetCheck(*s)
+	}
 	return su
 }
 
@@ -77,8 +94,16 @@ func (su *ScansUpdate) ClearCheck() *ScansUpdate {
 }
 
 // SetReport sets the "report" field.
-func (su *ScansUpdate) SetReport(m map[string]interface{}) *ScansUpdate {
-	su.mutation.SetReport(m)
+func (su *ScansUpdate) SetReport(s string) *ScansUpdate {
+	su.mutation.SetReport(s)
+	return su
+}
+
+// SetNillableReport sets the "report" field if the given value is not nil.
+func (su *ScansUpdate) SetNillableReport(s *string) *ScansUpdate {
+	if s != nil {
+		su.SetReport(*s)
+	}
 	return su
 }
 
@@ -191,7 +216,7 @@ func (su *ScansUpdate) sqlSave(ctx context.Context) (n int, err error) {
 		_spec.SetField(scans.FieldStatus, field.TypeString, value)
 	}
 	if value, ok := su.mutation.Image(); ok {
-		_spec.SetField(scans.FieldImage, field.TypeJSON, value)
+		_spec.SetField(scans.FieldImage, field.TypeString, value)
 	}
 	if value, ok := su.mutation.Check(); ok {
 		_spec.SetField(scans.FieldCheck, field.TypeJSON, value)
@@ -200,10 +225,10 @@ func (su *ScansUpdate) sqlSave(ctx context.Context) (n int, err error) {
 		_spec.ClearField(scans.FieldCheck, field.TypeJSON)
 	}
 	if value, ok := su.mutation.Report(); ok {
-		_spec.SetField(scans.FieldReport, field.TypeJSON, value)
+		_spec.SetField(scans.FieldReport, field.TypeString, value)
 	}
 	if su.mutation.ReportCleared() {
-		_spec.ClearField(scans.FieldReport, field.TypeJSON)
+		_spec.ClearField(scans.FieldReport, field.TypeString)
 	}
 	if su.mutation.PolicyCleared() {
 		edge := &sqlgraph.EdgeSpec{
@@ -328,14 +353,30 @@ func (suo *ScansUpdateOne) SetNillableStatus(s *string) *ScansUpdateOne {
 }
 
 // SetImage sets the "image" field.
-func (suo *ScansUpdateOne) SetImage(m map[string]interface{}) *ScansUpdateOne {
-	suo.mutation.SetImage(m)
+func (suo *ScansUpdateOne) SetImage(s string) *ScansUpdateOne {
+	suo.mutation.SetImage(s)
+	return suo
+}
+
+// SetNillableImage sets the "image" field if the given value is not nil.
+func (suo *ScansUpdateOne) SetNillableImage(s *string) *ScansUpdateOne {
+	if s != nil {
+		suo.SetImage(*s)
+	}
 	return suo
 }
 
 // SetCheck sets the "check" field.
-func (suo *ScansUpdateOne) SetCheck(m map[string]interface{}) *ScansUpdateOne {
-	suo.mutation.SetCheck(m)
+func (suo *ScansUpdateOne) SetCheck(s schema.Check) *ScansUpdateOne {
+	suo.mutation.SetCheck(s)
+	return suo
+}
+
+// SetNillableCheck sets the "check" field if the given value is not nil.
+func (suo *ScansUpdateOne) SetNillableCheck(s *schema.Check) *ScansUpdateOne {
+	if s != nil {
+		suo.SetCheck(*s)
+	}
 	return suo
 }
 
@@ -346,8 +387,16 @@ func (suo *ScansUpdateOne) ClearCheck() *ScansUpdateOne {
 }
 
 // SetReport sets the "report" field.
-func (suo *ScansUpdateOne) SetReport(m map[string]interface{}) *ScansUpdateOne {
-	suo.mutation.SetReport(m)
+func (suo *ScansUpdateOne) SetReport(s string) *ScansUpdateOne {
+	suo.mutation.SetReport(s)
+	return suo
+}
+
+// SetNillableReport sets the "report" field if the given value is not nil.
+func (suo *ScansUpdateOne) SetNillableReport(s *string) *ScansUpdateOne {
+	if s != nil {
+		suo.SetReport(*s)
+	}
 	return suo
 }
 
@@ -490,7 +539,7 @@ func (suo *ScansUpdateOne) sqlSave(ctx context.Context) (_node *Scans, err error
 		_spec.SetField(scans.FieldStatus, field.TypeString, value)
 	}
 	if value, ok := suo.mutation.Image(); ok {
-		_spec.SetField(scans.FieldImage, field.TypeJSON, value)
+		_spec.SetField(scans.FieldImage, field.TypeString, value)
 	}
 	if value, ok := suo.mutation.Check(); ok {
 		_spec.SetField(scans.FieldCheck, field.TypeJSON, value)
@@ -499,10 +548,10 @@ func (suo *ScansUpdateOne) sqlSave(ctx context.Context) (_node *Scans, err error
 		_spec.ClearField(scans.FieldCheck, field.TypeJSON)
 	}
 	if value, ok := suo.mutation.Report(); ok {
-		_spec.SetField(scans.FieldReport, field.TypeJSON, value)
+		_spec.SetField(scans.FieldReport, field.TypeString, value)
 	}
 	if suo.mutation.ReportCleared() {
-		_spec.ClearField(scans.FieldReport, field.TypeJSON)
+		_spec.ClearField(scans.FieldReport, field.TypeString)
 	}
 	if suo.mutation.PolicyCleared() {
 		edge := &sqlgraph.EdgeSpec{

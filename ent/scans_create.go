@@ -13,6 +13,7 @@ import (
 	"github.com/shinobistack/gokakashi/ent/policies"
 	"github.com/shinobistack/gokakashi/ent/scanlabels"
 	"github.com/shinobistack/gokakashi/ent/scans"
+	"github.com/shinobistack/gokakashi/ent/schema"
 )
 
 // ScansCreate is the builder for creating a Scans entity.
@@ -43,20 +44,36 @@ func (sc *ScansCreate) SetNillableStatus(s *string) *ScansCreate {
 }
 
 // SetImage sets the "image" field.
-func (sc *ScansCreate) SetImage(m map[string]interface{}) *ScansCreate {
-	sc.mutation.SetImage(m)
+func (sc *ScansCreate) SetImage(s string) *ScansCreate {
+	sc.mutation.SetImage(s)
 	return sc
 }
 
 // SetCheck sets the "check" field.
-func (sc *ScansCreate) SetCheck(m map[string]interface{}) *ScansCreate {
-	sc.mutation.SetCheck(m)
+func (sc *ScansCreate) SetCheck(s schema.Check) *ScansCreate {
+	sc.mutation.SetCheck(s)
+	return sc
+}
+
+// SetNillableCheck sets the "check" field if the given value is not nil.
+func (sc *ScansCreate) SetNillableCheck(s *schema.Check) *ScansCreate {
+	if s != nil {
+		sc.SetCheck(*s)
+	}
 	return sc
 }
 
 // SetReport sets the "report" field.
-func (sc *ScansCreate) SetReport(m map[string]interface{}) *ScansCreate {
-	sc.mutation.SetReport(m)
+func (sc *ScansCreate) SetReport(s string) *ScansCreate {
+	sc.mutation.SetReport(s)
+	return sc
+}
+
+// SetNillableReport sets the "report" field if the given value is not nil.
+func (sc *ScansCreate) SetNillableReport(s *string) *ScansCreate {
+	if s != nil {
+		sc.SetReport(*s)
+	}
 	return sc
 }
 
@@ -193,7 +210,7 @@ func (sc *ScansCreate) createSpec() (*Scans, *sqlgraph.CreateSpec) {
 		_node.Status = value
 	}
 	if value, ok := sc.mutation.Image(); ok {
-		_spec.SetField(scans.FieldImage, field.TypeJSON, value)
+		_spec.SetField(scans.FieldImage, field.TypeString, value)
 		_node.Image = value
 	}
 	if value, ok := sc.mutation.Check(); ok {
@@ -201,7 +218,7 @@ func (sc *ScansCreate) createSpec() (*Scans, *sqlgraph.CreateSpec) {
 		_node.Check = value
 	}
 	if value, ok := sc.mutation.Report(); ok {
-		_spec.SetField(scans.FieldReport, field.TypeJSON, value)
+		_spec.SetField(scans.FieldReport, field.TypeString, value)
 		_node.Report = value
 	}
 	if nodes := sc.mutation.PolicyIDs(); len(nodes) > 0 {

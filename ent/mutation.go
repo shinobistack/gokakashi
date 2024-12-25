@@ -2670,9 +2670,9 @@ type ScansMutation struct {
 	typ                string
 	id                 *uuid.UUID
 	status             *string
-	image              *map[string]interface{}
-	check              *map[string]interface{}
-	report             *map[string]interface{}
+	image              *string
+	check              *schema.Check
+	report             *string
 	clearedFields      map[string]struct{}
 	policy             *uuid.UUID
 	clearedpolicy      bool
@@ -2861,12 +2861,12 @@ func (m *ScansMutation) ResetStatus() {
 }
 
 // SetImage sets the "image" field.
-func (m *ScansMutation) SetImage(value map[string]interface{}) {
-	m.image = &value
+func (m *ScansMutation) SetImage(s string) {
+	m.image = &s
 }
 
 // Image returns the value of the "image" field in the mutation.
-func (m *ScansMutation) Image() (r map[string]interface{}, exists bool) {
+func (m *ScansMutation) Image() (r string, exists bool) {
 	v := m.image
 	if v == nil {
 		return
@@ -2877,7 +2877,7 @@ func (m *ScansMutation) Image() (r map[string]interface{}, exists bool) {
 // OldImage returns the old "image" field's value of the Scans entity.
 // If the Scans object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *ScansMutation) OldImage(ctx context.Context) (v map[string]interface{}, err error) {
+func (m *ScansMutation) OldImage(ctx context.Context) (v string, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldImage is only allowed on UpdateOne operations")
 	}
@@ -2897,12 +2897,12 @@ func (m *ScansMutation) ResetImage() {
 }
 
 // SetCheck sets the "check" field.
-func (m *ScansMutation) SetCheck(value map[string]interface{}) {
-	m.check = &value
+func (m *ScansMutation) SetCheck(s schema.Check) {
+	m.check = &s
 }
 
 // Check returns the value of the "check" field in the mutation.
-func (m *ScansMutation) Check() (r map[string]interface{}, exists bool) {
+func (m *ScansMutation) Check() (r schema.Check, exists bool) {
 	v := m.check
 	if v == nil {
 		return
@@ -2913,7 +2913,7 @@ func (m *ScansMutation) Check() (r map[string]interface{}, exists bool) {
 // OldCheck returns the old "check" field's value of the Scans entity.
 // If the Scans object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *ScansMutation) OldCheck(ctx context.Context) (v map[string]interface{}, err error) {
+func (m *ScansMutation) OldCheck(ctx context.Context) (v schema.Check, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldCheck is only allowed on UpdateOne operations")
 	}
@@ -2946,12 +2946,12 @@ func (m *ScansMutation) ResetCheck() {
 }
 
 // SetReport sets the "report" field.
-func (m *ScansMutation) SetReport(value map[string]interface{}) {
-	m.report = &value
+func (m *ScansMutation) SetReport(s string) {
+	m.report = &s
 }
 
 // Report returns the value of the "report" field in the mutation.
-func (m *ScansMutation) Report() (r map[string]interface{}, exists bool) {
+func (m *ScansMutation) Report() (r string, exists bool) {
 	v := m.report
 	if v == nil {
 		return
@@ -2962,7 +2962,7 @@ func (m *ScansMutation) Report() (r map[string]interface{}, exists bool) {
 // OldReport returns the old "report" field's value of the Scans entity.
 // If the Scans object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *ScansMutation) OldReport(ctx context.Context) (v map[string]interface{}, err error) {
+func (m *ScansMutation) OldReport(ctx context.Context) (v string, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldReport is only allowed on UpdateOne operations")
 	}
@@ -3186,21 +3186,21 @@ func (m *ScansMutation) SetField(name string, value ent.Value) error {
 		m.SetStatus(v)
 		return nil
 	case scans.FieldImage:
-		v, ok := value.(map[string]interface{})
+		v, ok := value.(string)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetImage(v)
 		return nil
 	case scans.FieldCheck:
-		v, ok := value.(map[string]interface{})
+		v, ok := value.(schema.Check)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetCheck(v)
 		return nil
 	case scans.FieldReport:
-		v, ok := value.(map[string]interface{})
+		v, ok := value.(string)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}

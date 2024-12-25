@@ -24,12 +24,12 @@ func (Scans) Fields() []ent.Field {
 		field.String("status").
 			Default("scan_pending").
 			Comment("Enum: { scan_pending, scan_in_progress, check_pending, check_in_progress,  success, error }."),
-		field.JSON("image", map[string]interface{}{}).
+		field.String("image").
 			Comment("Details of the image being scanned."),
-		field.JSON("check", map[string]interface{}{}).
+		field.JSON("check", Check{}).
 			Optional().
 			Comment("Conditions checked during the scan."),
-		field.JSON("report", map[string]interface{}{}).
+		field.String("report").
 			Optional().
 			Comment("Stores the scan results or report."),
 	}

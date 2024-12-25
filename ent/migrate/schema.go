@@ -102,9 +102,9 @@ var (
 	ScansColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeUUID, Unique: true},
 		{Name: "status", Type: field.TypeString, Default: "scan_pending"},
-		{Name: "image", Type: field.TypeJSON},
+		{Name: "image", Type: field.TypeString},
 		{Name: "check", Type: field.TypeJSON, Nullable: true},
-		{Name: "report", Type: field.TypeJSON, Nullable: true},
+		{Name: "report", Type: field.TypeString, Nullable: true},
 		{Name: "policy_id", Type: field.TypeUUID},
 	}
 	// ScansTable holds the schema information for the "scans" table.
