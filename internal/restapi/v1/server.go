@@ -12,6 +12,8 @@ import (
 	integrationtype1 "github.com/shinobistack/gokakashi/internal/restapi/v1/integrationtype"
 	policies1 "github.com/shinobistack/gokakashi/internal/restapi/v1/policies"
 	policylabels1 "github.com/shinobistack/gokakashi/internal/restapi/v1/policylabels"
+	scans1 "github.com/shinobistack/gokakashi/internal/restapi/v1/scans"
+
 	"github.com/swaggest/openapi-go/openapi31"
 	"github.com/swaggest/rest/web"
 	swg "github.com/swaggest/swgui"
@@ -68,6 +70,12 @@ func (srv *Server) Service() *web.Service {
 	apiV1.Get("/policies/{policy_id}/labels/{key}", usecase.NewInteractor(policylabels1.GetPolicyLabel(srv.DB)))
 	apiV1.Put("/policies/{policy_id}/labels", usecase.NewInteractor(policylabels1.UpdatePolicyLabels(srv.DB)))
 	apiV1.Delete("/policies/{policy_id}/labels/{key}", usecase.NewInteractor(policylabels1.DeletePolicyLabel(srv.DB)))
+
+	apiV1.Post("/scans", usecase.NewInteractor(scans1.CreateScan(srv.DB)))
+	apiV1.Get("/scans", usecase.NewInteractor(scans1.ListScans(srv.DB)))
+	apiV1.Get("/scans/{id}", usecase.NewInteractor(scans1.GetScan(srv.DB)))
+	apiV1.Put("/scans/{id}", usecase.NewInteractor(scans1.UpdateScan(srv.DB)))
+	apiV1.Delete("/scans/{id}", usecase.NewInteractor(scans1.DeleteScan(srv.DB)))
 
 	s.Mount("/api/v1/openapi.json", specHandler(apiV1.OpenAPICollector.SpecSchema().(*openapi31.Spec)))
 	s.Mount("/api/v1", apiV1)
