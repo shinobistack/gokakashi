@@ -19,12 +19,14 @@ type GetScanResponse struct {
 	Report   interface{}  `json:"report"`
 }
 
+type ListScanRequest struct{}
+
 type GetScanRequest struct {
 	ID uuid.UUID `path:"id"`
 }
 
-func ListScans(client *ent.Client) func(ctx context.Context, req struct{}, res *[]GetScanResponse) error {
-	return func(ctx context.Context, req struct{}, res *[]GetScanResponse) error {
+func ListScans(client *ent.Client) func(ctx context.Context, req ListScanRequest, res *[]GetScanResponse) error {
+	return func(ctx context.Context, req ListScanRequest, res *[]GetScanResponse) error {
 		scans, err := client.Scans.Query().All(ctx)
 		if err != nil {
 			return status.Wrap(errors.New("failed to fetch scan details"), status.Internal)

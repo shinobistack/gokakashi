@@ -9,6 +9,7 @@ import (
 	"github.com/swaggest/usecase/status"
 )
 
+// ToDo: To have a requests to create labels in bulk?
 type CreateScanLabelRequest struct {
 	ScanID uuid.UUID `path:"scan_id"`
 	Key    string    `json:"key"`
