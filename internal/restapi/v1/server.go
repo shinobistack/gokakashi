@@ -8,6 +8,9 @@ import (
 	_ "github.com/lib/pq"
 	"github.com/shinobistack/gokakashi/ent"
 	"github.com/shinobistack/gokakashi/internal/restapi/server/middleware"
+	agents1 "github.com/shinobistack/gokakashi/internal/restapi/v1/agents"
+	agenttasks1 "github.com/shinobistack/gokakashi/internal/restapi/v1/agenttasks"
+
 	integrations1 "github.com/shinobistack/gokakashi/internal/restapi/v1/integrations"
 	integrationtype1 "github.com/shinobistack/gokakashi/internal/restapi/v1/integrationtype"
 	policies1 "github.com/shinobistack/gokakashi/internal/restapi/v1/policies"
@@ -83,6 +86,18 @@ func (srv *Server) Service() *web.Service {
 	apiV1.Get("/scans/{scan_id}/labels/{key}", usecase.NewInteractor(scanlabels1.GetScanLabel(srv.DB)))
 	apiV1.Put("/scans/{scan_id}/labels", usecase.NewInteractor(scanlabels1.UpdateScanLabel(srv.DB)))
 	apiV1.Delete("/scans/{scan_id}/labels/{key}", usecase.NewInteractor(scanlabels1.DeleteScanLabel(srv.DB)))
+
+	apiV1.Post("/agents", usecase.NewInteractor(agents1.CreateAgent(srv.DB)))
+	apiV1.Get("/agents", usecase.NewInteractor(agents1.ListAgents(srv.DB)))
+	apiV1.Get("/agents/{id}", usecase.NewInteractor(agents1.GetAgent(srv.DB)))
+	apiV1.Put("/agents/{id}", usecase.NewInteractor(agents1.UpdateAgent(srv.DB)))
+	apiV1.Delete("/agents/{id}", usecase.NewInteractor(agents1.DeleteAgent(srv.DB)))
+
+	apiV1.Post("/agents/{agent_id}/tasks", usecase.NewInteractor(agenttasks1.CreateAgentTask(srv.DB)))
+	apiV1.Get("/agents/{agent_id}/tasks", usecase.NewInteractor(agenttasks1.ListAgentTasks(srv.DB)))
+	apiV1.Get("/agents/{agent_id}/tasks/{id}", usecase.NewInteractor(agenttasks1.GetAgentTask(srv.DB)))
+	apiV1.Put("/agents/{agent_id}/tasks/{id}", usecase.NewInteractor(agenttasks1.UpdateAgentTask(srv.DB)))
+	apiV1.Delete("/agents/{agent_id}/tasks/{id}", usecase.NewInteractor(agenttasks1.DeleteAgentTask(srv.DB)))
 
 	s.Mount("/api/v1/openapi.json", specHandler(apiV1.OpenAPICollector.SpecSchema().(*openapi31.Spec)))
 	s.Mount("/api/v1", apiV1)
