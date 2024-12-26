@@ -10,6 +10,7 @@ import (
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
+	"github.com/google/uuid"
 	"github.com/shinobistack/gokakashi/ent/agents"
 	"github.com/shinobistack/gokakashi/ent/agenttasks"
 	"github.com/shinobistack/gokakashi/ent/predicate"
@@ -43,14 +44,14 @@ func (au *AgentsUpdate) SetNillableStatus(s *string) *AgentsUpdate {
 }
 
 // AddAgentTaskIDs adds the "agent_tasks" edge to the AgentTasks entity by IDs.
-func (au *AgentsUpdate) AddAgentTaskIDs(ids ...int) *AgentsUpdate {
+func (au *AgentsUpdate) AddAgentTaskIDs(ids ...uuid.UUID) *AgentsUpdate {
 	au.mutation.AddAgentTaskIDs(ids...)
 	return au
 }
 
 // AddAgentTasks adds the "agent_tasks" edges to the AgentTasks entity.
 func (au *AgentsUpdate) AddAgentTasks(a ...*AgentTasks) *AgentsUpdate {
-	ids := make([]int, len(a))
+	ids := make([]uuid.UUID, len(a))
 	for i := range a {
 		ids[i] = a[i].ID
 	}
@@ -69,14 +70,14 @@ func (au *AgentsUpdate) ClearAgentTasks() *AgentsUpdate {
 }
 
 // RemoveAgentTaskIDs removes the "agent_tasks" edge to AgentTasks entities by IDs.
-func (au *AgentsUpdate) RemoveAgentTaskIDs(ids ...int) *AgentsUpdate {
+func (au *AgentsUpdate) RemoveAgentTaskIDs(ids ...uuid.UUID) *AgentsUpdate {
 	au.mutation.RemoveAgentTaskIDs(ids...)
 	return au
 }
 
 // RemoveAgentTasks removes "agent_tasks" edges to AgentTasks entities.
 func (au *AgentsUpdate) RemoveAgentTasks(a ...*AgentTasks) *AgentsUpdate {
-	ids := make([]int, len(a))
+	ids := make([]uuid.UUID, len(a))
 	for i := range a {
 		ids[i] = a[i].ID
 	}
@@ -130,7 +131,7 @@ func (au *AgentsUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			Columns: []string{agents.AgentTasksColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(agenttasks.FieldID, field.TypeInt),
+				IDSpec: sqlgraph.NewFieldSpec(agenttasks.FieldID, field.TypeUUID),
 			},
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
@@ -143,7 +144,7 @@ func (au *AgentsUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			Columns: []string{agents.AgentTasksColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(agenttasks.FieldID, field.TypeInt),
+				IDSpec: sqlgraph.NewFieldSpec(agenttasks.FieldID, field.TypeUUID),
 			},
 		}
 		for _, k := range nodes {
@@ -159,7 +160,7 @@ func (au *AgentsUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			Columns: []string{agents.AgentTasksColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(agenttasks.FieldID, field.TypeInt),
+				IDSpec: sqlgraph.NewFieldSpec(agenttasks.FieldID, field.TypeUUID),
 			},
 		}
 		for _, k := range nodes {
@@ -202,14 +203,14 @@ func (auo *AgentsUpdateOne) SetNillableStatus(s *string) *AgentsUpdateOne {
 }
 
 // AddAgentTaskIDs adds the "agent_tasks" edge to the AgentTasks entity by IDs.
-func (auo *AgentsUpdateOne) AddAgentTaskIDs(ids ...int) *AgentsUpdateOne {
+func (auo *AgentsUpdateOne) AddAgentTaskIDs(ids ...uuid.UUID) *AgentsUpdateOne {
 	auo.mutation.AddAgentTaskIDs(ids...)
 	return auo
 }
 
 // AddAgentTasks adds the "agent_tasks" edges to the AgentTasks entity.
 func (auo *AgentsUpdateOne) AddAgentTasks(a ...*AgentTasks) *AgentsUpdateOne {
-	ids := make([]int, len(a))
+	ids := make([]uuid.UUID, len(a))
 	for i := range a {
 		ids[i] = a[i].ID
 	}
@@ -228,14 +229,14 @@ func (auo *AgentsUpdateOne) ClearAgentTasks() *AgentsUpdateOne {
 }
 
 // RemoveAgentTaskIDs removes the "agent_tasks" edge to AgentTasks entities by IDs.
-func (auo *AgentsUpdateOne) RemoveAgentTaskIDs(ids ...int) *AgentsUpdateOne {
+func (auo *AgentsUpdateOne) RemoveAgentTaskIDs(ids ...uuid.UUID) *AgentsUpdateOne {
 	auo.mutation.RemoveAgentTaskIDs(ids...)
 	return auo
 }
 
 // RemoveAgentTasks removes "agent_tasks" edges to AgentTasks entities.
 func (auo *AgentsUpdateOne) RemoveAgentTasks(a ...*AgentTasks) *AgentsUpdateOne {
-	ids := make([]int, len(a))
+	ids := make([]uuid.UUID, len(a))
 	for i := range a {
 		ids[i] = a[i].ID
 	}
@@ -319,7 +320,7 @@ func (auo *AgentsUpdateOne) sqlSave(ctx context.Context) (_node *Agents, err err
 			Columns: []string{agents.AgentTasksColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(agenttasks.FieldID, field.TypeInt),
+				IDSpec: sqlgraph.NewFieldSpec(agenttasks.FieldID, field.TypeUUID),
 			},
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
@@ -332,7 +333,7 @@ func (auo *AgentsUpdateOne) sqlSave(ctx context.Context) (_node *Agents, err err
 			Columns: []string{agents.AgentTasksColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(agenttasks.FieldID, field.TypeInt),
+				IDSpec: sqlgraph.NewFieldSpec(agenttasks.FieldID, field.TypeUUID),
 			},
 		}
 		for _, k := range nodes {
@@ -348,7 +349,7 @@ func (auo *AgentsUpdateOne) sqlSave(ctx context.Context) (_node *Agents, err err
 			Columns: []string{agents.AgentTasksColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(agenttasks.FieldID, field.TypeInt),
+				IDSpec: sqlgraph.NewFieldSpec(agenttasks.FieldID, field.TypeUUID),
 			},
 		}
 		for _, k := range nodes {

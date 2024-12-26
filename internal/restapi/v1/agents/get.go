@@ -11,6 +11,8 @@ type GetAgentRequest struct {
 	ID int `path:"id"`
 }
 
+type ListAgentsRequest struct{}
+
 type GetAgentResponse struct {
 	ID     int    `json:"id"`
 	Status string `json:"status"`
@@ -20,8 +22,8 @@ type ListAgentsResponse struct {
 	Agents []GetAgentResponse `json:"agents"`
 }
 
-func ListAgents(client *ent.Client) func(ctx context.Context, req interface{}, res *[]GetAgentResponse) error {
-	return func(ctx context.Context, req interface{}, res *[]GetAgentResponse) error {
+func ListAgents(client *ent.Client) func(ctx context.Context, req ListAgentsRequest, res *[]GetAgentResponse) error {
+	return func(ctx context.Context, req ListAgentsRequest, res *[]GetAgentResponse) error {
 		agentsList, err := client.Agents.Query().All(ctx)
 		if err != nil {
 			return status.Wrap(err, status.Internal)

@@ -64,8 +64,16 @@ func (atc *AgentTasksCreate) SetNillableCreatedAt(t *time.Time) *AgentTasksCreat
 }
 
 // SetID sets the "id" field.
-func (atc *AgentTasksCreate) SetID(i int) *AgentTasksCreate {
-	atc.mutation.SetID(i)
+func (atc *AgentTasksCreate) SetID(u uuid.UUID) *AgentTasksCreate {
+	atc.mutation.SetID(u)
+	return atc
+}
+
+// SetNillableID sets the "id" field if the given value is not nil.
+func (atc *AgentTasksCreate) SetNillableID(u *uuid.UUID) *AgentTasksCreate {
+	if u != nil {
+		atc.SetID(*u)
+	}
 	return atc
 }
 
@@ -122,6 +130,10 @@ func (atc *AgentTasksCreate) defaults() {
 		v := agenttasks.DefaultCreatedAt()
 		atc.mutation.SetCreatedAt(v)
 	}
+	if _, ok := atc.mutation.ID(); !ok {
+		v := agenttasks.DefaultID()
+		atc.mutation.SetID(v)
+	}
 }
 
 // check runs all checks and user-defined validators on the builder.
@@ -158,9 +170,12 @@ func (atc *AgentTasksCreate) sqlSave(ctx context.Context) (*AgentTasks, error) {
 		}
 		return nil, err
 	}
-	if _spec.ID.Value != _node.ID {
-		id := _spec.ID.Value.(int64)
-		_node.ID = int(id)
+	if _spec.ID.Value != nil {
+		if id, ok := _spec.ID.Value.(*uuid.UUID); ok {
+			_node.ID = *id
+		} else if err := _node.ID.Scan(_spec.ID.Value); err != nil {
+			return nil, err
+		}
 	}
 	atc.mutation.id = &_node.ID
 	atc.mutation.done = true
@@ -170,11 +185,11 @@ func (atc *AgentTasksCreate) sqlSave(ctx context.Context) (*AgentTasks, error) {
 func (atc *AgentTasksCreate) createSpec() (*AgentTasks, *sqlgraph.CreateSpec) {
 	var (
 		_node = &AgentTasks{config: atc.config}
-		_spec = sqlgraph.NewCreateSpec(agenttasks.Table, sqlgraph.NewFieldSpec(agenttasks.FieldID, field.TypeInt))
+		_spec = sqlgraph.NewCreateSpec(agenttasks.Table, sqlgraph.NewFieldSpec(agenttasks.FieldID, field.TypeUUID))
 	)
 	if id, ok := atc.mutation.ID(); ok {
 		_node.ID = id
-		_spec.ID.Value = id
+		_spec.ID.Value = &id
 	}
 	if value, ok := atc.mutation.Status(); ok {
 		_spec.SetField(agenttasks.FieldStatus, field.TypeString, value)
@@ -266,10 +281,6 @@ func (atcb *AgentTasksCreateBulk) Save(ctx context.Context) ([]*AgentTasks, erro
 					return nil, err
 				}
 				mutation.id = &nodes[i].ID
-				if specs[i].ID.Value != nil && nodes[i].ID == 0 {
-					id := specs[i].ID.Value.(int64)
-					nodes[i].ID = int(id)
-				}
 				mutation.done = true
 				return nodes[i], nil
 			})

@@ -31,6 +31,10 @@ func init() {
 	agenttasksDescCreatedAt := agenttasksFields[4].Descriptor()
 	// agenttasks.DefaultCreatedAt holds the default value on creation for the created_at field.
 	agenttasks.DefaultCreatedAt = agenttasksDescCreatedAt.Default.(func() time.Time)
+	// agenttasksDescID is the schema descriptor for id field.
+	agenttasksDescID := agenttasksFields[0].Descriptor()
+	// agenttasks.DefaultID holds the default value on creation for the id field.
+	agenttasks.DefaultID = agenttasksDescID.Default.(func() uuid.UUID)
 	agentsFields := schema.Agents{}.Fields()
 	_ = agentsFields
 	// agentsDescStatus is the schema descriptor for status field.

@@ -10,23 +10,26 @@ import (
 )
 
 type GetAgentTaskRequest struct {
-	ID int `path:"id"`
+	ID      uuid.UUID `path:"id"`
+	AgentID int       `path:"agent_id"`
 }
 
 type GetAgentTaskResponse struct {
-	ID        int       `json:"id"`
+	ID        uuid.UUID `json:"id"`
 	AgentID   int       `json:"agent_id"`
 	ScanID    uuid.UUID `json:"scan_id"`
 	Status    string    `json:"status"`
 	CreatedAt time.Time `json:"created_at"`
+}
+type ListAgentTasksRequest struct {
 }
 
 type ListAgentTasksResponse struct {
 	AgentTasks []GetAgentTaskResponse `json:"agent_tasks"`
 }
 
-func ListAgentTasks(client *ent.Client) func(ctx context.Context, req interface{}, res *[]GetAgentTaskResponse) error {
-	return func(ctx context.Context, req interface{}, res *[]GetAgentTaskResponse) error {
+func ListAgentTasks(client *ent.Client) func(ctx context.Context, req ListAgentTasksRequest, res *[]GetAgentTaskResponse) error {
+	return func(ctx context.Context, req ListAgentTasksRequest, res *[]GetAgentTaskResponse) error {
 		tasks, err := client.AgentTasks.Query().All(ctx)
 		if err != nil {
 			return status.Wrap(err, status.Internal)
@@ -48,7 +51,7 @@ func ListAgentTasks(client *ent.Client) func(ctx context.Context, req interface{
 
 func GetAgentTask(client *ent.Client) func(ctx context.Context, req GetAgentTaskRequest, res *GetAgentTaskResponse) error {
 	return func(ctx context.Context, req GetAgentTaskRequest, res *GetAgentTaskResponse) error {
-		if req.ID <= 0 {
+		if req.ID == uuid.Nil {
 			return status.Wrap(errors.New("invalid ID"), status.InvalidArgument)
 		}
 

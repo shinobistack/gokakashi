@@ -16,7 +16,8 @@ type AgentTasks struct {
 // Fields of the AgentTasks.
 func (AgentTasks) Fields() []ent.Field {
 	return []ent.Field{
-		field.Int("id").
+		field.UUID("id", uuid.UUID{}).
+			Default(uuid.New).
 			Unique().
 			Comment("Primary key, unique identifier."),
 		field.Int("agent_id").

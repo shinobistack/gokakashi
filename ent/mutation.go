@@ -48,7 +48,7 @@ type AgentTasksMutation struct {
 	config
 	op            Op
 	typ           string
-	id            *int
+	id            *uuid.UUID
 	status        *string
 	created_at    *time.Time
 	clearedFields map[string]struct{}
@@ -81,7 +81,7 @@ func newAgentTasksMutation(c config, op Op, opts ...agenttasksOption) *AgentTask
 }
 
 // withAgentTasksID sets the ID field of the mutation.
-func withAgentTasksID(id int) agenttasksOption {
+func withAgentTasksID(id uuid.UUID) agenttasksOption {
 	return func(m *AgentTasksMutation) {
 		var (
 			err   error
@@ -133,13 +133,13 @@ func (m AgentTasksMutation) Tx() (*Tx, error) {
 
 // SetID sets the value of the id field. Note that this
 // operation is only accepted on creation of AgentTasks entities.
-func (m *AgentTasksMutation) SetID(id int) {
+func (m *AgentTasksMutation) SetID(id uuid.UUID) {
 	m.id = &id
 }
 
 // ID returns the ID value in the mutation. Note that the ID is only available
 // if it was provided to the builder or after it was returned from the database.
-func (m *AgentTasksMutation) ID() (id int, exists bool) {
+func (m *AgentTasksMutation) ID() (id uuid.UUID, exists bool) {
 	if m.id == nil {
 		return
 	}
@@ -150,12 +150,12 @@ func (m *AgentTasksMutation) ID() (id int, exists bool) {
 // That means, if the mutation is applied within a transaction with an isolation level such
 // as sql.LevelSerializable, the returned ids match the ids of the rows that will be updated
 // or updated by the mutation.
-func (m *AgentTasksMutation) IDs(ctx context.Context) ([]int, error) {
+func (m *AgentTasksMutation) IDs(ctx context.Context) ([]uuid.UUID, error) {
 	switch {
 	case m.op.Is(OpUpdateOne | OpDeleteOne):
 		id, exists := m.ID()
 		if exists {
-			return []int{id}, nil
+			return []uuid.UUID{id}, nil
 		}
 		fallthrough
 	case m.op.Is(OpUpdate | OpDelete):
@@ -648,8 +648,8 @@ type AgentsMutation struct {
 	id                 *int
 	status             *string
 	clearedFields      map[string]struct{}
-	agent_tasks        map[int]struct{}
-	removedagent_tasks map[int]struct{}
+	agent_tasks        map[uuid.UUID]struct{}
+	removedagent_tasks map[uuid.UUID]struct{}
 	clearedagent_tasks bool
 	done               bool
 	oldValue           func(context.Context) (*Agents, error)
@@ -797,9 +797,9 @@ func (m *AgentsMutation) ResetStatus() {
 }
 
 // AddAgentTaskIDs adds the "agent_tasks" edge to the AgentTasks entity by ids.
-func (m *AgentsMutation) AddAgentTaskIDs(ids ...int) {
+func (m *AgentsMutation) AddAgentTaskIDs(ids ...uuid.UUID) {
 	if m.agent_tasks == nil {
-		m.agent_tasks = make(map[int]struct{})
+		m.agent_tasks = make(map[uuid.UUID]struct{})
 	}
 	for i := range ids {
 		m.agent_tasks[ids[i]] = struct{}{}
@@ -817,9 +817,9 @@ func (m *AgentsMutation) AgentTasksCleared() bool {
 }
 
 // RemoveAgentTaskIDs removes the "agent_tasks" edge to the AgentTasks entity by IDs.
-func (m *AgentsMutation) RemoveAgentTaskIDs(ids ...int) {
+func (m *AgentsMutation) RemoveAgentTaskIDs(ids ...uuid.UUID) {
 	if m.removedagent_tasks == nil {
-		m.removedagent_tasks = make(map[int]struct{})
+		m.removedagent_tasks = make(map[uuid.UUID]struct{})
 	}
 	for i := range ids {
 		delete(m.agent_tasks, ids[i])
@@ -828,7 +828,7 @@ func (m *AgentsMutation) RemoveAgentTaskIDs(ids ...int) {
 }
 
 // RemovedAgentTasks returns the removed IDs of the "agent_tasks" edge to the AgentTasks entity.
-func (m *AgentsMutation) RemovedAgentTasksIDs() (ids []int) {
+func (m *AgentsMutation) RemovedAgentTasksIDs() (ids []uuid.UUID) {
 	for id := range m.removedagent_tasks {
 		ids = append(ids, id)
 	}
@@ -836,7 +836,7 @@ func (m *AgentsMutation) RemovedAgentTasksIDs() (ids []int) {
 }
 
 // AgentTasksIDs returns the "agent_tasks" edge IDs in the mutation.
-func (m *AgentsMutation) AgentTasksIDs() (ids []int) {
+func (m *AgentsMutation) AgentTasksIDs() (ids []uuid.UUID) {
 	for id := range m.agent_tasks {
 		ids = append(ids, id)
 	}
@@ -3706,8 +3706,8 @@ type ScansMutation struct {
 	scan_labels        map[int]struct{}
 	removedscan_labels map[int]struct{}
 	clearedscan_labels bool
-	agent_tasks        map[int]struct{}
-	removedagent_tasks map[int]struct{}
+	agent_tasks        map[uuid.UUID]struct{}
+	removedagent_tasks map[uuid.UUID]struct{}
 	clearedagent_tasks bool
 	done               bool
 	oldValue           func(context.Context) (*Scans, error)
@@ -4106,9 +4106,9 @@ func (m *ScansMutation) ResetScanLabels() {
 }
 
 // AddAgentTaskIDs adds the "agent_tasks" edge to the AgentTasks entity by ids.
-func (m *ScansMutation) AddAgentTaskIDs(ids ...int) {
+func (m *ScansMutation) AddAgentTaskIDs(ids ...uuid.UUID) {
 	if m.agent_tasks == nil {
-		m.agent_tasks = make(map[int]struct{})
+		m.agent_tasks = make(map[uuid.UUID]struct{})
 	}
 	for i := range ids {
 		m.agent_tasks[ids[i]] = struct{}{}
@@ -4126,9 +4126,9 @@ func (m *ScansMutation) AgentTasksCleared() bool {
 }
 
 // RemoveAgentTaskIDs removes the "agent_tasks" edge to the AgentTasks entity by IDs.
-func (m *ScansMutation) RemoveAgentTaskIDs(ids ...int) {
+func (m *ScansMutation) RemoveAgentTaskIDs(ids ...uuid.UUID) {
 	if m.removedagent_tasks == nil {
-		m.removedagent_tasks = make(map[int]struct{})
+		m.removedagent_tasks = make(map[uuid.UUID]struct{})
 	}
 	for i := range ids {
 		delete(m.agent_tasks, ids[i])
@@ -4137,7 +4137,7 @@ func (m *ScansMutation) RemoveAgentTaskIDs(ids ...int) {
 }
 
 // RemovedAgentTasks returns the removed IDs of the "agent_tasks" edge to the AgentTasks entity.
-func (m *ScansMutation) RemovedAgentTasksIDs() (ids []int) {
+func (m *ScansMutation) RemovedAgentTasksIDs() (ids []uuid.UUID) {
 	for id := range m.removedagent_tasks {
 		ids = append(ids, id)
 	}
@@ -4145,7 +4145,7 @@ func (m *ScansMutation) RemovedAgentTasksIDs() (ids []int) {
 }
 
 // AgentTasksIDs returns the "agent_tasks" edge IDs in the mutation.
-func (m *ScansMutation) AgentTasksIDs() (ids []int) {
+func (m *ScansMutation) AgentTasksIDs() (ids []uuid.UUID) {
 	for id := range m.agent_tasks {
 		ids = append(ids, id)
 	}

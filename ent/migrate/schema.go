@@ -10,7 +10,7 @@ import (
 var (
 	// AgentTasksColumns holds the columns for the "agent_tasks" table.
 	AgentTasksColumns = []*schema.Column{
-		{Name: "id", Type: field.TypeInt, Increment: true},
+		{Name: "id", Type: field.TypeUUID, Unique: true},
 		{Name: "status", Type: field.TypeString, Default: "pending"},
 		{Name: "created_at", Type: field.TypeTime},
 		{Name: "agent_id", Type: field.TypeInt},

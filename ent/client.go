@@ -325,7 +325,7 @@ func (c *AgentTasksClient) UpdateOne(at *AgentTasks) *AgentTasksUpdateOne {
 }
 
 // UpdateOneID returns an update builder for the given id.
-func (c *AgentTasksClient) UpdateOneID(id int) *AgentTasksUpdateOne {
+func (c *AgentTasksClient) UpdateOneID(id uuid.UUID) *AgentTasksUpdateOne {
 	mutation := newAgentTasksMutation(c.config, OpUpdateOne, withAgentTasksID(id))
 	return &AgentTasksUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
 }
@@ -342,7 +342,7 @@ func (c *AgentTasksClient) DeleteOne(at *AgentTasks) *AgentTasksDeleteOne {
 }
 
 // DeleteOneID returns a builder for deleting the given entity by its id.
-func (c *AgentTasksClient) DeleteOneID(id int) *AgentTasksDeleteOne {
+func (c *AgentTasksClient) DeleteOneID(id uuid.UUID) *AgentTasksDeleteOne {
 	builder := c.Delete().Where(agenttasks.ID(id))
 	builder.mutation.id = &id
 	builder.mutation.op = OpDeleteOne
@@ -359,12 +359,12 @@ func (c *AgentTasksClient) Query() *AgentTasksQuery {
 }
 
 // Get returns a AgentTasks entity by its id.
-func (c *AgentTasksClient) Get(ctx context.Context, id int) (*AgentTasks, error) {
+func (c *AgentTasksClient) Get(ctx context.Context, id uuid.UUID) (*AgentTasks, error) {
 	return c.Query().Where(agenttasks.ID(id)).Only(ctx)
 }
 
 // GetX is like Get, but panics if an error occurs.
-func (c *AgentTasksClient) GetX(ctx context.Context, id int) *AgentTasks {
+func (c *AgentTasksClient) GetX(ctx context.Context, id uuid.UUID) *AgentTasks {
 	obj, err := c.Get(ctx, id)
 	if err != nil {
 		panic(err)
