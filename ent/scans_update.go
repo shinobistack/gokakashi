@@ -135,14 +135,14 @@ func (su *ScansUpdate) AddScanLabels(s ...*ScanLabels) *ScansUpdate {
 }
 
 // AddAgentTaskIDs adds the "agent_tasks" edge to the AgentTasks entity by IDs.
-func (su *ScansUpdate) AddAgentTaskIDs(ids ...int) *ScansUpdate {
+func (su *ScansUpdate) AddAgentTaskIDs(ids ...uuid.UUID) *ScansUpdate {
 	su.mutation.AddAgentTaskIDs(ids...)
 	return su
 }
 
 // AddAgentTasks adds the "agent_tasks" edges to the AgentTasks entity.
 func (su *ScansUpdate) AddAgentTasks(a ...*AgentTasks) *ScansUpdate {
-	ids := make([]int, len(a))
+	ids := make([]uuid.UUID, len(a))
 	for i := range a {
 		ids[i] = a[i].ID
 	}
@@ -188,14 +188,14 @@ func (su *ScansUpdate) ClearAgentTasks() *ScansUpdate {
 }
 
 // RemoveAgentTaskIDs removes the "agent_tasks" edge to AgentTasks entities by IDs.
-func (su *ScansUpdate) RemoveAgentTaskIDs(ids ...int) *ScansUpdate {
+func (su *ScansUpdate) RemoveAgentTaskIDs(ids ...uuid.UUID) *ScansUpdate {
 	su.mutation.RemoveAgentTaskIDs(ids...)
 	return su
 }
 
 // RemoveAgentTasks removes "agent_tasks" edges to AgentTasks entities.
 func (su *ScansUpdate) RemoveAgentTasks(a ...*AgentTasks) *ScansUpdate {
-	ids := make([]int, len(a))
+	ids := make([]uuid.UUID, len(a))
 	for i := range a {
 		ids[i] = a[i].ID
 	}
@@ -349,7 +349,7 @@ func (su *ScansUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			Columns: []string{scans.AgentTasksColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(agenttasks.FieldID, field.TypeInt),
+				IDSpec: sqlgraph.NewFieldSpec(agenttasks.FieldID, field.TypeUUID),
 			},
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
@@ -362,7 +362,7 @@ func (su *ScansUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			Columns: []string{scans.AgentTasksColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(agenttasks.FieldID, field.TypeInt),
+				IDSpec: sqlgraph.NewFieldSpec(agenttasks.FieldID, field.TypeUUID),
 			},
 		}
 		for _, k := range nodes {
@@ -378,7 +378,7 @@ func (su *ScansUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			Columns: []string{scans.AgentTasksColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(agenttasks.FieldID, field.TypeInt),
+				IDSpec: sqlgraph.NewFieldSpec(agenttasks.FieldID, field.TypeUUID),
 			},
 		}
 		for _, k := range nodes {
@@ -509,14 +509,14 @@ func (suo *ScansUpdateOne) AddScanLabels(s ...*ScanLabels) *ScansUpdateOne {
 }
 
 // AddAgentTaskIDs adds the "agent_tasks" edge to the AgentTasks entity by IDs.
-func (suo *ScansUpdateOne) AddAgentTaskIDs(ids ...int) *ScansUpdateOne {
+func (suo *ScansUpdateOne) AddAgentTaskIDs(ids ...uuid.UUID) *ScansUpdateOne {
 	suo.mutation.AddAgentTaskIDs(ids...)
 	return suo
 }
 
 // AddAgentTasks adds the "agent_tasks" edges to the AgentTasks entity.
 func (suo *ScansUpdateOne) AddAgentTasks(a ...*AgentTasks) *ScansUpdateOne {
-	ids := make([]int, len(a))
+	ids := make([]uuid.UUID, len(a))
 	for i := range a {
 		ids[i] = a[i].ID
 	}
@@ -562,14 +562,14 @@ func (suo *ScansUpdateOne) ClearAgentTasks() *ScansUpdateOne {
 }
 
 // RemoveAgentTaskIDs removes the "agent_tasks" edge to AgentTasks entities by IDs.
-func (suo *ScansUpdateOne) RemoveAgentTaskIDs(ids ...int) *ScansUpdateOne {
+func (suo *ScansUpdateOne) RemoveAgentTaskIDs(ids ...uuid.UUID) *ScansUpdateOne {
 	suo.mutation.RemoveAgentTaskIDs(ids...)
 	return suo
 }
 
 // RemoveAgentTasks removes "agent_tasks" edges to AgentTasks entities.
 func (suo *ScansUpdateOne) RemoveAgentTasks(a ...*AgentTasks) *ScansUpdateOne {
-	ids := make([]int, len(a))
+	ids := make([]uuid.UUID, len(a))
 	for i := range a {
 		ids[i] = a[i].ID
 	}
@@ -753,7 +753,7 @@ func (suo *ScansUpdateOne) sqlSave(ctx context.Context) (_node *Scans, err error
 			Columns: []string{scans.AgentTasksColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(agenttasks.FieldID, field.TypeInt),
+				IDSpec: sqlgraph.NewFieldSpec(agenttasks.FieldID, field.TypeUUID),
 			},
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
@@ -766,7 +766,7 @@ func (suo *ScansUpdateOne) sqlSave(ctx context.Context) (_node *Scans, err error
 			Columns: []string{scans.AgentTasksColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(agenttasks.FieldID, field.TypeInt),
+				IDSpec: sqlgraph.NewFieldSpec(agenttasks.FieldID, field.TypeUUID),
 			},
 		}
 		for _, k := range nodes {
@@ -782,7 +782,7 @@ func (suo *ScansUpdateOne) sqlSave(ctx context.Context) (_node *Scans, err error
 			Columns: []string{scans.AgentTasksColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(agenttasks.FieldID, field.TypeInt),
+				IDSpec: sqlgraph.NewFieldSpec(agenttasks.FieldID, field.TypeUUID),
 			},
 		}
 		for _, k := range nodes {

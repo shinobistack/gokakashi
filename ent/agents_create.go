@@ -9,6 +9,7 @@ import (
 
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
+	"github.com/google/uuid"
 	"github.com/shinobistack/gokakashi/ent/agents"
 	"github.com/shinobistack/gokakashi/ent/agenttasks"
 )
@@ -41,14 +42,14 @@ func (ac *AgentsCreate) SetID(i int) *AgentsCreate {
 }
 
 // AddAgentTaskIDs adds the "agent_tasks" edge to the AgentTasks entity by IDs.
-func (ac *AgentsCreate) AddAgentTaskIDs(ids ...int) *AgentsCreate {
+func (ac *AgentsCreate) AddAgentTaskIDs(ids ...uuid.UUID) *AgentsCreate {
 	ac.mutation.AddAgentTaskIDs(ids...)
 	return ac
 }
 
 // AddAgentTasks adds the "agent_tasks" edges to the AgentTasks entity.
 func (ac *AgentsCreate) AddAgentTasks(a ...*AgentTasks) *AgentsCreate {
-	ids := make([]int, len(a))
+	ids := make([]uuid.UUID, len(a))
 	for i := range a {
 		ids[i] = a[i].ID
 	}
@@ -145,7 +146,7 @@ func (ac *AgentsCreate) createSpec() (*Agents, *sqlgraph.CreateSpec) {
 			Columns: []string{agents.AgentTasksColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(agenttasks.FieldID, field.TypeInt),
+				IDSpec: sqlgraph.NewFieldSpec(agenttasks.FieldID, field.TypeUUID),
 			},
 		}
 		for _, k := range nodes {

@@ -3,22 +3,24 @@ package agenttasks
 import (
 	"context"
 	"errors"
+	"github.com/google/uuid"
 	"github.com/shinobistack/gokakashi/ent"
 	"github.com/swaggest/usecase/status"
 )
 
 type DeleteAgentTaskRequest struct {
-	ID int `path:"id"`
+	ID      uuid.UUID `path:"id"`
+	AgentID int       `path:"agent_id"`
 }
 
 type DeleteAgentTaskResponse struct {
-	ID     int    `json:"id"`
-	Status string `json:"status"`
+	ID     uuid.UUID `json:"id"`
+	Status string    `json:"status"`
 }
 
 func DeleteAgentTask(client *ent.Client) func(ctx context.Context, req DeleteAgentTaskRequest, res *DeleteAgentTaskResponse) error {
 	return func(ctx context.Context, req DeleteAgentTaskRequest, res *DeleteAgentTaskResponse) error {
-		if req.ID <= 0 {
+		if req.ID == uuid.Nil {
 			return status.Wrap(errors.New("invalid ID"), status.InvalidArgument)
 		}
 

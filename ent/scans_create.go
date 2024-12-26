@@ -113,14 +113,14 @@ func (sc *ScansCreate) AddScanLabels(s ...*ScanLabels) *ScansCreate {
 }
 
 // AddAgentTaskIDs adds the "agent_tasks" edge to the AgentTasks entity by IDs.
-func (sc *ScansCreate) AddAgentTaskIDs(ids ...int) *ScansCreate {
+func (sc *ScansCreate) AddAgentTaskIDs(ids ...uuid.UUID) *ScansCreate {
 	sc.mutation.AddAgentTaskIDs(ids...)
 	return sc
 }
 
 // AddAgentTasks adds the "agent_tasks" edges to the AgentTasks entity.
 func (sc *ScansCreate) AddAgentTasks(a ...*AgentTasks) *ScansCreate {
-	ids := make([]int, len(a))
+	ids := make([]uuid.UUID, len(a))
 	for i := range a {
 		ids[i] = a[i].ID
 	}
@@ -278,7 +278,7 @@ func (sc *ScansCreate) createSpec() (*Scans, *sqlgraph.CreateSpec) {
 			Columns: []string{scans.AgentTasksColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(agenttasks.FieldID, field.TypeInt),
+				IDSpec: sqlgraph.NewFieldSpec(agenttasks.FieldID, field.TypeUUID),
 			},
 		}
 		for _, k := range nodes {

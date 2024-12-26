@@ -12,47 +12,47 @@ import (
 )
 
 // ID filters vertices based on their ID field.
-func ID(id int) predicate.AgentTasks {
+func ID(id uuid.UUID) predicate.AgentTasks {
 	return predicate.AgentTasks(sql.FieldEQ(FieldID, id))
 }
 
 // IDEQ applies the EQ predicate on the ID field.
-func IDEQ(id int) predicate.AgentTasks {
+func IDEQ(id uuid.UUID) predicate.AgentTasks {
 	return predicate.AgentTasks(sql.FieldEQ(FieldID, id))
 }
 
 // IDNEQ applies the NEQ predicate on the ID field.
-func IDNEQ(id int) predicate.AgentTasks {
+func IDNEQ(id uuid.UUID) predicate.AgentTasks {
 	return predicate.AgentTasks(sql.FieldNEQ(FieldID, id))
 }
 
 // IDIn applies the In predicate on the ID field.
-func IDIn(ids ...int) predicate.AgentTasks {
+func IDIn(ids ...uuid.UUID) predicate.AgentTasks {
 	return predicate.AgentTasks(sql.FieldIn(FieldID, ids...))
 }
 
 // IDNotIn applies the NotIn predicate on the ID field.
-func IDNotIn(ids ...int) predicate.AgentTasks {
+func IDNotIn(ids ...uuid.UUID) predicate.AgentTasks {
 	return predicate.AgentTasks(sql.FieldNotIn(FieldID, ids...))
 }
 
 // IDGT applies the GT predicate on the ID field.
-func IDGT(id int) predicate.AgentTasks {
+func IDGT(id uuid.UUID) predicate.AgentTasks {
 	return predicate.AgentTasks(sql.FieldGT(FieldID, id))
 }
 
 // IDGTE applies the GTE predicate on the ID field.
-func IDGTE(id int) predicate.AgentTasks {
+func IDGTE(id uuid.UUID) predicate.AgentTasks {
 	return predicate.AgentTasks(sql.FieldGTE(FieldID, id))
 }
 
 // IDLT applies the LT predicate on the ID field.
-func IDLT(id int) predicate.AgentTasks {
+func IDLT(id uuid.UUID) predicate.AgentTasks {
 	return predicate.AgentTasks(sql.FieldLT(FieldID, id))
 }
 
 // IDLTE applies the LTE predicate on the ID field.
-func IDLTE(id int) predicate.AgentTasks {
+func IDLTE(id uuid.UUID) predicate.AgentTasks {
 	return predicate.AgentTasks(sql.FieldLTE(FieldID, id))
 }
 

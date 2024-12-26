@@ -20,7 +20,7 @@ type AgentTasks struct {
 	config `json:"-"`
 	// ID of the ent.
 	// Primary key, unique identifier.
-	ID int `json:"id,omitempty"`
+	ID uuid.UUID `json:"id,omitempty"`
 	// Foreign key to Agents.ID.
 	AgentID int `json:"agent_id,omitempty"`
 	// Foreign key to Scans.ID.
@@ -73,13 +73,13 @@ func (*AgentTasks) scanValues(columns []string) ([]any, error) {
 	values := make([]any, len(columns))
 	for i := range columns {
 		switch columns[i] {
-		case agenttasks.FieldID, agenttasks.FieldAgentID:
+		case agenttasks.FieldAgentID:
 			values[i] = new(sql.NullInt64)
 		case agenttasks.FieldStatus:
 			values[i] = new(sql.NullString)
 		case agenttasks.FieldCreatedAt:
 			values[i] = new(sql.NullTime)
-		case agenttasks.FieldScanID:
+		case agenttasks.FieldID, agenttasks.FieldScanID:
 			values[i] = new(uuid.UUID)
 		default:
 			values[i] = new(sql.UnknownType)
@@ -97,11 +97,11 @@ func (at *AgentTasks) assignValues(columns []string, values []any) error {
 	for i := range columns {
 		switch columns[i] {
 		case agenttasks.FieldID:
-			value, ok := values[i].(*sql.NullInt64)
-			if !ok {
-				return fmt.Errorf("unexpected type %T for field id", value)
+			if value, ok := values[i].(*uuid.UUID); !ok {
+				return fmt.Errorf("unexpected type %T for field id", values[i])
+			} else if value != nil {
+				at.ID = *value
 			}
-			at.ID = int(value.Int64)
 		case agenttasks.FieldAgentID:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field agent_id", values[i])

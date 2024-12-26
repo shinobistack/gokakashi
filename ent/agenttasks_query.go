@@ -131,8 +131,8 @@ func (atq *AgentTasksQuery) FirstX(ctx context.Context) *AgentTasks {
 
 // FirstID returns the first AgentTasks ID from the query.
 // Returns a *NotFoundError when no AgentTasks ID was found.
-func (atq *AgentTasksQuery) FirstID(ctx context.Context) (id int, err error) {
-	var ids []int
+func (atq *AgentTasksQuery) FirstID(ctx context.Context) (id uuid.UUID, err error) {
+	var ids []uuid.UUID
 	if ids, err = atq.Limit(1).IDs(setContextOp(ctx, atq.ctx, ent.OpQueryFirstID)); err != nil {
 		return
 	}
@@ -144,7 +144,7 @@ func (atq *AgentTasksQuery) FirstID(ctx context.Context) (id int, err error) {
 }
 
 // FirstIDX is like FirstID, but panics if an error occurs.
-func (atq *AgentTasksQuery) FirstIDX(ctx context.Context) int {
+func (atq *AgentTasksQuery) FirstIDX(ctx context.Context) uuid.UUID {
 	id, err := atq.FirstID(ctx)
 	if err != nil && !IsNotFound(err) {
 		panic(err)
@@ -182,8 +182,8 @@ func (atq *AgentTasksQuery) OnlyX(ctx context.Context) *AgentTasks {
 // OnlyID is like Only, but returns the only AgentTasks ID in the query.
 // Returns a *NotSingularError when more than one AgentTasks ID is found.
 // Returns a *NotFoundError when no entities are found.
-func (atq *AgentTasksQuery) OnlyID(ctx context.Context) (id int, err error) {
-	var ids []int
+func (atq *AgentTasksQuery) OnlyID(ctx context.Context) (id uuid.UUID, err error) {
+	var ids []uuid.UUID
 	if ids, err = atq.Limit(2).IDs(setContextOp(ctx, atq.ctx, ent.OpQueryOnlyID)); err != nil {
 		return
 	}
@@ -199,7 +199,7 @@ func (atq *AgentTasksQuery) OnlyID(ctx context.Context) (id int, err error) {
 }
 
 // OnlyIDX is like OnlyID, but panics if an error occurs.
-func (atq *AgentTasksQuery) OnlyIDX(ctx context.Context) int {
+func (atq *AgentTasksQuery) OnlyIDX(ctx context.Context) uuid.UUID {
 	id, err := atq.OnlyID(ctx)
 	if err != nil {
 		panic(err)
@@ -227,7 +227,7 @@ func (atq *AgentTasksQuery) AllX(ctx context.Context) []*AgentTasks {
 }
 
 // IDs executes the query and returns a list of AgentTasks IDs.
-func (atq *AgentTasksQuery) IDs(ctx context.Context) (ids []int, err error) {
+func (atq *AgentTasksQuery) IDs(ctx context.Context) (ids []uuid.UUID, err error) {
 	if atq.ctx.Unique == nil && atq.path != nil {
 		atq.Unique(true)
 	}
@@ -239,7 +239,7 @@ func (atq *AgentTasksQuery) IDs(ctx context.Context) (ids []int, err error) {
 }
 
 // IDsX is like IDs, but panics if an error occurs.
-func (atq *AgentTasksQuery) IDsX(ctx context.Context) []int {
+func (atq *AgentTasksQuery) IDsX(ctx context.Context) []uuid.UUID {
 	ids, err := atq.IDs(ctx)
 	if err != nil {
 		panic(err)
@@ -514,7 +514,7 @@ func (atq *AgentTasksQuery) sqlCount(ctx context.Context) (int, error) {
 }
 
 func (atq *AgentTasksQuery) querySpec() *sqlgraph.QuerySpec {
-	_spec := sqlgraph.NewQuerySpec(agenttasks.Table, agenttasks.Columns, sqlgraph.NewFieldSpec(agenttasks.FieldID, field.TypeInt))
+	_spec := sqlgraph.NewQuerySpec(agenttasks.Table, agenttasks.Columns, sqlgraph.NewFieldSpec(agenttasks.FieldID, field.TypeUUID))
 	_spec.From = atq.sql
 	if unique := atq.ctx.Unique; unique != nil {
 		_spec.Unique = *unique
