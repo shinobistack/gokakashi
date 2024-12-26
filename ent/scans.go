@@ -43,9 +43,11 @@ type ScansEdges struct {
 	Policy *Policies `json:"policy,omitempty"`
 	// ScanLabels holds the value of the scan_labels edge.
 	ScanLabels []*ScanLabels `json:"scan_labels,omitempty"`
+	// AgentTasks holds the value of the agent_tasks edge.
+	AgentTasks []*AgentTasks `json:"agent_tasks,omitempty"`
 	// loadedTypes holds the information for reporting if a
 	// type was loaded (or requested) in eager-loading or not.
-	loadedTypes [2]bool
+	loadedTypes [3]bool
 }
 
 // PolicyOrErr returns the Policy value or an error if the edge
@@ -66,6 +68,15 @@ func (e ScansEdges) ScanLabelsOrErr() ([]*ScanLabels, error) {
 		return e.ScanLabels, nil
 	}
 	return nil, &NotLoadedError{edge: "scan_labels"}
+}
+
+// AgentTasksOrErr returns the AgentTasks value or an error if the edge
+// was not loaded in eager-loading.
+func (e ScansEdges) AgentTasksOrErr() ([]*AgentTasks, error) {
+	if e.loadedTypes[2] {
+		return e.AgentTasks, nil
+	}
+	return nil, &NotLoadedError{edge: "agent_tasks"}
 }
 
 // scanValues returns the types for scanning values from sql.Rows.
@@ -153,6 +164,11 @@ func (s *Scans) QueryPolicy() *PoliciesQuery {
 // QueryScanLabels queries the "scan_labels" edge of the Scans entity.
 func (s *Scans) QueryScanLabels() *ScanLabelsQuery {
 	return NewScansClient(s.config).QueryScanLabels(s)
+}
+
+// QueryAgentTasks queries the "agent_tasks" edge of the Scans entity.
+func (s *Scans) QueryAgentTasks() *AgentTasksQuery {
+	return NewScansClient(s.config).QueryAgentTasks(s)
 }
 
 // Update returns a builder for updating this Scans.

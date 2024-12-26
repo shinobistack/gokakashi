@@ -6,6 +6,12 @@ import (
 	"entgo.io/ent/dialect/sql"
 )
 
+// AgentTasks is the predicate function for agenttasks builders.
+type AgentTasks func(*sql.Selector)
+
+// Agents is the predicate function for agents builders.
+type Agents func(*sql.Selector)
+
 // IntegrationType is the predicate function for integrationtype builders.
 type IntegrationType func(*sql.Selector)
 
