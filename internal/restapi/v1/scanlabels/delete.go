@@ -26,7 +26,19 @@ func DeleteScanLabel(client *ent.Client) func(ctx context.Context, req DeleteSca
 		if req.Key == "" {
 			return status.Wrap(errors.New("invalid key: cannot be nil"), status.InvalidArgument)
 		}
-		_, err := client.ScanLabels.Delete().
+		// Check if the label exists
+		exists, err := client.ScanLabels.Query().
+			Where(scanlabels.ScanID(req.ScanID), scanlabels.Key(req.Key)).
+			Exist(ctx)
+		if err != nil {
+			return status.Wrap(err, status.Internal)
+		}
+		if !exists {
+			return status.Wrap(errors.New("label not found"), status.NotFound)
+		}
+
+		// Delete the label
+		_, err = client.ScanLabels.Delete().
 			Where(scanlabels.ScanID(req.ScanID), scanlabels.Key(req.Key)).
 			Exec(ctx)
 		if err != nil {

@@ -9,6 +9,7 @@ import (
 	"github.com/swaggest/usecase/status"
 )
 
+// ToDo: To have a requests to create labels in bulk?
 type CreatePolicyLabelRequest struct {
 	PolicyID uuid.UUID `path:"policy_id"`
 	Key      string    `json:"key"`

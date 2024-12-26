@@ -67,6 +67,7 @@ func GetScanLabel(client *ent.Client) func(ctx context.Context, req GetScanLabel
 		if req.ScanID == uuid.Nil || req.Key == "" {
 			return status.Wrap(errors.New("invalid Scan ID or Key"), status.InvalidArgument)
 		}
+
 		label, err := client.ScanLabels.Query().
 			Where(scanlabels.ScanID(req.ScanID), scanlabels.Key(req.Key)).
 			Only(ctx)
