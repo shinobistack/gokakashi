@@ -27,6 +27,8 @@ const (
 	EdgePolicy = "policy"
 	// EdgeScanLabels holds the string denoting the scan_labels edge name in mutations.
 	EdgeScanLabels = "scan_labels"
+	// EdgeAgentTasks holds the string denoting the agent_tasks edge name in mutations.
+	EdgeAgentTasks = "agent_tasks"
 	// Table holds the table name of the scans in the database.
 	Table = "scans"
 	// PolicyTable is the table that holds the policy relation/edge.
@@ -43,6 +45,13 @@ const (
 	ScanLabelsInverseTable = "scan_labels"
 	// ScanLabelsColumn is the table column denoting the scan_labels relation/edge.
 	ScanLabelsColumn = "scan_id"
+	// AgentTasksTable is the table that holds the agent_tasks relation/edge.
+	AgentTasksTable = "agent_tasks"
+	// AgentTasksInverseTable is the table name for the AgentTasks entity.
+	// It exists in this package in order to avoid circular dependency with the "agenttasks" package.
+	AgentTasksInverseTable = "agent_tasks"
+	// AgentTasksColumn is the table column denoting the agent_tasks relation/edge.
+	AgentTasksColumn = "scan_id"
 )
 
 // Columns holds all SQL columns for scans fields.
@@ -120,6 +129,20 @@ func ByScanLabels(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
 		sqlgraph.OrderByNeighborTerms(s, newScanLabelsStep(), append([]sql.OrderTerm{term}, terms...)...)
 	}
 }
+
+// ByAgentTasksCount orders the results by agent_tasks count.
+func ByAgentTasksCount(opts ...sql.OrderTermOption) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborsCount(s, newAgentTasksStep(), opts...)
+	}
+}
+
+// ByAgentTasks orders the results by agent_tasks terms.
+func ByAgentTasks(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborTerms(s, newAgentTasksStep(), append([]sql.OrderTerm{term}, terms...)...)
+	}
+}
 func newPolicyStep() *sqlgraph.Step {
 	return sqlgraph.NewStep(
 		sqlgraph.From(Table, FieldID),
@@ -132,5 +155,12 @@ func newScanLabelsStep() *sqlgraph.Step {
 		sqlgraph.From(Table, FieldID),
 		sqlgraph.To(ScanLabelsInverseTable, FieldID),
 		sqlgraph.Edge(sqlgraph.O2M, false, ScanLabelsTable, ScanLabelsColumn),
+	)
+}
+func newAgentTasksStep() *sqlgraph.Step {
+	return sqlgraph.NewStep(
+		sqlgraph.From(Table, FieldID),
+		sqlgraph.To(AgentTasksInverseTable, FieldID),
+		sqlgraph.Edge(sqlgraph.O2M, false, AgentTasksTable, AgentTasksColumn),
 	)
 }

@@ -9,6 +9,30 @@ import (
 	"github.com/shinobistack/gokakashi/ent"
 )
 
+// The AgentTasksFunc type is an adapter to allow the use of ordinary
+// function as AgentTasks mutator.
+type AgentTasksFunc func(context.Context, *ent.AgentTasksMutation) (ent.Value, error)
+
+// Mutate calls f(ctx, m).
+func (f AgentTasksFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error) {
+	if mv, ok := m.(*ent.AgentTasksMutation); ok {
+		return f(ctx, mv)
+	}
+	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.AgentTasksMutation", m)
+}
+
+// The AgentsFunc type is an adapter to allow the use of ordinary
+// function as Agents mutator.
+type AgentsFunc func(context.Context, *ent.AgentsMutation) (ent.Value, error)
+
+// Mutate calls f(ctx, m).
+func (f AgentsFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error) {
+	if mv, ok := m.(*ent.AgentsMutation); ok {
+		return f(ctx, mv)
+	}
+	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.AgentsMutation", m)
+}
+
 // The IntegrationTypeFunc type is an adapter to allow the use of ordinary
 // function as IntegrationType mutator.
 type IntegrationTypeFunc func(context.Context, *ent.IntegrationTypeMutation) (ent.Value, error)

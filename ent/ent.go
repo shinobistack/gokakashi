@@ -12,6 +12,8 @@ import (
 	"entgo.io/ent"
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
+	"github.com/shinobistack/gokakashi/ent/agents"
+	"github.com/shinobistack/gokakashi/ent/agenttasks"
 	"github.com/shinobistack/gokakashi/ent/integrations"
 	"github.com/shinobistack/gokakashi/ent/integrationtype"
 	"github.com/shinobistack/gokakashi/ent/policies"
@@ -78,6 +80,8 @@ var (
 func checkColumn(table, column string) error {
 	initCheck.Do(func() {
 		columnCheck = sql.NewColumnCheck(map[string]func(string) bool{
+			agenttasks.Table:      agenttasks.ValidColumn,
+			agents.Table:          agents.ValidColumn,
 			integrationtype.Table: integrationtype.ValidColumn,
 			integrations.Table:    integrations.ValidColumn,
 			policies.Table:        policies.ValidColumn,

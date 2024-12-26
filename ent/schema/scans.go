@@ -45,5 +45,6 @@ func (Scans) Edges() []ent.Edge {
 			Field("policy_id"),
 		// A single scan can have multiple labels.
 		edge.To("scan_labels", ScanLabels.Type),
+		edge.To("agent_tasks", AgentTasks.Type),
 	}
 }

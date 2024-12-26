@@ -355,6 +355,29 @@ func HasScanLabelsWith(preds ...predicate.ScanLabels) predicate.Scans {
 	})
 }
 
+// HasAgentTasks applies the HasEdge predicate on the "agent_tasks" edge.
+func HasAgentTasks() predicate.Scans {
+	return predicate.Scans(func(s *sql.Selector) {
+		step := sqlgraph.NewStep(
+			sqlgraph.From(Table, FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, AgentTasksTable, AgentTasksColumn),
+		)
+		sqlgraph.HasNeighbors(s, step)
+	})
+}
+
+// HasAgentTasksWith applies the HasEdge predicate on the "agent_tasks" edge with a given conditions (other predicates).
+func HasAgentTasksWith(preds ...predicate.AgentTasks) predicate.Scans {
+	return predicate.Scans(func(s *sql.Selector) {
+		step := newAgentTasksStep()
+		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
+			for _, p := range preds {
+				p(s)
+			}
+		})
+	})
+}
+
 // And groups predicates with the AND operator between them.
 func And(predicates ...predicate.Scans) predicate.Scans {
 	return predicate.Scans(sql.AndPredicates(predicates...))

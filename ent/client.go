@@ -16,6 +16,8 @@ import (
 	"entgo.io/ent/dialect"
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
+	"github.com/shinobistack/gokakashi/ent/agents"
+	"github.com/shinobistack/gokakashi/ent/agenttasks"
 	"github.com/shinobistack/gokakashi/ent/integrations"
 	"github.com/shinobistack/gokakashi/ent/integrationtype"
 	"github.com/shinobistack/gokakashi/ent/policies"
@@ -29,6 +31,10 @@ type Client struct {
 	config
 	// Schema is the client for creating, migrating and dropping schema.
 	Schema *migrate.Schema
+	// AgentTasks is the client for interacting with the AgentTasks builders.
+	AgentTasks *AgentTasksClient
+	// Agents is the client for interacting with the Agents builders.
+	Agents *AgentsClient
 	// IntegrationType is the client for interacting with the IntegrationType builders.
 	IntegrationType *IntegrationTypeClient
 	// Integrations is the client for interacting with the Integrations builders.
@@ -52,6 +58,8 @@ func NewClient(opts ...Option) *Client {
 
 func (c *Client) init() {
 	c.Schema = migrate.NewSchema(c.driver)
+	c.AgentTasks = NewAgentTasksClient(c.config)
+	c.Agents = NewAgentsClient(c.config)
 	c.IntegrationType = NewIntegrationTypeClient(c.config)
 	c.Integrations = NewIntegrationsClient(c.config)
 	c.Policies = NewPoliciesClient(c.config)
@@ -150,6 +158,8 @@ func (c *Client) Tx(ctx context.Context) (*Tx, error) {
 	return &Tx{
 		ctx:             ctx,
 		config:          cfg,
+		AgentTasks:      NewAgentTasksClient(cfg),
+		Agents:          NewAgentsClient(cfg),
 		IntegrationType: NewIntegrationTypeClient(cfg),
 		Integrations:    NewIntegrationsClient(cfg),
 		Policies:        NewPoliciesClient(cfg),
@@ -175,6 +185,8 @@ func (c *Client) BeginTx(ctx context.Context, opts *sql.TxOptions) (*Tx, error) 
 	return &Tx{
 		ctx:             ctx,
 		config:          cfg,
+		AgentTasks:      NewAgentTasksClient(cfg),
+		Agents:          NewAgentsClient(cfg),
 		IntegrationType: NewIntegrationTypeClient(cfg),
 		Integrations:    NewIntegrationsClient(cfg),
 		Policies:        NewPoliciesClient(cfg),
@@ -187,7 +199,7 @@ func (c *Client) BeginTx(ctx context.Context, opts *sql.TxOptions) (*Tx, error) 
 // Debug returns a new debug-client. It's used to get verbose logging on specific operations.
 //
 //	client.Debug().
-//		IntegrationType.
+//		AgentTasks.
 //		Query().
 //		Count(ctx)
 func (c *Client) Debug() *Client {
@@ -210,8 +222,8 @@ func (c *Client) Close() error {
 // In order to add hooks to a specific client, call: `client.Node.Use(...)`.
 func (c *Client) Use(hooks ...Hook) {
 	for _, n := range []interface{ Use(...Hook) }{
-		c.IntegrationType, c.Integrations, c.Policies, c.PolicyLabels, c.ScanLabels,
-		c.Scans,
+		c.AgentTasks, c.Agents, c.IntegrationType, c.Integrations, c.Policies,
+		c.PolicyLabels, c.ScanLabels, c.Scans,
 	} {
 		n.Use(hooks...)
 	}
@@ -221,8 +233,8 @@ func (c *Client) Use(hooks ...Hook) {
 // In order to add interceptors to a specific client, call: `client.Node.Intercept(...)`.
 func (c *Client) Intercept(interceptors ...Interceptor) {
 	for _, n := range []interface{ Intercept(...Interceptor) }{
-		c.IntegrationType, c.Integrations, c.Policies, c.PolicyLabels, c.ScanLabels,
-		c.Scans,
+		c.AgentTasks, c.Agents, c.IntegrationType, c.Integrations, c.Policies,
+		c.PolicyLabels, c.ScanLabels, c.Scans,
 	} {
 		n.Intercept(interceptors...)
 	}
@@ -231,6 +243,10 @@ func (c *Client) Intercept(interceptors ...Interceptor) {
 // Mutate implements the ent.Mutator interface.
 func (c *Client) Mutate(ctx context.Context, m Mutation) (Value, error) {
 	switch m := m.(type) {
+	case *AgentTasksMutation:
+		return c.AgentTasks.mutate(ctx, m)
+	case *AgentsMutation:
+		return c.Agents.mutate(ctx, m)
 	case *IntegrationTypeMutation:
 		return c.IntegrationType.mutate(ctx, m)
 	case *IntegrationsMutation:
@@ -245,6 +261,320 @@ func (c *Client) Mutate(ctx context.Context, m Mutation) (Value, error) {
 		return c.Scans.mutate(ctx, m)
 	default:
 		return nil, fmt.Errorf("ent: unknown mutation type %T", m)
+	}
+}
+
+// AgentTasksClient is a client for the AgentTasks schema.
+type AgentTasksClient struct {
+	config
+}
+
+// NewAgentTasksClient returns a client for the AgentTasks from the given config.
+func NewAgentTasksClient(c config) *AgentTasksClient {
+	return &AgentTasksClient{config: c}
+}
+
+// Use adds a list of mutation hooks to the hooks stack.
+// A call to `Use(f, g, h)` equals to `agenttasks.Hooks(f(g(h())))`.
+func (c *AgentTasksClient) Use(hooks ...Hook) {
+	c.hooks.AgentTasks = append(c.hooks.AgentTasks, hooks...)
+}
+
+// Intercept adds a list of query interceptors to the interceptors stack.
+// A call to `Intercept(f, g, h)` equals to `agenttasks.Intercept(f(g(h())))`.
+func (c *AgentTasksClient) Intercept(interceptors ...Interceptor) {
+	c.inters.AgentTasks = append(c.inters.AgentTasks, interceptors...)
+}
+
+// Create returns a builder for creating a AgentTasks entity.
+func (c *AgentTasksClient) Create() *AgentTasksCreate {
+	mutation := newAgentTasksMutation(c.config, OpCreate)
+	return &AgentTasksCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// CreateBulk returns a builder for creating a bulk of AgentTasks entities.
+func (c *AgentTasksClient) CreateBulk(builders ...*AgentTasksCreate) *AgentTasksCreateBulk {
+	return &AgentTasksCreateBulk{config: c.config, builders: builders}
+}
+
+// MapCreateBulk creates a bulk creation builder from the given slice. For each item in the slice, the function creates
+// a builder and applies setFunc on it.
+func (c *AgentTasksClient) MapCreateBulk(slice any, setFunc func(*AgentTasksCreate, int)) *AgentTasksCreateBulk {
+	rv := reflect.ValueOf(slice)
+	if rv.Kind() != reflect.Slice {
+		return &AgentTasksCreateBulk{err: fmt.Errorf("calling to AgentTasksClient.MapCreateBulk with wrong type %T, need slice", slice)}
+	}
+	builders := make([]*AgentTasksCreate, rv.Len())
+	for i := 0; i < rv.Len(); i++ {
+		builders[i] = c.Create()
+		setFunc(builders[i], i)
+	}
+	return &AgentTasksCreateBulk{config: c.config, builders: builders}
+}
+
+// Update returns an update builder for AgentTasks.
+func (c *AgentTasksClient) Update() *AgentTasksUpdate {
+	mutation := newAgentTasksMutation(c.config, OpUpdate)
+	return &AgentTasksUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOne returns an update builder for the given entity.
+func (c *AgentTasksClient) UpdateOne(at *AgentTasks) *AgentTasksUpdateOne {
+	mutation := newAgentTasksMutation(c.config, OpUpdateOne, withAgentTasks(at))
+	return &AgentTasksUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOneID returns an update builder for the given id.
+func (c *AgentTasksClient) UpdateOneID(id uuid.UUID) *AgentTasksUpdateOne {
+	mutation := newAgentTasksMutation(c.config, OpUpdateOne, withAgentTasksID(id))
+	return &AgentTasksUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// Delete returns a delete builder for AgentTasks.
+func (c *AgentTasksClient) Delete() *AgentTasksDelete {
+	mutation := newAgentTasksMutation(c.config, OpDelete)
+	return &AgentTasksDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// DeleteOne returns a builder for deleting the given entity.
+func (c *AgentTasksClient) DeleteOne(at *AgentTasks) *AgentTasksDeleteOne {
+	return c.DeleteOneID(at.ID)
+}
+
+// DeleteOneID returns a builder for deleting the given entity by its id.
+func (c *AgentTasksClient) DeleteOneID(id uuid.UUID) *AgentTasksDeleteOne {
+	builder := c.Delete().Where(agenttasks.ID(id))
+	builder.mutation.id = &id
+	builder.mutation.op = OpDeleteOne
+	return &AgentTasksDeleteOne{builder}
+}
+
+// Query returns a query builder for AgentTasks.
+func (c *AgentTasksClient) Query() *AgentTasksQuery {
+	return &AgentTasksQuery{
+		config: c.config,
+		ctx:    &QueryContext{Type: TypeAgentTasks},
+		inters: c.Interceptors(),
+	}
+}
+
+// Get returns a AgentTasks entity by its id.
+func (c *AgentTasksClient) Get(ctx context.Context, id uuid.UUID) (*AgentTasks, error) {
+	return c.Query().Where(agenttasks.ID(id)).Only(ctx)
+}
+
+// GetX is like Get, but panics if an error occurs.
+func (c *AgentTasksClient) GetX(ctx context.Context, id uuid.UUID) *AgentTasks {
+	obj, err := c.Get(ctx, id)
+	if err != nil {
+		panic(err)
+	}
+	return obj
+}
+
+// QueryAgent queries the agent edge of a AgentTasks.
+func (c *AgentTasksClient) QueryAgent(at *AgentTasks) *AgentsQuery {
+	query := (&AgentsClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := at.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(agenttasks.Table, agenttasks.FieldID, id),
+			sqlgraph.To(agents.Table, agents.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, true, agenttasks.AgentTable, agenttasks.AgentColumn),
+		)
+		fromV = sqlgraph.Neighbors(at.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryScan queries the scan edge of a AgentTasks.
+func (c *AgentTasksClient) QueryScan(at *AgentTasks) *ScansQuery {
+	query := (&ScansClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := at.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(agenttasks.Table, agenttasks.FieldID, id),
+			sqlgraph.To(scans.Table, scans.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, true, agenttasks.ScanTable, agenttasks.ScanColumn),
+		)
+		fromV = sqlgraph.Neighbors(at.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// Hooks returns the client hooks.
+func (c *AgentTasksClient) Hooks() []Hook {
+	return c.hooks.AgentTasks
+}
+
+// Interceptors returns the client interceptors.
+func (c *AgentTasksClient) Interceptors() []Interceptor {
+	return c.inters.AgentTasks
+}
+
+func (c *AgentTasksClient) mutate(ctx context.Context, m *AgentTasksMutation) (Value, error) {
+	switch m.Op() {
+	case OpCreate:
+		return (&AgentTasksCreate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdate:
+		return (&AgentTasksUpdate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdateOne:
+		return (&AgentTasksUpdateOne{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpDelete, OpDeleteOne:
+		return (&AgentTasksDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
+	default:
+		return nil, fmt.Errorf("ent: unknown AgentTasks mutation op: %q", m.Op())
+	}
+}
+
+// AgentsClient is a client for the Agents schema.
+type AgentsClient struct {
+	config
+}
+
+// NewAgentsClient returns a client for the Agents from the given config.
+func NewAgentsClient(c config) *AgentsClient {
+	return &AgentsClient{config: c}
+}
+
+// Use adds a list of mutation hooks to the hooks stack.
+// A call to `Use(f, g, h)` equals to `agents.Hooks(f(g(h())))`.
+func (c *AgentsClient) Use(hooks ...Hook) {
+	c.hooks.Agents = append(c.hooks.Agents, hooks...)
+}
+
+// Intercept adds a list of query interceptors to the interceptors stack.
+// A call to `Intercept(f, g, h)` equals to `agents.Intercept(f(g(h())))`.
+func (c *AgentsClient) Intercept(interceptors ...Interceptor) {
+	c.inters.Agents = append(c.inters.Agents, interceptors...)
+}
+
+// Create returns a builder for creating a Agents entity.
+func (c *AgentsClient) Create() *AgentsCreate {
+	mutation := newAgentsMutation(c.config, OpCreate)
+	return &AgentsCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// CreateBulk returns a builder for creating a bulk of Agents entities.
+func (c *AgentsClient) CreateBulk(builders ...*AgentsCreate) *AgentsCreateBulk {
+	return &AgentsCreateBulk{config: c.config, builders: builders}
+}
+
+// MapCreateBulk creates a bulk creation builder from the given slice. For each item in the slice, the function creates
+// a builder and applies setFunc on it.
+func (c *AgentsClient) MapCreateBulk(slice any, setFunc func(*AgentsCreate, int)) *AgentsCreateBulk {
+	rv := reflect.ValueOf(slice)
+	if rv.Kind() != reflect.Slice {
+		return &AgentsCreateBulk{err: fmt.Errorf("calling to AgentsClient.MapCreateBulk with wrong type %T, need slice", slice)}
+	}
+	builders := make([]*AgentsCreate, rv.Len())
+	for i := 0; i < rv.Len(); i++ {
+		builders[i] = c.Create()
+		setFunc(builders[i], i)
+	}
+	return &AgentsCreateBulk{config: c.config, builders: builders}
+}
+
+// Update returns an update builder for Agents.
+func (c *AgentsClient) Update() *AgentsUpdate {
+	mutation := newAgentsMutation(c.config, OpUpdate)
+	return &AgentsUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOne returns an update builder for the given entity.
+func (c *AgentsClient) UpdateOne(a *Agents) *AgentsUpdateOne {
+	mutation := newAgentsMutation(c.config, OpUpdateOne, withAgents(a))
+	return &AgentsUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOneID returns an update builder for the given id.
+func (c *AgentsClient) UpdateOneID(id int) *AgentsUpdateOne {
+	mutation := newAgentsMutation(c.config, OpUpdateOne, withAgentsID(id))
+	return &AgentsUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// Delete returns a delete builder for Agents.
+func (c *AgentsClient) Delete() *AgentsDelete {
+	mutation := newAgentsMutation(c.config, OpDelete)
+	return &AgentsDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// DeleteOne returns a builder for deleting the given entity.
+func (c *AgentsClient) DeleteOne(a *Agents) *AgentsDeleteOne {
+	return c.DeleteOneID(a.ID)
+}
+
+// DeleteOneID returns a builder for deleting the given entity by its id.
+func (c *AgentsClient) DeleteOneID(id int) *AgentsDeleteOne {
+	builder := c.Delete().Where(agents.ID(id))
+	builder.mutation.id = &id
+	builder.mutation.op = OpDeleteOne
+	return &AgentsDeleteOne{builder}
+}
+
+// Query returns a query builder for Agents.
+func (c *AgentsClient) Query() *AgentsQuery {
+	return &AgentsQuery{
+		config: c.config,
+		ctx:    &QueryContext{Type: TypeAgents},
+		inters: c.Interceptors(),
+	}
+}
+
+// Get returns a Agents entity by its id.
+func (c *AgentsClient) Get(ctx context.Context, id int) (*Agents, error) {
+	return c.Query().Where(agents.ID(id)).Only(ctx)
+}
+
+// GetX is like Get, but panics if an error occurs.
+func (c *AgentsClient) GetX(ctx context.Context, id int) *Agents {
+	obj, err := c.Get(ctx, id)
+	if err != nil {
+		panic(err)
+	}
+	return obj
+}
+
+// QueryAgentTasks queries the agent_tasks edge of a Agents.
+func (c *AgentsClient) QueryAgentTasks(a *Agents) *AgentTasksQuery {
+	query := (&AgentTasksClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := a.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(agents.Table, agents.FieldID, id),
+			sqlgraph.To(agenttasks.Table, agenttasks.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, agents.AgentTasksTable, agents.AgentTasksColumn),
+		)
+		fromV = sqlgraph.Neighbors(a.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// Hooks returns the client hooks.
+func (c *AgentsClient) Hooks() []Hook {
+	return c.hooks.Agents
+}
+
+// Interceptors returns the client interceptors.
+func (c *AgentsClient) Interceptors() []Interceptor {
+	return c.inters.Agents
+}
+
+func (c *AgentsClient) mutate(ctx context.Context, m *AgentsMutation) (Value, error) {
+	switch m.Op() {
+	case OpCreate:
+		return (&AgentsCreate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdate:
+		return (&AgentsUpdate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdateOne:
+		return (&AgentsUpdateOne{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpDelete, OpDeleteOne:
+		return (&AgentsDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
+	default:
+		return nil, fmt.Errorf("ent: unknown Agents mutation op: %q", m.Op())
 	}
 }
 
@@ -1133,6 +1463,22 @@ func (c *ScansClient) QueryScanLabels(s *Scans) *ScanLabelsQuery {
 	return query
 }
 
+// QueryAgentTasks queries the agent_tasks edge of a Scans.
+func (c *ScansClient) QueryAgentTasks(s *Scans) *AgentTasksQuery {
+	query := (&AgentTasksClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := s.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(scans.Table, scans.FieldID, id),
+			sqlgraph.To(agenttasks.Table, agenttasks.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, scans.AgentTasksTable, scans.AgentTasksColumn),
+		)
+		fromV = sqlgraph.Neighbors(s.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
 // Hooks returns the client hooks.
 func (c *ScansClient) Hooks() []Hook {
 	return c.hooks.Scans
@@ -1161,11 +1507,11 @@ func (c *ScansClient) mutate(ctx context.Context, m *ScansMutation) (Value, erro
 // hooks and interceptors per client, for fast access.
 type (
 	hooks struct {
-		IntegrationType, Integrations, Policies, PolicyLabels, ScanLabels,
-		Scans []ent.Hook
+		AgentTasks, Agents, IntegrationType, Integrations, Policies, PolicyLabels,
+		ScanLabels, Scans []ent.Hook
 	}
 	inters struct {
-		IntegrationType, Integrations, Policies, PolicyLabels, ScanLabels,
-		Scans []ent.Interceptor
+		AgentTasks, Agents, IntegrationType, Integrations, Policies, PolicyLabels,
+		ScanLabels, Scans []ent.Interceptor
 	}
 )

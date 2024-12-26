@@ -3,7 +3,11 @@
 package ent
 
 import (
+	"time"
+
 	"github.com/google/uuid"
+	"github.com/shinobistack/gokakashi/ent/agents"
+	"github.com/shinobistack/gokakashi/ent/agenttasks"
 	"github.com/shinobistack/gokakashi/ent/integrations"
 	"github.com/shinobistack/gokakashi/ent/integrationtype"
 	"github.com/shinobistack/gokakashi/ent/policies"
@@ -17,6 +21,26 @@ import (
 // (default values, validators, hooks and policies) and stitches it
 // to their package variables.
 func init() {
+	agenttasksFields := schema.AgentTasks{}.Fields()
+	_ = agenttasksFields
+	// agenttasksDescStatus is the schema descriptor for status field.
+	agenttasksDescStatus := agenttasksFields[3].Descriptor()
+	// agenttasks.DefaultStatus holds the default value on creation for the status field.
+	agenttasks.DefaultStatus = agenttasksDescStatus.Default.(string)
+	// agenttasksDescCreatedAt is the schema descriptor for created_at field.
+	agenttasksDescCreatedAt := agenttasksFields[4].Descriptor()
+	// agenttasks.DefaultCreatedAt holds the default value on creation for the created_at field.
+	agenttasks.DefaultCreatedAt = agenttasksDescCreatedAt.Default.(func() time.Time)
+	// agenttasksDescID is the schema descriptor for id field.
+	agenttasksDescID := agenttasksFields[0].Descriptor()
+	// agenttasks.DefaultID holds the default value on creation for the id field.
+	agenttasks.DefaultID = agenttasksDescID.Default.(func() uuid.UUID)
+	agentsFields := schema.Agents{}.Fields()
+	_ = agentsFields
+	// agentsDescStatus is the schema descriptor for status field.
+	agentsDescStatus := agentsFields[1].Descriptor()
+	// agents.DefaultStatus holds the default value on creation for the status field.
+	agents.DefaultStatus = agentsDescStatus.Default.(string)
 	integrationtypeFields := schema.IntegrationType{}.Fields()
 	_ = integrationtypeFields
 	// integrationtypeDescDisplayName is the schema descriptor for display_name field.

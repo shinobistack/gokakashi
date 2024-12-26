@@ -13,6 +13,7 @@ import (
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
 	"github.com/google/uuid"
+	"github.com/shinobistack/gokakashi/ent/agenttasks"
 	"github.com/shinobistack/gokakashi/ent/policies"
 	"github.com/shinobistack/gokakashi/ent/predicate"
 	"github.com/shinobistack/gokakashi/ent/scanlabels"
@@ -28,6 +29,7 @@ type ScansQuery struct {
 	predicates     []predicate.Scans
 	withPolicy     *PoliciesQuery
 	withScanLabels *ScanLabelsQuery
+	withAgentTasks *AgentTasksQuery
 	// intermediate query (i.e. traversal path).
 	sql  *sql.Selector
 	path func(context.Context) (*sql.Selector, error)
@@ -101,6 +103,28 @@ func (sq *ScansQuery) QueryScanLabels() *ScanLabelsQuery {
 			sqlgraph.From(scans.Table, scans.FieldID, selector),
 			sqlgraph.To(scanlabels.Table, scanlabels.FieldID),
 			sqlgraph.Edge(sqlgraph.O2M, false, scans.ScanLabelsTable, scans.ScanLabelsColumn),
+		)
+		fromU = sqlgraph.SetNeighbors(sq.driver.Dialect(), step)
+		return fromU, nil
+	}
+	return query
+}
+
+// QueryAgentTasks chains the current query on the "agent_tasks" edge.
+func (sq *ScansQuery) QueryAgentTasks() *AgentTasksQuery {
+	query := (&AgentTasksClient{config: sq.config}).Query()
+	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
+		if err := sq.prepareQuery(ctx); err != nil {
+			return nil, err
+		}
+		selector := sq.sqlQuery(ctx)
+		if err := selector.Err(); err != nil {
+			return nil, err
+		}
+		step := sqlgraph.NewStep(
+			sqlgraph.From(scans.Table, scans.FieldID, selector),
+			sqlgraph.To(agenttasks.Table, agenttasks.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, scans.AgentTasksTable, scans.AgentTasksColumn),
 		)
 		fromU = sqlgraph.SetNeighbors(sq.driver.Dialect(), step)
 		return fromU, nil
@@ -302,6 +326,7 @@ func (sq *ScansQuery) Clone() *ScansQuery {
 		predicates:     append([]predicate.Scans{}, sq.predicates...),
 		withPolicy:     sq.withPolicy.Clone(),
 		withScanLabels: sq.withScanLabels.Clone(),
+		withAgentTasks: sq.withAgentTasks.Clone(),
 		// clone intermediate query.
 		sql:  sq.sql.Clone(),
 		path: sq.path,
@@ -327,6 +352,17 @@ func (sq *ScansQuery) WithScanLabels(opts ...func(*ScanLabelsQuery)) *ScansQuery
 		opt(query)
 	}
 	sq.withScanLabels = query
+	return sq
+}
+
+// WithAgentTasks tells the query-builder to eager-load the nodes that are connected to
+// the "agent_tasks" edge. The optional arguments are used to configure the query builder of the edge.
+func (sq *ScansQuery) WithAgentTasks(opts ...func(*AgentTasksQuery)) *ScansQuery {
+	query := (&AgentTasksClient{config: sq.config}).Query()
+	for _, opt := range opts {
+		opt(query)
+	}
+	sq.withAgentTasks = query
 	return sq
 }
 
@@ -408,9 +444,10 @@ func (sq *ScansQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Scans,
 	var (
 		nodes       = []*Scans{}
 		_spec       = sq.querySpec()
-		loadedTypes = [2]bool{
+		loadedTypes = [3]bool{
 			sq.withPolicy != nil,
 			sq.withScanLabels != nil,
+			sq.withAgentTasks != nil,
 		}
 	)
 	_spec.ScanValues = func(columns []string) ([]any, error) {
@@ -441,6 +478,13 @@ func (sq *ScansQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Scans,
 		if err := sq.loadScanLabels(ctx, query, nodes,
 			func(n *Scans) { n.Edges.ScanLabels = []*ScanLabels{} },
 			func(n *Scans, e *ScanLabels) { n.Edges.ScanLabels = append(n.Edges.ScanLabels, e) }); err != nil {
+			return nil, err
+		}
+	}
+	if query := sq.withAgentTasks; query != nil {
+		if err := sq.loadAgentTasks(ctx, query, nodes,
+			func(n *Scans) { n.Edges.AgentTasks = []*AgentTasks{} },
+			func(n *Scans, e *AgentTasks) { n.Edges.AgentTasks = append(n.Edges.AgentTasks, e) }); err != nil {
 			return nil, err
 		}
 	}
@@ -491,6 +535,36 @@ func (sq *ScansQuery) loadScanLabels(ctx context.Context, query *ScanLabelsQuery
 	}
 	query.Where(predicate.ScanLabels(func(s *sql.Selector) {
 		s.Where(sql.InValues(s.C(scans.ScanLabelsColumn), fks...))
+	}))
+	neighbors, err := query.All(ctx)
+	if err != nil {
+		return err
+	}
+	for _, n := range neighbors {
+		fk := n.ScanID
+		node, ok := nodeids[fk]
+		if !ok {
+			return fmt.Errorf(`unexpected referenced foreign-key "scan_id" returned %v for node %v`, fk, n.ID)
+		}
+		assign(node, n)
+	}
+	return nil
+}
+func (sq *ScansQuery) loadAgentTasks(ctx context.Context, query *AgentTasksQuery, nodes []*Scans, init func(*Scans), assign func(*Scans, *AgentTasks)) error {
+	fks := make([]driver.Value, 0, len(nodes))
+	nodeids := make(map[uuid.UUID]*Scans)
+	for i := range nodes {
+		fks = append(fks, nodes[i].ID)
+		nodeids[nodes[i].ID] = nodes[i]
+		if init != nil {
+			init(nodes[i])
+		}
+	}
+	if len(query.ctx.Fields) > 0 {
+		query.ctx.AppendFieldOnce(agenttasks.FieldScanID)
+	}
+	query.Where(predicate.AgentTasks(func(s *sql.Selector) {
+		s.Where(sql.InValues(s.C(scans.AgentTasksColumn), fks...))
 	}))
 	neighbors, err := query.All(ctx)
 	if err != nil {

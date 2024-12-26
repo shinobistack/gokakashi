@@ -11,6 +11,7 @@ import (
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
 	"github.com/google/uuid"
+	"github.com/shinobistack/gokakashi/ent/agenttasks"
 	"github.com/shinobistack/gokakashi/ent/policies"
 	"github.com/shinobistack/gokakashi/ent/predicate"
 	"github.com/shinobistack/gokakashi/ent/scanlabels"
@@ -133,6 +134,21 @@ func (su *ScansUpdate) AddScanLabels(s ...*ScanLabels) *ScansUpdate {
 	return su.AddScanLabelIDs(ids...)
 }
 
+// AddAgentTaskIDs adds the "agent_tasks" edge to the AgentTasks entity by IDs.
+func (su *ScansUpdate) AddAgentTaskIDs(ids ...uuid.UUID) *ScansUpdate {
+	su.mutation.AddAgentTaskIDs(ids...)
+	return su
+}
+
+// AddAgentTasks adds the "agent_tasks" edges to the AgentTasks entity.
+func (su *ScansUpdate) AddAgentTasks(a ...*AgentTasks) *ScansUpdate {
+	ids := make([]uuid.UUID, len(a))
+	for i := range a {
+		ids[i] = a[i].ID
+	}
+	return su.AddAgentTaskIDs(ids...)
+}
+
 // Mutation returns the ScansMutation object of the builder.
 func (su *ScansUpdate) Mutation() *ScansMutation {
 	return su.mutation
@@ -163,6 +179,27 @@ func (su *ScansUpdate) RemoveScanLabels(s ...*ScanLabels) *ScansUpdate {
 		ids[i] = s[i].ID
 	}
 	return su.RemoveScanLabelIDs(ids...)
+}
+
+// ClearAgentTasks clears all "agent_tasks" edges to the AgentTasks entity.
+func (su *ScansUpdate) ClearAgentTasks() *ScansUpdate {
+	su.mutation.ClearAgentTasks()
+	return su
+}
+
+// RemoveAgentTaskIDs removes the "agent_tasks" edge to AgentTasks entities by IDs.
+func (su *ScansUpdate) RemoveAgentTaskIDs(ids ...uuid.UUID) *ScansUpdate {
+	su.mutation.RemoveAgentTaskIDs(ids...)
+	return su
+}
+
+// RemoveAgentTasks removes "agent_tasks" edges to AgentTasks entities.
+func (su *ScansUpdate) RemoveAgentTasks(a ...*AgentTasks) *ScansUpdate {
+	ids := make([]uuid.UUID, len(a))
+	for i := range a {
+		ids[i] = a[i].ID
+	}
+	return su.RemoveAgentTaskIDs(ids...)
 }
 
 // Save executes the query and returns the number of nodes affected by the update operation.
@@ -304,6 +341,51 @@ func (su *ScansUpdate) sqlSave(ctx context.Context) (n int, err error) {
 		}
 		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
+	if su.mutation.AgentTasksCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   scans.AgentTasksTable,
+			Columns: []string{scans.AgentTasksColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(agenttasks.FieldID, field.TypeUUID),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := su.mutation.RemovedAgentTasksIDs(); len(nodes) > 0 && !su.mutation.AgentTasksCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   scans.AgentTasksTable,
+			Columns: []string{scans.AgentTasksColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(agenttasks.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := su.mutation.AgentTasksIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   scans.AgentTasksTable,
+			Columns: []string{scans.AgentTasksColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(agenttasks.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
 	if n, err = sqlgraph.UpdateNodes(ctx, su.driver, _spec); err != nil {
 		if _, ok := err.(*sqlgraph.NotFoundError); ok {
 			err = &NotFoundError{scans.Label}
@@ -426,6 +508,21 @@ func (suo *ScansUpdateOne) AddScanLabels(s ...*ScanLabels) *ScansUpdateOne {
 	return suo.AddScanLabelIDs(ids...)
 }
 
+// AddAgentTaskIDs adds the "agent_tasks" edge to the AgentTasks entity by IDs.
+func (suo *ScansUpdateOne) AddAgentTaskIDs(ids ...uuid.UUID) *ScansUpdateOne {
+	suo.mutation.AddAgentTaskIDs(ids...)
+	return suo
+}
+
+// AddAgentTasks adds the "agent_tasks" edges to the AgentTasks entity.
+func (suo *ScansUpdateOne) AddAgentTasks(a ...*AgentTasks) *ScansUpdateOne {
+	ids := make([]uuid.UUID, len(a))
+	for i := range a {
+		ids[i] = a[i].ID
+	}
+	return suo.AddAgentTaskIDs(ids...)
+}
+
 // Mutation returns the ScansMutation object of the builder.
 func (suo *ScansUpdateOne) Mutation() *ScansMutation {
 	return suo.mutation
@@ -456,6 +553,27 @@ func (suo *ScansUpdateOne) RemoveScanLabels(s ...*ScanLabels) *ScansUpdateOne {
 		ids[i] = s[i].ID
 	}
 	return suo.RemoveScanLabelIDs(ids...)
+}
+
+// ClearAgentTasks clears all "agent_tasks" edges to the AgentTasks entity.
+func (suo *ScansUpdateOne) ClearAgentTasks() *ScansUpdateOne {
+	suo.mutation.ClearAgentTasks()
+	return suo
+}
+
+// RemoveAgentTaskIDs removes the "agent_tasks" edge to AgentTasks entities by IDs.
+func (suo *ScansUpdateOne) RemoveAgentTaskIDs(ids ...uuid.UUID) *ScansUpdateOne {
+	suo.mutation.RemoveAgentTaskIDs(ids...)
+	return suo
+}
+
+// RemoveAgentTasks removes "agent_tasks" edges to AgentTasks entities.
+func (suo *ScansUpdateOne) RemoveAgentTasks(a ...*AgentTasks) *ScansUpdateOne {
+	ids := make([]uuid.UUID, len(a))
+	for i := range a {
+		ids[i] = a[i].ID
+	}
+	return suo.RemoveAgentTaskIDs(ids...)
 }
 
 // Where appends a list predicates to the ScansUpdate builder.
@@ -620,6 +738,51 @@ func (suo *ScansUpdateOne) sqlSave(ctx context.Context) (_node *Scans, err error
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(scanlabels.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if suo.mutation.AgentTasksCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   scans.AgentTasksTable,
+			Columns: []string{scans.AgentTasksColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(agenttasks.FieldID, field.TypeUUID),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := suo.mutation.RemovedAgentTasksIDs(); len(nodes) > 0 && !suo.mutation.AgentTasksCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   scans.AgentTasksTable,
+			Columns: []string{scans.AgentTasksColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(agenttasks.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := suo.mutation.AgentTasksIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   scans.AgentTasksTable,
+			Columns: []string{scans.AgentTasksColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(agenttasks.FieldID, field.TypeUUID),
 			},
 		}
 		for _, k := range nodes {
