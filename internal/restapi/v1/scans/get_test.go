@@ -62,6 +62,8 @@ func TestGetScan_Valid(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Equal(t, scan.ID, res.ID)
 	assert.Equal(t, "test-image", res.Image)
+	assert.Equal(t, "scan_pending", res.Status)
+	assert.Equal(t, policy.ID, res.PolicyID)
 }
 
 func TestGetScan_NonExistentID(t *testing.T) {

@@ -6,6 +6,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/shinobistack/gokakashi/ent"
 	"github.com/shinobistack/gokakashi/ent/scanlabels"
+	"github.com/shinobistack/gokakashi/ent/scans"
 	"github.com/swaggest/usecase/status"
 )
 
@@ -28,14 +29,25 @@ func CreateScanLabel(client *ent.Client) func(ctx context.Context, req CreateSca
 			return status.Wrap(errors.New("invalid input: missing fields"), status.InvalidArgument)
 		}
 
+		// Check if the ScanID exists
+		exists, err := client.Scans.Query().
+			Where(scans.ID(req.ScanID)).
+			Exist(ctx)
+		if err != nil {
+			return status.Wrap(err, status.Internal)
+		}
+		if !exists {
+			return status.Wrap(errors.New("scan not found"), status.NotFound)
+		}
+
 		// Check if the label already exists
-		exists, err := client.ScanLabels.Query().
+		labelExists, err := client.ScanLabels.Query().
 			Where(scanlabels.ScanID(req.ScanID), scanlabels.Key(req.Key)).
 			Exist(ctx)
 		if err != nil {
 			return status.Wrap(err, status.Internal)
 		}
-		if exists {
+		if labelExists {
 			return status.Wrap(errors.New("label already exists"), status.AlreadyExists)
 		}
 

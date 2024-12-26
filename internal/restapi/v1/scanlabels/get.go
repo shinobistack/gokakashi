@@ -68,10 +68,14 @@ func GetScanLabel(client *ent.Client) func(ctx context.Context, req GetScanLabel
 			return status.Wrap(errors.New("invalid Scan ID or Key"), status.InvalidArgument)
 		}
 
+		// Query the label
 		label, err := client.ScanLabels.Query().
 			Where(scanlabels.ScanID(req.ScanID), scanlabels.Key(req.Key)).
 			Only(ctx)
 		if err != nil {
+			if ent.IsNotFound(err) {
+				return status.Wrap(errors.New("label not found"), status.NotFound)
+			}
 			return status.Wrap(err, status.Internal)
 		}
 
