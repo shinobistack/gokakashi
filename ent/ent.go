@@ -16,6 +16,8 @@ import (
 	"github.com/shinobistack/gokakashi/ent/integrationtype"
 	"github.com/shinobistack/gokakashi/ent/policies"
 	"github.com/shinobistack/gokakashi/ent/policylabels"
+	"github.com/shinobistack/gokakashi/ent/scanlabels"
+	"github.com/shinobistack/gokakashi/ent/scans"
 )
 
 // ent aliases to avoid import conflicts in user's code.
@@ -80,6 +82,8 @@ func checkColumn(table, column string) error {
 			integrations.Table:    integrations.ValidColumn,
 			policies.Table:        policies.ValidColumn,
 			policylabels.Table:    policylabels.ValidColumn,
+			scanlabels.Table:      scanlabels.ValidColumn,
+			scans.Table:           scans.ValidColumn,
 		})
 	})
 	return columnCheck(table, column)

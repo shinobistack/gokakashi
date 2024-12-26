@@ -40,9 +40,11 @@ type Policies struct {
 type PoliciesEdges struct {
 	// PolicyLabels holds the value of the policy_labels edge.
 	PolicyLabels []*PolicyLabels `json:"policy_labels,omitempty"`
+	// Scans holds the value of the scans edge.
+	Scans []*Scans `json:"scans,omitempty"`
 	// loadedTypes holds the information for reporting if a
 	// type was loaded (or requested) in eager-loading or not.
-	loadedTypes [1]bool
+	loadedTypes [2]bool
 }
 
 // PolicyLabelsOrErr returns the PolicyLabels value or an error if the edge
@@ -52,6 +54,15 @@ func (e PoliciesEdges) PolicyLabelsOrErr() ([]*PolicyLabels, error) {
 		return e.PolicyLabels, nil
 	}
 	return nil, &NotLoadedError{edge: "policy_labels"}
+}
+
+// ScansOrErr returns the Scans value or an error if the edge
+// was not loaded in eager-loading.
+func (e PoliciesEdges) ScansOrErr() ([]*Scans, error) {
+	if e.loadedTypes[1] {
+		return e.Scans, nil
+	}
+	return nil, &NotLoadedError{edge: "scans"}
 }
 
 // scanValues returns the types for scanning values from sql.Rows.
@@ -140,6 +151,11 @@ func (po *Policies) Value(name string) (ent.Value, error) {
 // QueryPolicyLabels queries the "policy_labels" edge of the Policies entity.
 func (po *Policies) QueryPolicyLabels() *PolicyLabelsQuery {
 	return NewPoliciesClient(po.config).QueryPolicyLabels(po)
+}
+
+// QueryScans queries the "scans" edge of the Policies entity.
+func (po *Policies) QueryScans() *ScansQuery {
+	return NewPoliciesClient(po.config).QueryScans(po)
 }
 
 // Update returns a builder for updating this Policies.

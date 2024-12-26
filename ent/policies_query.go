@@ -16,6 +16,7 @@ import (
 	"github.com/shinobistack/gokakashi/ent/policies"
 	"github.com/shinobistack/gokakashi/ent/policylabels"
 	"github.com/shinobistack/gokakashi/ent/predicate"
+	"github.com/shinobistack/gokakashi/ent/scans"
 )
 
 // PoliciesQuery is the builder for querying Policies entities.
@@ -26,6 +27,7 @@ type PoliciesQuery struct {
 	inters           []Interceptor
 	predicates       []predicate.Policies
 	withPolicyLabels *PolicyLabelsQuery
+	withScans        *ScansQuery
 	// intermediate query (i.e. traversal path).
 	sql  *sql.Selector
 	path func(context.Context) (*sql.Selector, error)
@@ -77,6 +79,28 @@ func (pq *PoliciesQuery) QueryPolicyLabels() *PolicyLabelsQuery {
 			sqlgraph.From(policies.Table, policies.FieldID, selector),
 			sqlgraph.To(policylabels.Table, policylabels.FieldID),
 			sqlgraph.Edge(sqlgraph.O2M, false, policies.PolicyLabelsTable, policies.PolicyLabelsColumn),
+		)
+		fromU = sqlgraph.SetNeighbors(pq.driver.Dialect(), step)
+		return fromU, nil
+	}
+	return query
+}
+
+// QueryScans chains the current query on the "scans" edge.
+func (pq *PoliciesQuery) QueryScans() *ScansQuery {
+	query := (&ScansClient{config: pq.config}).Query()
+	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
+		if err := pq.prepareQuery(ctx); err != nil {
+			return nil, err
+		}
+		selector := pq.sqlQuery(ctx)
+		if err := selector.Err(); err != nil {
+			return nil, err
+		}
+		step := sqlgraph.NewStep(
+			sqlgraph.From(policies.Table, policies.FieldID, selector),
+			sqlgraph.To(scans.Table, scans.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, policies.ScansTable, policies.ScansColumn),
 		)
 		fromU = sqlgraph.SetNeighbors(pq.driver.Dialect(), step)
 		return fromU, nil
@@ -277,6 +301,7 @@ func (pq *PoliciesQuery) Clone() *PoliciesQuery {
 		inters:           append([]Interceptor{}, pq.inters...),
 		predicates:       append([]predicate.Policies{}, pq.predicates...),
 		withPolicyLabels: pq.withPolicyLabels.Clone(),
+		withScans:        pq.withScans.Clone(),
 		// clone intermediate query.
 		sql:  pq.sql.Clone(),
 		path: pq.path,
@@ -291,6 +316,17 @@ func (pq *PoliciesQuery) WithPolicyLabels(opts ...func(*PolicyLabelsQuery)) *Pol
 		opt(query)
 	}
 	pq.withPolicyLabels = query
+	return pq
+}
+
+// WithScans tells the query-builder to eager-load the nodes that are connected to
+// the "scans" edge. The optional arguments are used to configure the query builder of the edge.
+func (pq *PoliciesQuery) WithScans(opts ...func(*ScansQuery)) *PoliciesQuery {
+	query := (&ScansClient{config: pq.config}).Query()
+	for _, opt := range opts {
+		opt(query)
+	}
+	pq.withScans = query
 	return pq
 }
 
@@ -372,8 +408,9 @@ func (pq *PoliciesQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Pol
 	var (
 		nodes       = []*Policies{}
 		_spec       = pq.querySpec()
-		loadedTypes = [1]bool{
+		loadedTypes = [2]bool{
 			pq.withPolicyLabels != nil,
+			pq.withScans != nil,
 		}
 	)
 	_spec.ScanValues = func(columns []string) ([]any, error) {
@@ -401,6 +438,13 @@ func (pq *PoliciesQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Pol
 			return nil, err
 		}
 	}
+	if query := pq.withScans; query != nil {
+		if err := pq.loadScans(ctx, query, nodes,
+			func(n *Policies) { n.Edges.Scans = []*Scans{} },
+			func(n *Policies, e *Scans) { n.Edges.Scans = append(n.Edges.Scans, e) }); err != nil {
+			return nil, err
+		}
+	}
 	return nodes, nil
 }
 
@@ -419,6 +463,36 @@ func (pq *PoliciesQuery) loadPolicyLabels(ctx context.Context, query *PolicyLabe
 	}
 	query.Where(predicate.PolicyLabels(func(s *sql.Selector) {
 		s.Where(sql.InValues(s.C(policies.PolicyLabelsColumn), fks...))
+	}))
+	neighbors, err := query.All(ctx)
+	if err != nil {
+		return err
+	}
+	for _, n := range neighbors {
+		fk := n.PolicyID
+		node, ok := nodeids[fk]
+		if !ok {
+			return fmt.Errorf(`unexpected referenced foreign-key "policy_id" returned %v for node %v`, fk, n.ID)
+		}
+		assign(node, n)
+	}
+	return nil
+}
+func (pq *PoliciesQuery) loadScans(ctx context.Context, query *ScansQuery, nodes []*Policies, init func(*Policies), assign func(*Policies, *Scans)) error {
+	fks := make([]driver.Value, 0, len(nodes))
+	nodeids := make(map[uuid.UUID]*Policies)
+	for i := range nodes {
+		fks = append(fks, nodes[i].ID)
+		nodeids[nodes[i].ID] = nodes[i]
+		if init != nil {
+			init(nodes[i])
+		}
+	}
+	if len(query.ctx.Fields) > 0 {
+		query.ctx.AppendFieldOnce(scans.FieldPolicyID)
+	}
+	query.Where(predicate.Scans(func(s *sql.Selector) {
+		s.Where(sql.InValues(s.C(policies.ScansColumn), fks...))
 	}))
 	neighbors, err := query.All(ctx)
 	if err != nil {

@@ -20,6 +20,8 @@ import (
 	"github.com/shinobistack/gokakashi/ent/integrationtype"
 	"github.com/shinobistack/gokakashi/ent/policies"
 	"github.com/shinobistack/gokakashi/ent/policylabels"
+	"github.com/shinobistack/gokakashi/ent/scanlabels"
+	"github.com/shinobistack/gokakashi/ent/scans"
 )
 
 // Client is the client that holds all ent builders.
@@ -35,6 +37,10 @@ type Client struct {
 	Policies *PoliciesClient
 	// PolicyLabels is the client for interacting with the PolicyLabels builders.
 	PolicyLabels *PolicyLabelsClient
+	// ScanLabels is the client for interacting with the ScanLabels builders.
+	ScanLabels *ScanLabelsClient
+	// Scans is the client for interacting with the Scans builders.
+	Scans *ScansClient
 }
 
 // NewClient creates a new client configured with the given options.
@@ -50,6 +56,8 @@ func (c *Client) init() {
 	c.Integrations = NewIntegrationsClient(c.config)
 	c.Policies = NewPoliciesClient(c.config)
 	c.PolicyLabels = NewPolicyLabelsClient(c.config)
+	c.ScanLabels = NewScanLabelsClient(c.config)
+	c.Scans = NewScansClient(c.config)
 }
 
 type (
@@ -146,6 +154,8 @@ func (c *Client) Tx(ctx context.Context) (*Tx, error) {
 		Integrations:    NewIntegrationsClient(cfg),
 		Policies:        NewPoliciesClient(cfg),
 		PolicyLabels:    NewPolicyLabelsClient(cfg),
+		ScanLabels:      NewScanLabelsClient(cfg),
+		Scans:           NewScansClient(cfg),
 	}, nil
 }
 
@@ -169,6 +179,8 @@ func (c *Client) BeginTx(ctx context.Context, opts *sql.TxOptions) (*Tx, error) 
 		Integrations:    NewIntegrationsClient(cfg),
 		Policies:        NewPoliciesClient(cfg),
 		PolicyLabels:    NewPolicyLabelsClient(cfg),
+		ScanLabels:      NewScanLabelsClient(cfg),
+		Scans:           NewScansClient(cfg),
 	}, nil
 }
 
@@ -197,19 +209,23 @@ func (c *Client) Close() error {
 // Use adds the mutation hooks to all the entity clients.
 // In order to add hooks to a specific client, call: `client.Node.Use(...)`.
 func (c *Client) Use(hooks ...Hook) {
-	c.IntegrationType.Use(hooks...)
-	c.Integrations.Use(hooks...)
-	c.Policies.Use(hooks...)
-	c.PolicyLabels.Use(hooks...)
+	for _, n := range []interface{ Use(...Hook) }{
+		c.IntegrationType, c.Integrations, c.Policies, c.PolicyLabels, c.ScanLabels,
+		c.Scans,
+	} {
+		n.Use(hooks...)
+	}
 }
 
 // Intercept adds the query interceptors to all the entity clients.
 // In order to add interceptors to a specific client, call: `client.Node.Intercept(...)`.
 func (c *Client) Intercept(interceptors ...Interceptor) {
-	c.IntegrationType.Intercept(interceptors...)
-	c.Integrations.Intercept(interceptors...)
-	c.Policies.Intercept(interceptors...)
-	c.PolicyLabels.Intercept(interceptors...)
+	for _, n := range []interface{ Intercept(...Interceptor) }{
+		c.IntegrationType, c.Integrations, c.Policies, c.PolicyLabels, c.ScanLabels,
+		c.Scans,
+	} {
+		n.Intercept(interceptors...)
+	}
 }
 
 // Mutate implements the ent.Mutator interface.
@@ -223,6 +239,10 @@ func (c *Client) Mutate(ctx context.Context, m Mutation) (Value, error) {
 		return c.Policies.mutate(ctx, m)
 	case *PolicyLabelsMutation:
 		return c.PolicyLabels.mutate(ctx, m)
+	case *ScanLabelsMutation:
+		return c.ScanLabels.mutate(ctx, m)
+	case *ScansMutation:
+		return c.Scans.mutate(ctx, m)
 	default:
 		return nil, fmt.Errorf("ent: unknown mutation type %T", m)
 	}
@@ -634,6 +654,22 @@ func (c *PoliciesClient) QueryPolicyLabels(po *Policies) *PolicyLabelsQuery {
 	return query
 }
 
+// QueryScans queries the scans edge of a Policies.
+func (c *PoliciesClient) QueryScans(po *Policies) *ScansQuery {
+	query := (&ScansClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := po.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(policies.Table, policies.FieldID, id),
+			sqlgraph.To(scans.Table, scans.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, policies.ScansTable, policies.ScansColumn),
+		)
+		fromV = sqlgraph.Neighbors(po.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
 // Hooks returns the client hooks.
 func (c *PoliciesClient) Hooks() []Hook {
 	return c.hooks.Policies
@@ -808,12 +844,328 @@ func (c *PolicyLabelsClient) mutate(ctx context.Context, m *PolicyLabelsMutation
 	}
 }
 
+// ScanLabelsClient is a client for the ScanLabels schema.
+type ScanLabelsClient struct {
+	config
+}
+
+// NewScanLabelsClient returns a client for the ScanLabels from the given config.
+func NewScanLabelsClient(c config) *ScanLabelsClient {
+	return &ScanLabelsClient{config: c}
+}
+
+// Use adds a list of mutation hooks to the hooks stack.
+// A call to `Use(f, g, h)` equals to `scanlabels.Hooks(f(g(h())))`.
+func (c *ScanLabelsClient) Use(hooks ...Hook) {
+	c.hooks.ScanLabels = append(c.hooks.ScanLabels, hooks...)
+}
+
+// Intercept adds a list of query interceptors to the interceptors stack.
+// A call to `Intercept(f, g, h)` equals to `scanlabels.Intercept(f(g(h())))`.
+func (c *ScanLabelsClient) Intercept(interceptors ...Interceptor) {
+	c.inters.ScanLabels = append(c.inters.ScanLabels, interceptors...)
+}
+
+// Create returns a builder for creating a ScanLabels entity.
+func (c *ScanLabelsClient) Create() *ScanLabelsCreate {
+	mutation := newScanLabelsMutation(c.config, OpCreate)
+	return &ScanLabelsCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// CreateBulk returns a builder for creating a bulk of ScanLabels entities.
+func (c *ScanLabelsClient) CreateBulk(builders ...*ScanLabelsCreate) *ScanLabelsCreateBulk {
+	return &ScanLabelsCreateBulk{config: c.config, builders: builders}
+}
+
+// MapCreateBulk creates a bulk creation builder from the given slice. For each item in the slice, the function creates
+// a builder and applies setFunc on it.
+func (c *ScanLabelsClient) MapCreateBulk(slice any, setFunc func(*ScanLabelsCreate, int)) *ScanLabelsCreateBulk {
+	rv := reflect.ValueOf(slice)
+	if rv.Kind() != reflect.Slice {
+		return &ScanLabelsCreateBulk{err: fmt.Errorf("calling to ScanLabelsClient.MapCreateBulk with wrong type %T, need slice", slice)}
+	}
+	builders := make([]*ScanLabelsCreate, rv.Len())
+	for i := 0; i < rv.Len(); i++ {
+		builders[i] = c.Create()
+		setFunc(builders[i], i)
+	}
+	return &ScanLabelsCreateBulk{config: c.config, builders: builders}
+}
+
+// Update returns an update builder for ScanLabels.
+func (c *ScanLabelsClient) Update() *ScanLabelsUpdate {
+	mutation := newScanLabelsMutation(c.config, OpUpdate)
+	return &ScanLabelsUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOne returns an update builder for the given entity.
+func (c *ScanLabelsClient) UpdateOne(sl *ScanLabels) *ScanLabelsUpdateOne {
+	mutation := newScanLabelsMutation(c.config, OpUpdateOne, withScanLabels(sl))
+	return &ScanLabelsUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOneID returns an update builder for the given id.
+func (c *ScanLabelsClient) UpdateOneID(id int) *ScanLabelsUpdateOne {
+	mutation := newScanLabelsMutation(c.config, OpUpdateOne, withScanLabelsID(id))
+	return &ScanLabelsUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// Delete returns a delete builder for ScanLabels.
+func (c *ScanLabelsClient) Delete() *ScanLabelsDelete {
+	mutation := newScanLabelsMutation(c.config, OpDelete)
+	return &ScanLabelsDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// DeleteOne returns a builder for deleting the given entity.
+func (c *ScanLabelsClient) DeleteOne(sl *ScanLabels) *ScanLabelsDeleteOne {
+	return c.DeleteOneID(sl.ID)
+}
+
+// DeleteOneID returns a builder for deleting the given entity by its id.
+func (c *ScanLabelsClient) DeleteOneID(id int) *ScanLabelsDeleteOne {
+	builder := c.Delete().Where(scanlabels.ID(id))
+	builder.mutation.id = &id
+	builder.mutation.op = OpDeleteOne
+	return &ScanLabelsDeleteOne{builder}
+}
+
+// Query returns a query builder for ScanLabels.
+func (c *ScanLabelsClient) Query() *ScanLabelsQuery {
+	return &ScanLabelsQuery{
+		config: c.config,
+		ctx:    &QueryContext{Type: TypeScanLabels},
+		inters: c.Interceptors(),
+	}
+}
+
+// Get returns a ScanLabels entity by its id.
+func (c *ScanLabelsClient) Get(ctx context.Context, id int) (*ScanLabels, error) {
+	return c.Query().Where(scanlabels.ID(id)).Only(ctx)
+}
+
+// GetX is like Get, but panics if an error occurs.
+func (c *ScanLabelsClient) GetX(ctx context.Context, id int) *ScanLabels {
+	obj, err := c.Get(ctx, id)
+	if err != nil {
+		panic(err)
+	}
+	return obj
+}
+
+// QueryScan queries the scan edge of a ScanLabels.
+func (c *ScanLabelsClient) QueryScan(sl *ScanLabels) *ScansQuery {
+	query := (&ScansClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := sl.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(scanlabels.Table, scanlabels.FieldID, id),
+			sqlgraph.To(scans.Table, scans.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, true, scanlabels.ScanTable, scanlabels.ScanColumn),
+		)
+		fromV = sqlgraph.Neighbors(sl.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// Hooks returns the client hooks.
+func (c *ScanLabelsClient) Hooks() []Hook {
+	return c.hooks.ScanLabels
+}
+
+// Interceptors returns the client interceptors.
+func (c *ScanLabelsClient) Interceptors() []Interceptor {
+	return c.inters.ScanLabels
+}
+
+func (c *ScanLabelsClient) mutate(ctx context.Context, m *ScanLabelsMutation) (Value, error) {
+	switch m.Op() {
+	case OpCreate:
+		return (&ScanLabelsCreate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdate:
+		return (&ScanLabelsUpdate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdateOne:
+		return (&ScanLabelsUpdateOne{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpDelete, OpDeleteOne:
+		return (&ScanLabelsDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
+	default:
+		return nil, fmt.Errorf("ent: unknown ScanLabels mutation op: %q", m.Op())
+	}
+}
+
+// ScansClient is a client for the Scans schema.
+type ScansClient struct {
+	config
+}
+
+// NewScansClient returns a client for the Scans from the given config.
+func NewScansClient(c config) *ScansClient {
+	return &ScansClient{config: c}
+}
+
+// Use adds a list of mutation hooks to the hooks stack.
+// A call to `Use(f, g, h)` equals to `scans.Hooks(f(g(h())))`.
+func (c *ScansClient) Use(hooks ...Hook) {
+	c.hooks.Scans = append(c.hooks.Scans, hooks...)
+}
+
+// Intercept adds a list of query interceptors to the interceptors stack.
+// A call to `Intercept(f, g, h)` equals to `scans.Intercept(f(g(h())))`.
+func (c *ScansClient) Intercept(interceptors ...Interceptor) {
+	c.inters.Scans = append(c.inters.Scans, interceptors...)
+}
+
+// Create returns a builder for creating a Scans entity.
+func (c *ScansClient) Create() *ScansCreate {
+	mutation := newScansMutation(c.config, OpCreate)
+	return &ScansCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// CreateBulk returns a builder for creating a bulk of Scans entities.
+func (c *ScansClient) CreateBulk(builders ...*ScansCreate) *ScansCreateBulk {
+	return &ScansCreateBulk{config: c.config, builders: builders}
+}
+
+// MapCreateBulk creates a bulk creation builder from the given slice. For each item in the slice, the function creates
+// a builder and applies setFunc on it.
+func (c *ScansClient) MapCreateBulk(slice any, setFunc func(*ScansCreate, int)) *ScansCreateBulk {
+	rv := reflect.ValueOf(slice)
+	if rv.Kind() != reflect.Slice {
+		return &ScansCreateBulk{err: fmt.Errorf("calling to ScansClient.MapCreateBulk with wrong type %T, need slice", slice)}
+	}
+	builders := make([]*ScansCreate, rv.Len())
+	for i := 0; i < rv.Len(); i++ {
+		builders[i] = c.Create()
+		setFunc(builders[i], i)
+	}
+	return &ScansCreateBulk{config: c.config, builders: builders}
+}
+
+// Update returns an update builder for Scans.
+func (c *ScansClient) Update() *ScansUpdate {
+	mutation := newScansMutation(c.config, OpUpdate)
+	return &ScansUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOne returns an update builder for the given entity.
+func (c *ScansClient) UpdateOne(s *Scans) *ScansUpdateOne {
+	mutation := newScansMutation(c.config, OpUpdateOne, withScans(s))
+	return &ScansUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOneID returns an update builder for the given id.
+func (c *ScansClient) UpdateOneID(id uuid.UUID) *ScansUpdateOne {
+	mutation := newScansMutation(c.config, OpUpdateOne, withScansID(id))
+	return &ScansUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// Delete returns a delete builder for Scans.
+func (c *ScansClient) Delete() *ScansDelete {
+	mutation := newScansMutation(c.config, OpDelete)
+	return &ScansDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// DeleteOne returns a builder for deleting the given entity.
+func (c *ScansClient) DeleteOne(s *Scans) *ScansDeleteOne {
+	return c.DeleteOneID(s.ID)
+}
+
+// DeleteOneID returns a builder for deleting the given entity by its id.
+func (c *ScansClient) DeleteOneID(id uuid.UUID) *ScansDeleteOne {
+	builder := c.Delete().Where(scans.ID(id))
+	builder.mutation.id = &id
+	builder.mutation.op = OpDeleteOne
+	return &ScansDeleteOne{builder}
+}
+
+// Query returns a query builder for Scans.
+func (c *ScansClient) Query() *ScansQuery {
+	return &ScansQuery{
+		config: c.config,
+		ctx:    &QueryContext{Type: TypeScans},
+		inters: c.Interceptors(),
+	}
+}
+
+// Get returns a Scans entity by its id.
+func (c *ScansClient) Get(ctx context.Context, id uuid.UUID) (*Scans, error) {
+	return c.Query().Where(scans.ID(id)).Only(ctx)
+}
+
+// GetX is like Get, but panics if an error occurs.
+func (c *ScansClient) GetX(ctx context.Context, id uuid.UUID) *Scans {
+	obj, err := c.Get(ctx, id)
+	if err != nil {
+		panic(err)
+	}
+	return obj
+}
+
+// QueryPolicy queries the policy edge of a Scans.
+func (c *ScansClient) QueryPolicy(s *Scans) *PoliciesQuery {
+	query := (&PoliciesClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := s.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(scans.Table, scans.FieldID, id),
+			sqlgraph.To(policies.Table, policies.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, true, scans.PolicyTable, scans.PolicyColumn),
+		)
+		fromV = sqlgraph.Neighbors(s.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryScanLabels queries the scan_labels edge of a Scans.
+func (c *ScansClient) QueryScanLabels(s *Scans) *ScanLabelsQuery {
+	query := (&ScanLabelsClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := s.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(scans.Table, scans.FieldID, id),
+			sqlgraph.To(scanlabels.Table, scanlabels.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, scans.ScanLabelsTable, scans.ScanLabelsColumn),
+		)
+		fromV = sqlgraph.Neighbors(s.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// Hooks returns the client hooks.
+func (c *ScansClient) Hooks() []Hook {
+	return c.hooks.Scans
+}
+
+// Interceptors returns the client interceptors.
+func (c *ScansClient) Interceptors() []Interceptor {
+	return c.inters.Scans
+}
+
+func (c *ScansClient) mutate(ctx context.Context, m *ScansMutation) (Value, error) {
+	switch m.Op() {
+	case OpCreate:
+		return (&ScansCreate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdate:
+		return (&ScansUpdate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdateOne:
+		return (&ScansUpdateOne{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpDelete, OpDeleteOne:
+		return (&ScansDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
+	default:
+		return nil, fmt.Errorf("ent: unknown Scans mutation op: %q", m.Op())
+	}
+}
+
 // hooks and interceptors per client, for fast access.
 type (
 	hooks struct {
-		IntegrationType, Integrations, Policies, PolicyLabels []ent.Hook
+		IntegrationType, Integrations, Policies, PolicyLabels, ScanLabels,
+		Scans []ent.Hook
 	}
 	inters struct {
-		IntegrationType, Integrations, Policies, PolicyLabels []ent.Interceptor
+		IntegrationType, Integrations, Policies, PolicyLabels, ScanLabels,
+		Scans []ent.Interceptor
 	}
 )

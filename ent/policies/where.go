@@ -177,6 +177,29 @@ func HasPolicyLabelsWith(preds ...predicate.PolicyLabels) predicate.Policies {
 	})
 }
 
+// HasScans applies the HasEdge predicate on the "scans" edge.
+func HasScans() predicate.Policies {
+	return predicate.Policies(func(s *sql.Selector) {
+		step := sqlgraph.NewStep(
+			sqlgraph.From(Table, FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, ScansTable, ScansColumn),
+		)
+		sqlgraph.HasNeighbors(s, step)
+	})
+}
+
+// HasScansWith applies the HasEdge predicate on the "scans" edge with a given conditions (other predicates).
+func HasScansWith(preds ...predicate.Scans) predicate.Policies {
+	return predicate.Policies(func(s *sql.Selector) {
+		step := newScansStep()
+		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
+			for _, p := range preds {
+				p(s)
+			}
+		})
+	})
+}
+
 // And groups predicates with the AND operator between them.
 func And(predicates ...predicate.Policies) predicate.Policies {
 	return predicate.Policies(sql.AndPredicates(predicates...))

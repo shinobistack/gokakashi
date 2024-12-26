@@ -9,6 +9,7 @@ import (
 	"github.com/swaggest/usecase/status"
 )
 
+// ToDo: To have a requests to create labels in bulk?
 type CreatePolicyLabelRequest struct {
 	PolicyID uuid.UUID `path:"policy_id"`
 	Key      string    `json:"key"`
@@ -40,7 +41,6 @@ func CreatePolicyLabel(client *ent.Client) func(ctx context.Context, req CreateP
 			return status.Wrap(err, status.Internal)
 		}
 		// Validate of if label exists
-		// Query the label
 		exists, _ := client.PolicyLabels.Query().
 			Where(policylabels.PolicyID(req.PolicyID), policylabels.Key(req.Key)).
 			Exist(ctx)

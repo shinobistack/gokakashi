@@ -8,6 +8,8 @@ import (
 	"github.com/shinobistack/gokakashi/ent/integrationtype"
 	"github.com/shinobistack/gokakashi/ent/policies"
 	"github.com/shinobistack/gokakashi/ent/policylabels"
+	"github.com/shinobistack/gokakashi/ent/scanlabels"
+	"github.com/shinobistack/gokakashi/ent/scans"
 	"github.com/shinobistack/gokakashi/ent/schema"
 )
 
@@ -69,4 +71,24 @@ func init() {
 	policylabelsDescValue := policylabelsFields[2].Descriptor()
 	// policylabels.ValueValidator is a validator for the "value" field. It is called by the builders before save.
 	policylabels.ValueValidator = policylabelsDescValue.Validators[0].(func(string) error)
+	scanlabelsFields := schema.ScanLabels{}.Fields()
+	_ = scanlabelsFields
+	// scanlabelsDescKey is the schema descriptor for key field.
+	scanlabelsDescKey := scanlabelsFields[1].Descriptor()
+	// scanlabels.KeyValidator is a validator for the "key" field. It is called by the builders before save.
+	scanlabels.KeyValidator = scanlabelsDescKey.Validators[0].(func(string) error)
+	// scanlabelsDescValue is the schema descriptor for value field.
+	scanlabelsDescValue := scanlabelsFields[2].Descriptor()
+	// scanlabels.ValueValidator is a validator for the "value" field. It is called by the builders before save.
+	scanlabels.ValueValidator = scanlabelsDescValue.Validators[0].(func(string) error)
+	scansFields := schema.Scans{}.Fields()
+	_ = scansFields
+	// scansDescStatus is the schema descriptor for status field.
+	scansDescStatus := scansFields[2].Descriptor()
+	// scans.DefaultStatus holds the default value on creation for the status field.
+	scans.DefaultStatus = scansDescStatus.Default.(string)
+	// scansDescID is the schema descriptor for id field.
+	scansDescID := scansFields[0].Descriptor()
+	// scans.DefaultID holds the default value on creation for the id field.
+	scans.DefaultID = scansDescID.Default.(func() uuid.UUID)
 }

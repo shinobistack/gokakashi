@@ -10,9 +10,11 @@ import (
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
+	"github.com/google/uuid"
 	"github.com/shinobistack/gokakashi/ent/policies"
 	"github.com/shinobistack/gokakashi/ent/policylabels"
 	"github.com/shinobistack/gokakashi/ent/predicate"
+	"github.com/shinobistack/gokakashi/ent/scans"
 	"github.com/shinobistack/gokakashi/ent/schema"
 )
 
@@ -124,6 +126,21 @@ func (pu *PoliciesUpdate) AddPolicyLabels(p ...*PolicyLabels) *PoliciesUpdate {
 	return pu.AddPolicyLabelIDs(ids...)
 }
 
+// AddScanIDs adds the "scans" edge to the Scans entity by IDs.
+func (pu *PoliciesUpdate) AddScanIDs(ids ...uuid.UUID) *PoliciesUpdate {
+	pu.mutation.AddScanIDs(ids...)
+	return pu
+}
+
+// AddScans adds the "scans" edges to the Scans entity.
+func (pu *PoliciesUpdate) AddScans(s ...*Scans) *PoliciesUpdate {
+	ids := make([]uuid.UUID, len(s))
+	for i := range s {
+		ids[i] = s[i].ID
+	}
+	return pu.AddScanIDs(ids...)
+}
+
 // Mutation returns the PoliciesMutation object of the builder.
 func (pu *PoliciesUpdate) Mutation() *PoliciesMutation {
 	return pu.mutation
@@ -148,6 +165,27 @@ func (pu *PoliciesUpdate) RemovePolicyLabels(p ...*PolicyLabels) *PoliciesUpdate
 		ids[i] = p[i].ID
 	}
 	return pu.RemovePolicyLabelIDs(ids...)
+}
+
+// ClearScans clears all "scans" edges to the Scans entity.
+func (pu *PoliciesUpdate) ClearScans() *PoliciesUpdate {
+	pu.mutation.ClearScans()
+	return pu
+}
+
+// RemoveScanIDs removes the "scans" edge to Scans entities by IDs.
+func (pu *PoliciesUpdate) RemoveScanIDs(ids ...uuid.UUID) *PoliciesUpdate {
+	pu.mutation.RemoveScanIDs(ids...)
+	return pu
+}
+
+// RemoveScans removes "scans" edges to Scans entities.
+func (pu *PoliciesUpdate) RemoveScans(s ...*Scans) *PoliciesUpdate {
+	ids := make([]uuid.UUID, len(s))
+	for i := range s {
+		ids[i] = s[i].ID
+	}
+	return pu.RemoveScanIDs(ids...)
 }
 
 // Save executes the query and returns the number of nodes affected by the update operation.
@@ -261,6 +299,51 @@ func (pu *PoliciesUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(policylabels.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if pu.mutation.ScansCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   policies.ScansTable,
+			Columns: []string{policies.ScansColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(scans.FieldID, field.TypeUUID),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := pu.mutation.RemovedScansIDs(); len(nodes) > 0 && !pu.mutation.ScansCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   policies.ScansTable,
+			Columns: []string{policies.ScansColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(scans.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := pu.mutation.ScansIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   policies.ScansTable,
+			Columns: []string{policies.ScansColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(scans.FieldID, field.TypeUUID),
 			},
 		}
 		for _, k := range nodes {
@@ -383,6 +466,21 @@ func (puo *PoliciesUpdateOne) AddPolicyLabels(p ...*PolicyLabels) *PoliciesUpdat
 	return puo.AddPolicyLabelIDs(ids...)
 }
 
+// AddScanIDs adds the "scans" edge to the Scans entity by IDs.
+func (puo *PoliciesUpdateOne) AddScanIDs(ids ...uuid.UUID) *PoliciesUpdateOne {
+	puo.mutation.AddScanIDs(ids...)
+	return puo
+}
+
+// AddScans adds the "scans" edges to the Scans entity.
+func (puo *PoliciesUpdateOne) AddScans(s ...*Scans) *PoliciesUpdateOne {
+	ids := make([]uuid.UUID, len(s))
+	for i := range s {
+		ids[i] = s[i].ID
+	}
+	return puo.AddScanIDs(ids...)
+}
+
 // Mutation returns the PoliciesMutation object of the builder.
 func (puo *PoliciesUpdateOne) Mutation() *PoliciesMutation {
 	return puo.mutation
@@ -407,6 +505,27 @@ func (puo *PoliciesUpdateOne) RemovePolicyLabels(p ...*PolicyLabels) *PoliciesUp
 		ids[i] = p[i].ID
 	}
 	return puo.RemovePolicyLabelIDs(ids...)
+}
+
+// ClearScans clears all "scans" edges to the Scans entity.
+func (puo *PoliciesUpdateOne) ClearScans() *PoliciesUpdateOne {
+	puo.mutation.ClearScans()
+	return puo
+}
+
+// RemoveScanIDs removes the "scans" edge to Scans entities by IDs.
+func (puo *PoliciesUpdateOne) RemoveScanIDs(ids ...uuid.UUID) *PoliciesUpdateOne {
+	puo.mutation.RemoveScanIDs(ids...)
+	return puo
+}
+
+// RemoveScans removes "scans" edges to Scans entities.
+func (puo *PoliciesUpdateOne) RemoveScans(s ...*Scans) *PoliciesUpdateOne {
+	ids := make([]uuid.UUID, len(s))
+	for i := range s {
+		ids[i] = s[i].ID
+	}
+	return puo.RemoveScanIDs(ids...)
 }
 
 // Where appends a list predicates to the PoliciesUpdate builder.
@@ -550,6 +669,51 @@ func (puo *PoliciesUpdateOne) sqlSave(ctx context.Context) (_node *Policies, err
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(policylabels.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if puo.mutation.ScansCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   policies.ScansTable,
+			Columns: []string{policies.ScansColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(scans.FieldID, field.TypeUUID),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := puo.mutation.RemovedScansIDs(); len(nodes) > 0 && !puo.mutation.ScansCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   policies.ScansTable,
+			Columns: []string{policies.ScansColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(scans.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := puo.mutation.ScansIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   policies.ScansTable,
+			Columns: []string{policies.ScansColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(scans.FieldID, field.TypeUUID),
 			},
 		}
 		for _, k := range nodes {
