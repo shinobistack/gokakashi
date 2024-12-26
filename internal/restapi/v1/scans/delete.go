@@ -13,7 +13,8 @@ type DeleteScanRequest struct {
 }
 
 type DeleteScanResponse struct {
-	Status string `json:"status"`
+	ID     uuid.UUID `json:"id"`
+	Status string    `json:"status"`
 }
 
 func DeleteScan(client *ent.Client) func(ctx context.Context, req DeleteScanRequest, res *DeleteScanResponse) error {
@@ -28,6 +29,7 @@ func DeleteScan(client *ent.Client) func(ctx context.Context, req DeleteScanRequ
 			return status.Wrap(err, status.Internal)
 		}
 
+		res.ID = req.ID
 		res.Status = "deleted"
 		return nil
 	}
