@@ -19,6 +19,7 @@ const AdminLoginPage = () => {
             className="w-full h-auto mb-4" 
           />
         <h2 className="text-2xl font-bold text-center">gokakshi</h2>
+        <h3 className="text-1xl text-center">The centralized security platform</h3>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
             <input
