@@ -6,7 +6,7 @@ const AdminLoginPage = () => {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    // Handle admin login logic here
+    // TODO: Handle admin login logic here
     console.log('Admin Secret:', adminSecret);
   };
 
