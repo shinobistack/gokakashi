@@ -1,4 +1,4 @@
-import AdminLoginPage from './login/AdminLoginPage'
+import AdminLoginPage from './components/AdminLoginPage'
 import './output.css'
 
 function App() {
