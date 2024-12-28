@@ -7,7 +7,7 @@ import AgentList from '../agents/List';
 
 const Page = () => {
     return (
-        <div className="flex">
+        <div className="flex bg-gray-200">
             <Sidebar />
             <div className="flex-grow p-4">
                 <Switch>
