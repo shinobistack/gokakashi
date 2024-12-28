@@ -19,7 +19,7 @@ const LoginPage = ({ setIsAuthenticated }) => {
             alt="Admin Logo" 
             className="w-full h-auto mb-4 rounded-3xl" 
           />
-        <h2 className="text-2xl font-bold font-mono text-center">gokakshi</h2>
+        <h2 className="text-2xl font-bold font-mono text-center">gokakashi</h2>
         <h3 className="text-1xl font-thin text-center">The centralized security platform</h3>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
