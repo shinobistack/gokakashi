@@ -1,7 +1,7 @@
 import { useEffect, useState} from 'react';
 
 import LoginPage from './components/LoginPage'
-import HomePage from './components/HomePage'
+import HomePage from './components/home/Page'
 
 function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
