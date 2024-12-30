@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"entgo.io/ent/dialect"
-	"fmt"
 	_ "github.com/lib/pq"
 	"github.com/shinobistack/gokakashi/ent"
 	"github.com/shinobistack/gokakashi/internal/restapi/server/middleware"
@@ -116,7 +115,6 @@ func (srv *Server) Service() *web.Service {
 
 // InitDB defaults to postgres
 func InitDB() *ent.Client {
-	fmt.Println("test: inside InitDB")
 	// ToDo: To take DB connection as input
 	client, err := ent.Open(dialect.Postgres, "host=localhost port=5432 user=postgres password=secret dbname=postgres sslmode=disable")
 
@@ -150,8 +148,6 @@ func specHandler(s *openapi31.Spec) http.Handler {
 }
 
 func (s *Server) Serve() {
-	// Initialize the database client
-	s.DB = InitDB()
 	defer s.DB.Close()
 
 	// Start the server

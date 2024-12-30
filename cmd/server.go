@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"fmt"
+	"github.com/shinobistack/gokakashi/internal/db"
 	"log"
 	"os"
 	"os/signal"
@@ -81,15 +82,27 @@ func handleConfigV1() {
 		log.Fatalf("Error: %v", err)
 	}
 
+	// Initialize a separate connection for API calls
+	apiDB := restapiv1.InitDB()
+	defer apiDB.Close()
+
 	log.Println("Starting API server for scan functionality...")
 	s := &restapiv1.Server{
 		AuthToken: cfg.Site.APIToken,
 		Websites:  cfg.Site.Host,
 		Port:      cfg.Site.Port,
+		DB:        apiDB,
 	}
 	go s.Serve()
 
-	log.Println("Shutting down goKakashi gracefully...")
+	// Initialize a separate connection for configuration tasks
+	configDB := restapiv1.InitDB()
+	defer configDB.Close()
+
+	// Populate the database
+	db.PopulateDatabase(configDB, cfg)
+
+	// log.Println("Shutting down goKakashi gracefully...")
 }
 
 func handleConfigV0() {
