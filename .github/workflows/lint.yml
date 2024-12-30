@@ -19,7 +19,7 @@ jobs:
           go-version: stable
       - uses: actions/setup-node@v3
         with:
-          node-version: "18.x"
+          node-version: "22.x"
       - name: Build webapp
         working-directory: ./webapp
         run: npm ci && npm run build

@@ -1,13 +1,14 @@
 import { useState } from 'react';
+import PropTypes from 'prop-types';
 import shinobiStackLogo from '../assets/shinobistack.png';
 
-const AdminLoginPage = () => {
+const LoginPage = ({ setIsAuthenticated }) => {
   const [adminSecret, setAdminSecret] = useState('');
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    // TODO: Handle admin login logic here
-    console.log('Admin Secret:', adminSecret);
+    localStorage.setItem('adminSecret', adminSecret);
+    setIsAuthenticated(true)
   };
 
   return (
@@ -18,7 +19,7 @@ const AdminLoginPage = () => {
             alt="Admin Logo" 
             className="w-full h-auto mb-4 rounded-3xl" 
           />
-        <h2 className="text-2xl font-bold font-mono text-center">gokakshi</h2>
+        <h2 className="text-2xl font-bold font-mono text-center">gokakashi</h2>
         <h3 className="text-1xl font-thin text-center">The centralized security platform</h3>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
@@ -44,4 +45,8 @@ const AdminLoginPage = () => {
   );
 };
 
-export default AdminLoginPage;
+LoginPage.propTypes = {
+  setIsAuthenticated: PropTypes.func.isRequired,
+};
+
+export default LoginPage;
