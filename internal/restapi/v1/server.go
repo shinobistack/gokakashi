@@ -148,6 +148,8 @@ func specHandler(s *openapi31.Spec) http.Handler {
 }
 
 func (s *Server) Serve() {
+	// Initialize the database client
+	s.DB = InitDB()
 	defer s.DB.Close()
 
 	// Start the server

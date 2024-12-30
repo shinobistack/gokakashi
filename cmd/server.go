@@ -82,16 +82,16 @@ func handleConfigV1() {
 		log.Fatalf("Error: %v", err)
 	}
 
+	// ToDo: To set a separate connection for API calls
 	// Initialize a separate connection for API calls
-	apiDB := restapiv1.InitDB()
-	defer apiDB.Close()
+	//apiDB := restapiv1.InitDB()
+	//defer apiDB.Close()
 
 	log.Println("Starting API server for scan functionality...")
 	s := &restapiv1.Server{
 		AuthToken: cfg.Site.APIToken,
 		Websites:  cfg.Site.Host,
 		Port:      cfg.Site.Port,
-		DB:        apiDB,
 	}
 	go s.Serve()
 
