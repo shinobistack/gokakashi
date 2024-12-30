@@ -646,7 +646,11 @@ type AgentsMutation struct {
 	op                 Op
 	typ                string
 	id                 *int
+	name               *string
 	status             *string
+	workspace          *string
+	server             *string
+	last_seen          *time.Time
 	clearedFields      map[string]struct{}
 	agent_tasks        map[uuid.UUID]struct{}
 	removedagent_tasks map[uuid.UUID]struct{}
@@ -760,6 +764,55 @@ func (m *AgentsMutation) IDs(ctx context.Context) ([]int, error) {
 	}
 }
 
+// SetName sets the "name" field.
+func (m *AgentsMutation) SetName(s string) {
+	m.name = &s
+}
+
+// Name returns the value of the "name" field in the mutation.
+func (m *AgentsMutation) Name() (r string, exists bool) {
+	v := m.name
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldName returns the old "name" field's value of the Agents entity.
+// If the Agents object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *AgentsMutation) OldName(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldName is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldName requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldName: %w", err)
+	}
+	return oldValue.Name, nil
+}
+
+// ClearName clears the value of the "name" field.
+func (m *AgentsMutation) ClearName() {
+	m.name = nil
+	m.clearedFields[agents.FieldName] = struct{}{}
+}
+
+// NameCleared returns if the "name" field was cleared in this mutation.
+func (m *AgentsMutation) NameCleared() bool {
+	_, ok := m.clearedFields[agents.FieldName]
+	return ok
+}
+
+// ResetName resets all changes to the "name" field.
+func (m *AgentsMutation) ResetName() {
+	m.name = nil
+	delete(m.clearedFields, agents.FieldName)
+}
+
 // SetStatus sets the "status" field.
 func (m *AgentsMutation) SetStatus(s string) {
 	m.status = &s
@@ -794,6 +847,140 @@ func (m *AgentsMutation) OldStatus(ctx context.Context) (v string, err error) {
 // ResetStatus resets all changes to the "status" field.
 func (m *AgentsMutation) ResetStatus() {
 	m.status = nil
+}
+
+// SetWorkspace sets the "workspace" field.
+func (m *AgentsMutation) SetWorkspace(s string) {
+	m.workspace = &s
+}
+
+// Workspace returns the value of the "workspace" field in the mutation.
+func (m *AgentsMutation) Workspace() (r string, exists bool) {
+	v := m.workspace
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldWorkspace returns the old "workspace" field's value of the Agents entity.
+// If the Agents object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *AgentsMutation) OldWorkspace(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldWorkspace is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldWorkspace requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldWorkspace: %w", err)
+	}
+	return oldValue.Workspace, nil
+}
+
+// ClearWorkspace clears the value of the "workspace" field.
+func (m *AgentsMutation) ClearWorkspace() {
+	m.workspace = nil
+	m.clearedFields[agents.FieldWorkspace] = struct{}{}
+}
+
+// WorkspaceCleared returns if the "workspace" field was cleared in this mutation.
+func (m *AgentsMutation) WorkspaceCleared() bool {
+	_, ok := m.clearedFields[agents.FieldWorkspace]
+	return ok
+}
+
+// ResetWorkspace resets all changes to the "workspace" field.
+func (m *AgentsMutation) ResetWorkspace() {
+	m.workspace = nil
+	delete(m.clearedFields, agents.FieldWorkspace)
+}
+
+// SetServer sets the "server" field.
+func (m *AgentsMutation) SetServer(s string) {
+	m.server = &s
+}
+
+// Server returns the value of the "server" field in the mutation.
+func (m *AgentsMutation) Server() (r string, exists bool) {
+	v := m.server
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldServer returns the old "server" field's value of the Agents entity.
+// If the Agents object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *AgentsMutation) OldServer(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldServer is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldServer requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldServer: %w", err)
+	}
+	return oldValue.Server, nil
+}
+
+// ClearServer clears the value of the "server" field.
+func (m *AgentsMutation) ClearServer() {
+	m.server = nil
+	m.clearedFields[agents.FieldServer] = struct{}{}
+}
+
+// ServerCleared returns if the "server" field was cleared in this mutation.
+func (m *AgentsMutation) ServerCleared() bool {
+	_, ok := m.clearedFields[agents.FieldServer]
+	return ok
+}
+
+// ResetServer resets all changes to the "server" field.
+func (m *AgentsMutation) ResetServer() {
+	m.server = nil
+	delete(m.clearedFields, agents.FieldServer)
+}
+
+// SetLastSeen sets the "last_seen" field.
+func (m *AgentsMutation) SetLastSeen(t time.Time) {
+	m.last_seen = &t
+}
+
+// LastSeen returns the value of the "last_seen" field in the mutation.
+func (m *AgentsMutation) LastSeen() (r time.Time, exists bool) {
+	v := m.last_seen
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldLastSeen returns the old "last_seen" field's value of the Agents entity.
+// If the Agents object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *AgentsMutation) OldLastSeen(ctx context.Context) (v time.Time, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldLastSeen is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldLastSeen requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldLastSeen: %w", err)
+	}
+	return oldValue.LastSeen, nil
+}
+
+// ResetLastSeen resets all changes to the "last_seen" field.
+func (m *AgentsMutation) ResetLastSeen() {
+	m.last_seen = nil
 }
 
 // AddAgentTaskIDs adds the "agent_tasks" edge to the AgentTasks entity by ids.
@@ -884,9 +1071,21 @@ func (m *AgentsMutation) Type() string {
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
 func (m *AgentsMutation) Fields() []string {
-	fields := make([]string, 0, 1)
+	fields := make([]string, 0, 5)
+	if m.name != nil {
+		fields = append(fields, agents.FieldName)
+	}
 	if m.status != nil {
 		fields = append(fields, agents.FieldStatus)
+	}
+	if m.workspace != nil {
+		fields = append(fields, agents.FieldWorkspace)
+	}
+	if m.server != nil {
+		fields = append(fields, agents.FieldServer)
+	}
+	if m.last_seen != nil {
+		fields = append(fields, agents.FieldLastSeen)
 	}
 	return fields
 }
@@ -896,8 +1095,16 @@ func (m *AgentsMutation) Fields() []string {
 // schema.
 func (m *AgentsMutation) Field(name string) (ent.Value, bool) {
 	switch name {
+	case agents.FieldName:
+		return m.Name()
 	case agents.FieldStatus:
 		return m.Status()
+	case agents.FieldWorkspace:
+		return m.Workspace()
+	case agents.FieldServer:
+		return m.Server()
+	case agents.FieldLastSeen:
+		return m.LastSeen()
 	}
 	return nil, false
 }
@@ -907,8 +1114,16 @@ func (m *AgentsMutation) Field(name string) (ent.Value, bool) {
 // database failed.
 func (m *AgentsMutation) OldField(ctx context.Context, name string) (ent.Value, error) {
 	switch name {
+	case agents.FieldName:
+		return m.OldName(ctx)
 	case agents.FieldStatus:
 		return m.OldStatus(ctx)
+	case agents.FieldWorkspace:
+		return m.OldWorkspace(ctx)
+	case agents.FieldServer:
+		return m.OldServer(ctx)
+	case agents.FieldLastSeen:
+		return m.OldLastSeen(ctx)
 	}
 	return nil, fmt.Errorf("unknown Agents field %s", name)
 }
@@ -918,12 +1133,40 @@ func (m *AgentsMutation) OldField(ctx context.Context, name string) (ent.Value, 
 // type.
 func (m *AgentsMutation) SetField(name string, value ent.Value) error {
 	switch name {
+	case agents.FieldName:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetName(v)
+		return nil
 	case agents.FieldStatus:
 		v, ok := value.(string)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetStatus(v)
+		return nil
+	case agents.FieldWorkspace:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetWorkspace(v)
+		return nil
+	case agents.FieldServer:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetServer(v)
+		return nil
+	case agents.FieldLastSeen:
+		v, ok := value.(time.Time)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetLastSeen(v)
 		return nil
 	}
 	return fmt.Errorf("unknown Agents field %s", name)
@@ -954,7 +1197,17 @@ func (m *AgentsMutation) AddField(name string, value ent.Value) error {
 // ClearedFields returns all nullable fields that were cleared during this
 // mutation.
 func (m *AgentsMutation) ClearedFields() []string {
-	return nil
+	var fields []string
+	if m.FieldCleared(agents.FieldName) {
+		fields = append(fields, agents.FieldName)
+	}
+	if m.FieldCleared(agents.FieldWorkspace) {
+		fields = append(fields, agents.FieldWorkspace)
+	}
+	if m.FieldCleared(agents.FieldServer) {
+		fields = append(fields, agents.FieldServer)
+	}
+	return fields
 }
 
 // FieldCleared returns a boolean indicating if a field with the given name was
@@ -967,6 +1220,17 @@ func (m *AgentsMutation) FieldCleared(name string) bool {
 // ClearField clears the value of the field with the given name. It returns an
 // error if the field is not defined in the schema.
 func (m *AgentsMutation) ClearField(name string) error {
+	switch name {
+	case agents.FieldName:
+		m.ClearName()
+		return nil
+	case agents.FieldWorkspace:
+		m.ClearWorkspace()
+		return nil
+	case agents.FieldServer:
+		m.ClearServer()
+		return nil
+	}
 	return fmt.Errorf("unknown Agents nullable field %s", name)
 }
 
@@ -974,8 +1238,20 @@ func (m *AgentsMutation) ClearField(name string) error {
 // It returns an error if the field is not defined in the schema.
 func (m *AgentsMutation) ResetField(name string) error {
 	switch name {
+	case agents.FieldName:
+		m.ResetName()
+		return nil
 	case agents.FieldStatus:
 		m.ResetStatus()
+		return nil
+	case agents.FieldWorkspace:
+		m.ResetWorkspace()
+		return nil
+	case agents.FieldServer:
+		m.ResetServer()
+		return nil
+	case agents.FieldLastSeen:
+		m.ResetLastSeen()
 		return nil
 	}
 	return fmt.Errorf("unknown Agents field %s", name)

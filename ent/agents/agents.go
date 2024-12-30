@@ -3,6 +3,8 @@
 package agents
 
 import (
+	"time"
+
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
 )
@@ -12,8 +14,16 @@ const (
 	Label = "agents"
 	// FieldID holds the string denoting the id field in the database.
 	FieldID = "id"
+	// FieldName holds the string denoting the name field in the database.
+	FieldName = "name"
 	// FieldStatus holds the string denoting the status field in the database.
 	FieldStatus = "status"
+	// FieldWorkspace holds the string denoting the workspace field in the database.
+	FieldWorkspace = "workspace"
+	// FieldServer holds the string denoting the server field in the database.
+	FieldServer = "server"
+	// FieldLastSeen holds the string denoting the last_seen field in the database.
+	FieldLastSeen = "last_seen"
 	// EdgeAgentTasks holds the string denoting the agent_tasks edge name in mutations.
 	EdgeAgentTasks = "agent_tasks"
 	// Table holds the table name of the agents in the database.
@@ -30,7 +40,11 @@ const (
 // Columns holds all SQL columns for agents fields.
 var Columns = []string{
 	FieldID,
+	FieldName,
 	FieldStatus,
+	FieldWorkspace,
+	FieldServer,
+	FieldLastSeen,
 }
 
 // ValidColumn reports if the column name is valid (part of the table columns).
@@ -46,6 +60,10 @@ func ValidColumn(column string) bool {
 var (
 	// DefaultStatus holds the default value on creation for the "status" field.
 	DefaultStatus string
+	// DefaultLastSeen holds the default value on creation for the "last_seen" field.
+	DefaultLastSeen func() time.Time
+	// UpdateDefaultLastSeen holds the default value on update for the "last_seen" field.
+	UpdateDefaultLastSeen func() time.Time
 )
 
 // OrderOption defines the ordering options for the Agents queries.
@@ -56,9 +74,29 @@ func ByID(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldID, opts...).ToFunc()
 }
 
+// ByName orders the results by the name field.
+func ByName(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldName, opts...).ToFunc()
+}
+
 // ByStatus orders the results by the status field.
 func ByStatus(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldStatus, opts...).ToFunc()
+}
+
+// ByWorkspace orders the results by the workspace field.
+func ByWorkspace(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldWorkspace, opts...).ToFunc()
+}
+
+// ByServer orders the results by the server field.
+func ByServer(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldServer, opts...).ToFunc()
+}
+
+// ByLastSeen orders the results by the last_seen field.
+func ByLastSeen(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldLastSeen, opts...).ToFunc()
 }
 
 // ByAgentTasksCount orders the results by agent_tasks count.

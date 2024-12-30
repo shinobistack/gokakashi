@@ -24,6 +24,13 @@ func init() {
 	rootCmd.AddCommand(serverCmd)
 
 	rootCmd.AddCommand(scanCmd)
+
+	agentStartCmd.Flags().StringVar(&server, "server", "", "The server address to connect to")
+	agentStartCmd.Flags().StringVar(&token, "token", "", "Authentication token for the server")
+	agentStartCmd.Flags().StringVar(&workspace, "workspace", "", "Path to the local workspace")
+	rootCmd.AddCommand(agentCmd)
+	agentCmd.AddCommand(agentStartCmd)
+
 }
 
 func Execute() {

@@ -38,9 +38,15 @@ func init() {
 	agentsFields := schema.Agents{}.Fields()
 	_ = agentsFields
 	// agentsDescStatus is the schema descriptor for status field.
-	agentsDescStatus := agentsFields[1].Descriptor()
+	agentsDescStatus := agentsFields[2].Descriptor()
 	// agents.DefaultStatus holds the default value on creation for the status field.
 	agents.DefaultStatus = agentsDescStatus.Default.(string)
+	// agentsDescLastSeen is the schema descriptor for last_seen field.
+	agentsDescLastSeen := agentsFields[5].Descriptor()
+	// agents.DefaultLastSeen holds the default value on creation for the last_seen field.
+	agents.DefaultLastSeen = agentsDescLastSeen.Default.(func() time.Time)
+	// agents.UpdateDefaultLastSeen holds the default value on update for the last_seen field.
+	agents.UpdateDefaultLastSeen = agentsDescLastSeen.UpdateDefault.(func() time.Time)
 	integrationtypeFields := schema.IntegrationType{}.Fields()
 	_ = integrationtypeFields
 	// integrationtypeDescDisplayName is the schema descriptor for display_name field.

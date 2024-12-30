@@ -5,6 +5,7 @@ package ent
 import (
 	"fmt"
 	"strings"
+	"time"
 
 	"entgo.io/ent"
 	"entgo.io/ent/dialect/sql"
@@ -17,8 +18,16 @@ type Agents struct {
 	// ID of the ent.
 	// Primary key, unique identifier.
 	ID int `json:"id,omitempty"`
+	// Unique name or identifier for the agent.
+	Name string `json:"name,omitempty"`
 	// Enum: { connected, in_progress, disconnected }.
 	Status string `json:"status,omitempty"`
+	// Optional workspace path for the agent.
+	Workspace string `json:"workspace,omitempty"`
+	// The server address this agent connects to.
+	Server string `json:"server,omitempty"`
+	// Timestamp of the agent's last activity.
+	LastSeen time.Time `json:"last_seen,omitempty"`
 	// Edges holds the relations/edges for other nodes in the graph.
 	// The values are being populated by the AgentsQuery when eager-loading is set.
 	Edges        AgentsEdges `json:"edges"`
@@ -50,8 +59,10 @@ func (*Agents) scanValues(columns []string) ([]any, error) {
 		switch columns[i] {
 		case agents.FieldID:
 			values[i] = new(sql.NullInt64)
-		case agents.FieldStatus:
+		case agents.FieldName, agents.FieldStatus, agents.FieldWorkspace, agents.FieldServer:
 			values[i] = new(sql.NullString)
+		case agents.FieldLastSeen:
+			values[i] = new(sql.NullTime)
 		default:
 			values[i] = new(sql.UnknownType)
 		}
@@ -73,11 +84,35 @@ func (a *Agents) assignValues(columns []string, values []any) error {
 				return fmt.Errorf("unexpected type %T for field id", value)
 			}
 			a.ID = int(value.Int64)
+		case agents.FieldName:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field name", values[i])
+			} else if value.Valid {
+				a.Name = value.String
+			}
 		case agents.FieldStatus:
 			if value, ok := values[i].(*sql.NullString); !ok {
 				return fmt.Errorf("unexpected type %T for field status", values[i])
 			} else if value.Valid {
 				a.Status = value.String
+			}
+		case agents.FieldWorkspace:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field workspace", values[i])
+			} else if value.Valid {
+				a.Workspace = value.String
+			}
+		case agents.FieldServer:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field server", values[i])
+			} else if value.Valid {
+				a.Server = value.String
+			}
+		case agents.FieldLastSeen:
+			if value, ok := values[i].(*sql.NullTime); !ok {
+				return fmt.Errorf("unexpected type %T for field last_seen", values[i])
+			} else if value.Valid {
+				a.LastSeen = value.Time
 			}
 		default:
 			a.selectValues.Set(columns[i], values[i])
@@ -120,8 +155,20 @@ func (a *Agents) String() string {
 	var builder strings.Builder
 	builder.WriteString("Agents(")
 	builder.WriteString(fmt.Sprintf("id=%v, ", a.ID))
+	builder.WriteString("name=")
+	builder.WriteString(a.Name)
+	builder.WriteString(", ")
 	builder.WriteString("status=")
 	builder.WriteString(a.Status)
+	builder.WriteString(", ")
+	builder.WriteString("workspace=")
+	builder.WriteString(a.Workspace)
+	builder.WriteString(", ")
+	builder.WriteString("server=")
+	builder.WriteString(a.Server)
+	builder.WriteString(", ")
+	builder.WriteString("last_seen=")
+	builder.WriteString(a.LastSeen.Format(time.ANSIC))
 	builder.WriteByte(')')
 	return builder.String()
 }

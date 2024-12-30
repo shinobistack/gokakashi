@@ -5,6 +5,7 @@ import (
 	"errors"
 	"github.com/google/uuid"
 	"github.com/shinobistack/gokakashi/ent"
+	"github.com/shinobistack/gokakashi/ent/agenttasks"
 	"github.com/swaggest/usecase/status"
 	"time"
 )
@@ -22,31 +23,7 @@ type GetAgentTaskResponse struct {
 	CreatedAt time.Time `json:"created_at"`
 }
 type ListAgentTasksRequest struct {
-}
-
-type ListAgentTasksResponse struct {
-	AgentTasks []GetAgentTaskResponse `json:"agent_tasks"`
-}
-
-func ListAgentTasks(client *ent.Client) func(ctx context.Context, req ListAgentTasksRequest, res *[]GetAgentTaskResponse) error {
-	return func(ctx context.Context, req ListAgentTasksRequest, res *[]GetAgentTaskResponse) error {
-		tasks, err := client.AgentTasks.Query().All(ctx)
-		if err != nil {
-			return status.Wrap(err, status.Internal)
-		}
-
-		*res = make([]GetAgentTaskResponse, len(tasks))
-		for i, task := range tasks {
-			(*res)[i] = GetAgentTaskResponse{
-				ID:        task.ID,
-				AgentID:   task.AgentID,
-				ScanID:    task.ScanID,
-				Status:    task.Status,
-				CreatedAt: task.CreatedAt,
-			}
-		}
-		return nil
-	}
+	AgentID int `path:"agent_id"`
 }
 
 func GetAgentTask(client *ent.Client) func(ctx context.Context, req GetAgentTaskRequest, res *GetAgentTaskResponse) error {
@@ -68,6 +45,33 @@ func GetAgentTask(client *ent.Client) func(ctx context.Context, req GetAgentTask
 		res.ScanID = task.ScanID
 		res.Status = task.Status
 		res.CreatedAt = task.CreatedAt
+		return nil
+	}
+}
+
+func ListAgentTasksByAgentID(client *ent.Client) func(ctx context.Context, req ListAgentTasksRequest, res *[]GetAgentTaskResponse) error {
+	return func(ctx context.Context, req ListAgentTasksRequest, res *[]GetAgentTaskResponse) error {
+		if req.AgentID <= 0 {
+			return status.Wrap(errors.New("invalid agent ID"), status.InvalidArgument)
+		}
+
+		tasks, err := client.AgentTasks.Query().
+			Where(agenttasks.AgentID(req.AgentID)).
+			All(ctx)
+		if err != nil {
+			return status.Wrap(err, status.Internal)
+		}
+
+		*res = make([]GetAgentTaskResponse, len(tasks))
+		for i, task := range tasks {
+			(*res)[i] = GetAgentTaskResponse{
+				ID:        task.ID,
+				AgentID:   task.AgentID,
+				ScanID:    task.ScanID,
+				Status:    task.Status,
+				CreatedAt: task.CreatedAt,
+			}
+		}
 		return nil
 	}
 }
