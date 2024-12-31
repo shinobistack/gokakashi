@@ -69,6 +69,11 @@ func Image(v string) predicate.Scans {
 	return predicate.Scans(sql.FieldEQ(FieldImage, v))
 }
 
+// IntegrationID applies equality check predicate on the "integration_id" field. It's identical to IntegrationIDEQ.
+func IntegrationID(v uuid.UUID) predicate.Scans {
+	return predicate.Scans(sql.FieldEQ(FieldIntegrationID, v))
+}
+
 // Scanner applies equality check predicate on the "scanner" field. It's identical to ScannerEQ.
 func Scanner(v string) predicate.Scans {
 	return predicate.Scans(sql.FieldEQ(FieldScanner, v))
@@ -227,6 +232,26 @@ func ImageEqualFold(v string) predicate.Scans {
 // ImageContainsFold applies the ContainsFold predicate on the "image" field.
 func ImageContainsFold(v string) predicate.Scans {
 	return predicate.Scans(sql.FieldContainsFold(FieldImage, v))
+}
+
+// IntegrationIDEQ applies the EQ predicate on the "integration_id" field.
+func IntegrationIDEQ(v uuid.UUID) predicate.Scans {
+	return predicate.Scans(sql.FieldEQ(FieldIntegrationID, v))
+}
+
+// IntegrationIDNEQ applies the NEQ predicate on the "integration_id" field.
+func IntegrationIDNEQ(v uuid.UUID) predicate.Scans {
+	return predicate.Scans(sql.FieldNEQ(FieldIntegrationID, v))
+}
+
+// IntegrationIDIn applies the In predicate on the "integration_id" field.
+func IntegrationIDIn(vs ...uuid.UUID) predicate.Scans {
+	return predicate.Scans(sql.FieldIn(FieldIntegrationID, vs...))
+}
+
+// IntegrationIDNotIn applies the NotIn predicate on the "integration_id" field.
+func IntegrationIDNotIn(vs ...uuid.UUID) predicate.Scans {
+	return predicate.Scans(sql.FieldNotIn(FieldIntegrationID, vs...))
 }
 
 // ScannerEQ applies the EQ predicate on the "scanner" field.
@@ -394,6 +419,29 @@ func HasPolicy() predicate.Scans {
 func HasPolicyWith(preds ...predicate.Policies) predicate.Scans {
 	return predicate.Scans(func(s *sql.Selector) {
 		step := newPolicyStep()
+		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
+			for _, p := range preds {
+				p(s)
+			}
+		})
+	})
+}
+
+// HasIntegrations applies the HasEdge predicate on the "integrations" edge.
+func HasIntegrations() predicate.Scans {
+	return predicate.Scans(func(s *sql.Selector) {
+		step := sqlgraph.NewStep(
+			sqlgraph.From(Table, FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, true, IntegrationsTable, IntegrationsColumn),
+		)
+		sqlgraph.HasNeighbors(s, step)
+	})
+}
+
+// HasIntegrationsWith applies the HasEdge predicate on the "integrations" edge with a given conditions (other predicates).
+func HasIntegrationsWith(preds ...predicate.Integrations) predicate.Scans {
+	return predicate.Scans(func(s *sql.Selector) {
+		step := newIntegrationsStep()
 		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
 			for _, p := range preds {
 				p(s)

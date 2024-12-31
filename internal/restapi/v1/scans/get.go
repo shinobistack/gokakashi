@@ -11,13 +11,14 @@ import (
 )
 
 type GetScanResponse struct {
-	ID       uuid.UUID    `json:"id"`
-	PolicyID uuid.UUID    `json:"policy_id"`
-	Image    string       `json:"image"`
-	Scanner  string       `json:"scanner"`
-	Status   string       `json:"status"`
-	Check    schema.Check `json:"check"`
-	Report   interface{}  `json:"report"`
+	ID            uuid.UUID    `json:"id"`
+	PolicyID      uuid.UUID    `json:"policy_id"`
+	Image         string       `json:"image"`
+	Scanner       string       `json:"scanner"`
+	IntegrationID uuid.UUID    `json:"integration_id"`
+	Status        string       `json:"status"`
+	Check         schema.Check `json:"check"`
+	Report        interface{}  `json:"report"`
 }
 
 type ListScanRequest struct{}
@@ -36,13 +37,14 @@ func ListScans(client *ent.Client) func(ctx context.Context, req ListScanRequest
 		*res = make([]GetScanResponse, len(scans))
 		for i, scan := range scans {
 			(*res)[i] = GetScanResponse{
-				ID:       scan.ID,
-				PolicyID: scan.PolicyID,
-				Image:    scan.Image,
-				Scanner:  scan.Scanner,
-				Status:   scan.Status,
-				Check:    scan.Check,
-				Report:   scan.Report,
+				ID:            scan.ID,
+				PolicyID:      scan.PolicyID,
+				Image:         scan.Image,
+				Scanner:       scan.Scanner,
+				IntegrationID: scan.IntegrationID,
+				Status:        scan.Status,
+				Check:         scan.Check,
+				Report:        scan.Report,
 			}
 		}
 		return nil
@@ -65,6 +67,7 @@ func GetScan(client *ent.Client) func(ctx context.Context, req GetScanRequest, r
 
 		res.ID = scan.ID
 		res.PolicyID = scan.PolicyID
+		res.IntegrationID = scan.IntegrationID
 		res.Image = scan.Image
 		res.Scanner = scan.Scanner
 		res.Status = scan.Status

@@ -1776,6 +1776,9 @@ type IntegrationsMutation struct {
 	_type         *string
 	_config       *map[string]interface{}
 	clearedFields map[string]struct{}
+	scans         map[uuid.UUID]struct{}
+	removedscans  map[uuid.UUID]struct{}
+	clearedscans  bool
 	done          bool
 	oldValue      func(context.Context) (*Integrations, error)
 	predicates    []predicate.Integrations
@@ -1993,6 +1996,60 @@ func (m *IntegrationsMutation) ResetConfig() {
 	m._config = nil
 }
 
+// AddScanIDs adds the "scans" edge to the Scans entity by ids.
+func (m *IntegrationsMutation) AddScanIDs(ids ...uuid.UUID) {
+	if m.scans == nil {
+		m.scans = make(map[uuid.UUID]struct{})
+	}
+	for i := range ids {
+		m.scans[ids[i]] = struct{}{}
+	}
+}
+
+// ClearScans clears the "scans" edge to the Scans entity.
+func (m *IntegrationsMutation) ClearScans() {
+	m.clearedscans = true
+}
+
+// ScansCleared reports if the "scans" edge to the Scans entity was cleared.
+func (m *IntegrationsMutation) ScansCleared() bool {
+	return m.clearedscans
+}
+
+// RemoveScanIDs removes the "scans" edge to the Scans entity by IDs.
+func (m *IntegrationsMutation) RemoveScanIDs(ids ...uuid.UUID) {
+	if m.removedscans == nil {
+		m.removedscans = make(map[uuid.UUID]struct{})
+	}
+	for i := range ids {
+		delete(m.scans, ids[i])
+		m.removedscans[ids[i]] = struct{}{}
+	}
+}
+
+// RemovedScans returns the removed IDs of the "scans" edge to the Scans entity.
+func (m *IntegrationsMutation) RemovedScansIDs() (ids []uuid.UUID) {
+	for id := range m.removedscans {
+		ids = append(ids, id)
+	}
+	return
+}
+
+// ScansIDs returns the "scans" edge IDs in the mutation.
+func (m *IntegrationsMutation) ScansIDs() (ids []uuid.UUID) {
+	for id := range m.scans {
+		ids = append(ids, id)
+	}
+	return
+}
+
+// ResetScans resets all changes to the "scans" edge.
+func (m *IntegrationsMutation) ResetScans() {
+	m.scans = nil
+	m.clearedscans = false
+	m.removedscans = nil
+}
+
 // Where appends a list predicates to the IntegrationsMutation builder.
 func (m *IntegrationsMutation) Where(ps ...predicate.Integrations) {
 	m.predicates = append(m.predicates, ps...)
@@ -2160,49 +2217,85 @@ func (m *IntegrationsMutation) ResetField(name string) error {
 
 // AddedEdges returns all edge names that were set/added in this mutation.
 func (m *IntegrationsMutation) AddedEdges() []string {
-	edges := make([]string, 0, 0)
+	edges := make([]string, 0, 1)
+	if m.scans != nil {
+		edges = append(edges, integrations.EdgeScans)
+	}
 	return edges
 }
 
 // AddedIDs returns all IDs (to other nodes) that were added for the given edge
 // name in this mutation.
 func (m *IntegrationsMutation) AddedIDs(name string) []ent.Value {
+	switch name {
+	case integrations.EdgeScans:
+		ids := make([]ent.Value, 0, len(m.scans))
+		for id := range m.scans {
+			ids = append(ids, id)
+		}
+		return ids
+	}
 	return nil
 }
 
 // RemovedEdges returns all edge names that were removed in this mutation.
 func (m *IntegrationsMutation) RemovedEdges() []string {
-	edges := make([]string, 0, 0)
+	edges := make([]string, 0, 1)
+	if m.removedscans != nil {
+		edges = append(edges, integrations.EdgeScans)
+	}
 	return edges
 }
 
 // RemovedIDs returns all IDs (to other nodes) that were removed for the edge with
 // the given name in this mutation.
 func (m *IntegrationsMutation) RemovedIDs(name string) []ent.Value {
+	switch name {
+	case integrations.EdgeScans:
+		ids := make([]ent.Value, 0, len(m.removedscans))
+		for id := range m.removedscans {
+			ids = append(ids, id)
+		}
+		return ids
+	}
 	return nil
 }
 
 // ClearedEdges returns all edge names that were cleared in this mutation.
 func (m *IntegrationsMutation) ClearedEdges() []string {
-	edges := make([]string, 0, 0)
+	edges := make([]string, 0, 1)
+	if m.clearedscans {
+		edges = append(edges, integrations.EdgeScans)
+	}
 	return edges
 }
 
 // EdgeCleared returns a boolean which indicates if the edge with the given name
 // was cleared in this mutation.
 func (m *IntegrationsMutation) EdgeCleared(name string) bool {
+	switch name {
+	case integrations.EdgeScans:
+		return m.clearedscans
+	}
 	return false
 }
 
 // ClearEdge clears the value of the edge with the given name. It returns an error
 // if that edge is not defined in the schema.
 func (m *IntegrationsMutation) ClearEdge(name string) error {
+	switch name {
+	}
 	return fmt.Errorf("unknown Integrations unique edge %s", name)
 }
 
 // ResetEdge resets all changes to the edge with the given name in this mutation.
 // It returns an error if the edge is not defined in the schema.
 func (m *IntegrationsMutation) ResetEdge(name string) error {
+	switch name {
+	case integrations.EdgeScans:
+		m.ResetScans()
+		return nil
+	}
 	return fmt.Errorf("unknown Integrations edge %s", name)
 }
 
@@ -4023,26 +4116,28 @@ func (m *ScanLabelsMutation) ResetEdge(name string) error {
 // ScansMutation represents an operation that mutates the Scans nodes in the graph.
 type ScansMutation struct {
 	config
-	op                 Op
-	typ                string
-	id                 *uuid.UUID
-	status             *string
-	image              *string
-	scanner            *string
-	check              *schema.Check
-	report             *string
-	clearedFields      map[string]struct{}
-	policy             *uuid.UUID
-	clearedpolicy      bool
-	scan_labels        map[int]struct{}
-	removedscan_labels map[int]struct{}
-	clearedscan_labels bool
-	agent_tasks        map[uuid.UUID]struct{}
-	removedagent_tasks map[uuid.UUID]struct{}
-	clearedagent_tasks bool
-	done               bool
-	oldValue           func(context.Context) (*Scans, error)
-	predicates         []predicate.Scans
+	op                  Op
+	typ                 string
+	id                  *uuid.UUID
+	status              *string
+	image               *string
+	scanner             *string
+	check               *schema.Check
+	report              *string
+	clearedFields       map[string]struct{}
+	policy              *uuid.UUID
+	clearedpolicy       bool
+	integrations        *uuid.UUID
+	clearedintegrations bool
+	scan_labels         map[int]struct{}
+	removedscan_labels  map[int]struct{}
+	clearedscan_labels  bool
+	agent_tasks         map[uuid.UUID]struct{}
+	removedagent_tasks  map[uuid.UUID]struct{}
+	clearedagent_tasks  bool
+	done                bool
+	oldValue            func(context.Context) (*Scans, error)
+	predicates          []predicate.Scans
 }
 
 var _ ent.Mutation = (*ScansMutation)(nil)
@@ -4257,6 +4352,42 @@ func (m *ScansMutation) ResetImage() {
 	m.image = nil
 }
 
+// SetIntegrationID sets the "integration_id" field.
+func (m *ScansMutation) SetIntegrationID(u uuid.UUID) {
+	m.integrations = &u
+}
+
+// IntegrationID returns the value of the "integration_id" field in the mutation.
+func (m *ScansMutation) IntegrationID() (r uuid.UUID, exists bool) {
+	v := m.integrations
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldIntegrationID returns the old "integration_id" field's value of the Scans entity.
+// If the Scans object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *ScansMutation) OldIntegrationID(ctx context.Context) (v uuid.UUID, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldIntegrationID is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldIntegrationID requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldIntegrationID: %w", err)
+	}
+	return oldValue.IntegrationID, nil
+}
+
+// ResetIntegrationID resets all changes to the "integration_id" field.
+func (m *ScansMutation) ResetIntegrationID() {
+	m.integrations = nil
+}
+
 // SetScanner sets the "scanner" field.
 func (m *ScansMutation) SetScanner(s string) {
 	m.scanner = &s
@@ -4418,6 +4549,46 @@ func (m *ScansMutation) ResetPolicy() {
 	m.clearedpolicy = false
 }
 
+// SetIntegrationsID sets the "integrations" edge to the Integrations entity by id.
+func (m *ScansMutation) SetIntegrationsID(id uuid.UUID) {
+	m.integrations = &id
+}
+
+// ClearIntegrations clears the "integrations" edge to the Integrations entity.
+func (m *ScansMutation) ClearIntegrations() {
+	m.clearedintegrations = true
+	m.clearedFields[scans.FieldIntegrationID] = struct{}{}
+}
+
+// IntegrationsCleared reports if the "integrations" edge to the Integrations entity was cleared.
+func (m *ScansMutation) IntegrationsCleared() bool {
+	return m.clearedintegrations
+}
+
+// IntegrationsID returns the "integrations" edge ID in the mutation.
+func (m *ScansMutation) IntegrationsID() (id uuid.UUID, exists bool) {
+	if m.integrations != nil {
+		return *m.integrations, true
+	}
+	return
+}
+
+// IntegrationsIDs returns the "integrations" edge IDs in the mutation.
+// Note that IDs always returns len(IDs) <= 1 for unique edges, and you should use
+// IntegrationsID instead. It exists only for internal usage by the builders.
+func (m *ScansMutation) IntegrationsIDs() (ids []uuid.UUID) {
+	if id := m.integrations; id != nil {
+		ids = append(ids, *id)
+	}
+	return
+}
+
+// ResetIntegrations resets all changes to the "integrations" edge.
+func (m *ScansMutation) ResetIntegrations() {
+	m.integrations = nil
+	m.clearedintegrations = false
+}
+
 // AddScanLabelIDs adds the "scan_labels" edge to the ScanLabels entity by ids.
 func (m *ScansMutation) AddScanLabelIDs(ids ...int) {
 	if m.scan_labels == nil {
@@ -4560,7 +4731,7 @@ func (m *ScansMutation) Type() string {
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
 func (m *ScansMutation) Fields() []string {
-	fields := make([]string, 0, 6)
+	fields := make([]string, 0, 7)
 	if m.policy != nil {
 		fields = append(fields, scans.FieldPolicyID)
 	}
@@ -4569,6 +4740,9 @@ func (m *ScansMutation) Fields() []string {
 	}
 	if m.image != nil {
 		fields = append(fields, scans.FieldImage)
+	}
+	if m.integrations != nil {
+		fields = append(fields, scans.FieldIntegrationID)
 	}
 	if m.scanner != nil {
 		fields = append(fields, scans.FieldScanner)
@@ -4593,6 +4767,8 @@ func (m *ScansMutation) Field(name string) (ent.Value, bool) {
 		return m.Status()
 	case scans.FieldImage:
 		return m.Image()
+	case scans.FieldIntegrationID:
+		return m.IntegrationID()
 	case scans.FieldScanner:
 		return m.Scanner()
 	case scans.FieldCheck:
@@ -4614,6 +4790,8 @@ func (m *ScansMutation) OldField(ctx context.Context, name string) (ent.Value, e
 		return m.OldStatus(ctx)
 	case scans.FieldImage:
 		return m.OldImage(ctx)
+	case scans.FieldIntegrationID:
+		return m.OldIntegrationID(ctx)
 	case scans.FieldScanner:
 		return m.OldScanner(ctx)
 	case scans.FieldCheck:
@@ -4649,6 +4827,13 @@ func (m *ScansMutation) SetField(name string, value ent.Value) error {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetImage(v)
+		return nil
+	case scans.FieldIntegrationID:
+		v, ok := value.(uuid.UUID)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetIntegrationID(v)
 		return nil
 	case scans.FieldScanner:
 		v, ok := value.(string)
@@ -4744,6 +4929,9 @@ func (m *ScansMutation) ResetField(name string) error {
 	case scans.FieldImage:
 		m.ResetImage()
 		return nil
+	case scans.FieldIntegrationID:
+		m.ResetIntegrationID()
+		return nil
 	case scans.FieldScanner:
 		m.ResetScanner()
 		return nil
@@ -4759,9 +4947,12 @@ func (m *ScansMutation) ResetField(name string) error {
 
 // AddedEdges returns all edge names that were set/added in this mutation.
 func (m *ScansMutation) AddedEdges() []string {
-	edges := make([]string, 0, 3)
+	edges := make([]string, 0, 4)
 	if m.policy != nil {
 		edges = append(edges, scans.EdgePolicy)
+	}
+	if m.integrations != nil {
+		edges = append(edges, scans.EdgeIntegrations)
 	}
 	if m.scan_labels != nil {
 		edges = append(edges, scans.EdgeScanLabels)
@@ -4778,6 +4969,10 @@ func (m *ScansMutation) AddedIDs(name string) []ent.Value {
 	switch name {
 	case scans.EdgePolicy:
 		if id := m.policy; id != nil {
+			return []ent.Value{*id}
+		}
+	case scans.EdgeIntegrations:
+		if id := m.integrations; id != nil {
 			return []ent.Value{*id}
 		}
 	case scans.EdgeScanLabels:
@@ -4798,7 +4993,7 @@ func (m *ScansMutation) AddedIDs(name string) []ent.Value {
 
 // RemovedEdges returns all edge names that were removed in this mutation.
 func (m *ScansMutation) RemovedEdges() []string {
-	edges := make([]string, 0, 3)
+	edges := make([]string, 0, 4)
 	if m.removedscan_labels != nil {
 		edges = append(edges, scans.EdgeScanLabels)
 	}
@@ -4830,9 +5025,12 @@ func (m *ScansMutation) RemovedIDs(name string) []ent.Value {
 
 // ClearedEdges returns all edge names that were cleared in this mutation.
 func (m *ScansMutation) ClearedEdges() []string {
-	edges := make([]string, 0, 3)
+	edges := make([]string, 0, 4)
 	if m.clearedpolicy {
 		edges = append(edges, scans.EdgePolicy)
+	}
+	if m.clearedintegrations {
+		edges = append(edges, scans.EdgeIntegrations)
 	}
 	if m.clearedscan_labels {
 		edges = append(edges, scans.EdgeScanLabels)
@@ -4849,6 +5047,8 @@ func (m *ScansMutation) EdgeCleared(name string) bool {
 	switch name {
 	case scans.EdgePolicy:
 		return m.clearedpolicy
+	case scans.EdgeIntegrations:
+		return m.clearedintegrations
 	case scans.EdgeScanLabels:
 		return m.clearedscan_labels
 	case scans.EdgeAgentTasks:
@@ -4864,6 +5064,9 @@ func (m *ScansMutation) ClearEdge(name string) error {
 	case scans.EdgePolicy:
 		m.ClearPolicy()
 		return nil
+	case scans.EdgeIntegrations:
+		m.ClearIntegrations()
+		return nil
 	}
 	return fmt.Errorf("unknown Scans unique edge %s", name)
 }
@@ -4874,6 +5077,9 @@ func (m *ScansMutation) ResetEdge(name string) error {
 	switch name {
 	case scans.EdgePolicy:
 		m.ResetPolicy()
+		return nil
+	case scans.EdgeIntegrations:
+		m.ResetIntegrations()
 		return nil
 	case scans.EdgeScanLabels:
 		m.ResetScanLabels()

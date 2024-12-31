@@ -4,6 +4,7 @@ import (
 	"entgo.io/ent"
 	"entgo.io/ent/schema/edge"
 	"entgo.io/ent/schema/field"
+	"errors"
 	"github.com/google/uuid"
 )
 
@@ -23,9 +24,20 @@ func (Scans) Fields() []ent.Field {
 			Comment("Foreign key to Policies.ID"),
 		field.String("status").
 			Default("scan_pending").
+			Validate(func(s string) error {
+				validStatuses := []string{"scan_pending", "scan_in_progress", "check_pending", "check_in_progress", "success", "error"}
+				for _, status := range validStatuses {
+					if s == status {
+						return nil
+					}
+				}
+				return errors.New("invalid status")
+			}).
 			Comment("Enum: { scan_pending, scan_in_progress, check_pending, check_in_progress,  success, error }."),
 		field.String("image").
 			Comment("Details of the image being scanned."),
+		field.UUID("integration_id", uuid.UUID{}).
+			Comment("Foreign key to Integrations.ID"),
 		field.String("scanner").
 			Comment("Scanners like Trivy."),
 		field.JSON("check", Check{}).
@@ -45,6 +57,11 @@ func (Scans) Edges() []ent.Edge {
 			Unique().
 			Required().
 			Field("policy_id"),
+		edge.From("integrations", Integrations.Type).
+			Ref("scans").
+			Unique().
+			Required().
+			Field("integration_id"),
 		// A single scan can have multiple labels.
 		edge.To("scan_labels", ScanLabels.Type),
 		edge.To("agent_tasks", AgentTasks.Type),

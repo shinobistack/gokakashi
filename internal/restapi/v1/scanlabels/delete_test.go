@@ -20,11 +20,18 @@ func TestDeleteScanLabel_Valid(t *testing.T) {
 		SetScanner("trivy").
 		SaveX(context.Background())
 
+	integrations := client.Integrations.Create().
+		SetName("integration").
+		SetType("linear").
+		SetConfig(map[string]interface{}{"key": "value"}).
+		SaveX(context.Background())
+
 	scan := client.Scans.Create().
 		SetPolicyID(policy.ID).
 		SetImage("example-image:latest").
 		SetScanner(policy.Scanner).
 		SetStatus("scan_pending").
+		SetIntegrationID(integrations.ID).
 		SaveX(context.Background())
 
 	// Add a label
@@ -56,11 +63,18 @@ func TestDeleteScanLabel_MissingFields(t *testing.T) {
 		SetScanner("trivy").
 		SaveX(context.Background())
 
+	integrations := client.Integrations.Create().
+		SetName("integration").
+		SetType("linear").
+		SetConfig(map[string]interface{}{"key": "value"}).
+		SaveX(context.Background())
+
 	scan := client.Scans.Create().
 		SetPolicyID(policy.ID).
 		SetImage("example-image:latest").
 		SetScanner(policy.Scanner).
 		SetStatus("scan_pending").
+		SetIntegrationID(integrations.ID).
 		SaveX(context.Background())
 
 	req := scanlabels.DeleteScanLabelRequest{
@@ -83,12 +97,18 @@ func TestDeleteScanLabel_LabelNotFound(t *testing.T) {
 		SetScanner("trivy").
 		SaveX(context.Background())
 
+	integrations := client.Integrations.Create().
+		SetName("integration").
+		SetType("linear").
+		SetConfig(map[string]interface{}{"key": "value"}).
+		SaveX(context.Background())
 	// Create a test scan
 	scan := client.Scans.Create().
 		SetPolicyID(policy.ID).
 		SetImage("example-image:latest").
 		SetScanner(policy.Scanner).
 		SetStatus("scan_pending").
+		SetIntegrationID(integrations.ID).
 		SaveX(context.Background())
 
 	client.ScanLabels.Create().

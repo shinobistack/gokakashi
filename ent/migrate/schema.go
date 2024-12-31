@@ -150,6 +150,7 @@ var (
 		{Name: "scanner", Type: field.TypeString},
 		{Name: "check", Type: field.TypeJSON, Nullable: true},
 		{Name: "report", Type: field.TypeString, Nullable: true},
+		{Name: "integration_id", Type: field.TypeUUID},
 		{Name: "policy_id", Type: field.TypeUUID},
 	}
 	// ScansTable holds the schema information for the "scans" table.
@@ -159,8 +160,14 @@ var (
 		PrimaryKey: []*schema.Column{ScansColumns[0]},
 		ForeignKeys: []*schema.ForeignKey{
 			{
-				Symbol:     "scans_policies_scans",
+				Symbol:     "scans_integrations_scans",
 				Columns:    []*schema.Column{ScansColumns[6]},
+				RefColumns: []*schema.Column{IntegrationsColumns[0]},
+				OnDelete:   schema.NoAction,
+			},
+			{
+				Symbol:     "scans_policies_scans",
+				Columns:    []*schema.Column{ScansColumns[7]},
 				RefColumns: []*schema.Column{PoliciesColumns[0]},
 				OnDelete:   schema.NoAction,
 			},
@@ -185,5 +192,6 @@ func init() {
 	IntegrationsTable.ForeignKeys[0].RefTable = IntegrationTypesTable
 	PolicyLabelsTable.ForeignKeys[0].RefTable = PoliciesTable
 	ScanLabelsTable.ForeignKeys[0].RefTable = ScansTable
-	ScansTable.ForeignKeys[0].RefTable = PoliciesTable
+	ScansTable.ForeignKeys[0].RefTable = IntegrationsTable
+	ScansTable.ForeignKeys[1].RefTable = PoliciesTable
 }

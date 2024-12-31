@@ -22,11 +22,17 @@ func TestDeleteScan_Valid(t *testing.T) {
 		SetImage(schema.Image{Registry: "test-registry", Name: "test-name", Tags: []string{"v1.0"}}).
 		SetScanner("trivy").
 		SaveX(context.Background())
+	integrations := client.Integrations.Create().
+		SetName("integration").
+		SetType("linear").
+		SetConfig(map[string]interface{}{"key": "value"}).
+		SaveX(context.Background())
 	scan := client.Scans.Create().
 		SetPolicyID(policy.ID).
 		SetImage("example-image:latest").
 		SetStatus("scan_pending").
 		SetScanner(policy.Scanner).
+		SetIntegrationID(integrations.ID).
 		SaveX(context.Background())
 
 	req := scans.DeleteScanRequest{

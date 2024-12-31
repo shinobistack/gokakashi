@@ -12,6 +12,7 @@ import (
 	"entgo.io/ent/schema/field"
 	"github.com/google/uuid"
 	"github.com/shinobistack/gokakashi/ent/agenttasks"
+	"github.com/shinobistack/gokakashi/ent/integrations"
 	"github.com/shinobistack/gokakashi/ent/policies"
 	"github.com/shinobistack/gokakashi/ent/predicate"
 	"github.com/shinobistack/gokakashi/ent/scanlabels"
@@ -70,6 +71,20 @@ func (su *ScansUpdate) SetImage(s string) *ScansUpdate {
 func (su *ScansUpdate) SetNillableImage(s *string) *ScansUpdate {
 	if s != nil {
 		su.SetImage(*s)
+	}
+	return su
+}
+
+// SetIntegrationID sets the "integration_id" field.
+func (su *ScansUpdate) SetIntegrationID(u uuid.UUID) *ScansUpdate {
+	su.mutation.SetIntegrationID(u)
+	return su
+}
+
+// SetNillableIntegrationID sets the "integration_id" field if the given value is not nil.
+func (su *ScansUpdate) SetNillableIntegrationID(u *uuid.UUID) *ScansUpdate {
+	if u != nil {
+		su.SetIntegrationID(*u)
 	}
 	return su
 }
@@ -133,6 +148,17 @@ func (su *ScansUpdate) SetPolicy(p *Policies) *ScansUpdate {
 	return su.SetPolicyID(p.ID)
 }
 
+// SetIntegrationsID sets the "integrations" edge to the Integrations entity by ID.
+func (su *ScansUpdate) SetIntegrationsID(id uuid.UUID) *ScansUpdate {
+	su.mutation.SetIntegrationsID(id)
+	return su
+}
+
+// SetIntegrations sets the "integrations" edge to the Integrations entity.
+func (su *ScansUpdate) SetIntegrations(i *Integrations) *ScansUpdate {
+	return su.SetIntegrationsID(i.ID)
+}
+
 // AddScanLabelIDs adds the "scan_labels" edge to the ScanLabels entity by IDs.
 func (su *ScansUpdate) AddScanLabelIDs(ids ...int) *ScansUpdate {
 	su.mutation.AddScanLabelIDs(ids...)
@@ -171,6 +197,12 @@ func (su *ScansUpdate) Mutation() *ScansMutation {
 // ClearPolicy clears the "policy" edge to the Policies entity.
 func (su *ScansUpdate) ClearPolicy() *ScansUpdate {
 	su.mutation.ClearPolicy()
+	return su
+}
+
+// ClearIntegrations clears the "integrations" edge to the Integrations entity.
+func (su *ScansUpdate) ClearIntegrations() *ScansUpdate {
+	su.mutation.ClearIntegrations()
 	return su
 }
 
@@ -245,8 +277,16 @@ func (su *ScansUpdate) ExecX(ctx context.Context) {
 
 // check runs all checks and user-defined validators on the builder.
 func (su *ScansUpdate) check() error {
+	if v, ok := su.mutation.Status(); ok {
+		if err := scans.StatusValidator(v); err != nil {
+			return &ValidationError{Name: "status", err: fmt.Errorf(`ent: validator failed for field "Scans.status": %w`, err)}
+		}
+	}
 	if su.mutation.PolicyCleared() && len(su.mutation.PolicyIDs()) > 0 {
 		return errors.New(`ent: clearing a required unique edge "Scans.policy"`)
+	}
+	if su.mutation.IntegrationsCleared() && len(su.mutation.IntegrationsIDs()) > 0 {
+		return errors.New(`ent: clearing a required unique edge "Scans.integrations"`)
 	}
 	return nil
 }
@@ -306,6 +346,35 @@ func (su *ScansUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(policies.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if su.mutation.IntegrationsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: true,
+			Table:   scans.IntegrationsTable,
+			Columns: []string{scans.IntegrationsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(integrations.FieldID, field.TypeUUID),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := su.mutation.IntegrationsIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: true,
+			Table:   scans.IntegrationsTable,
+			Columns: []string{scans.IntegrationsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(integrations.FieldID, field.TypeUUID),
 			},
 		}
 		for _, k := range nodes {
@@ -465,6 +534,20 @@ func (suo *ScansUpdateOne) SetNillableImage(s *string) *ScansUpdateOne {
 	return suo
 }
 
+// SetIntegrationID sets the "integration_id" field.
+func (suo *ScansUpdateOne) SetIntegrationID(u uuid.UUID) *ScansUpdateOne {
+	suo.mutation.SetIntegrationID(u)
+	return suo
+}
+
+// SetNillableIntegrationID sets the "integration_id" field if the given value is not nil.
+func (suo *ScansUpdateOne) SetNillableIntegrationID(u *uuid.UUID) *ScansUpdateOne {
+	if u != nil {
+		suo.SetIntegrationID(*u)
+	}
+	return suo
+}
+
 // SetScanner sets the "scanner" field.
 func (suo *ScansUpdateOne) SetScanner(s string) *ScansUpdateOne {
 	suo.mutation.SetScanner(s)
@@ -524,6 +607,17 @@ func (suo *ScansUpdateOne) SetPolicy(p *Policies) *ScansUpdateOne {
 	return suo.SetPolicyID(p.ID)
 }
 
+// SetIntegrationsID sets the "integrations" edge to the Integrations entity by ID.
+func (suo *ScansUpdateOne) SetIntegrationsID(id uuid.UUID) *ScansUpdateOne {
+	suo.mutation.SetIntegrationsID(id)
+	return suo
+}
+
+// SetIntegrations sets the "integrations" edge to the Integrations entity.
+func (suo *ScansUpdateOne) SetIntegrations(i *Integrations) *ScansUpdateOne {
+	return suo.SetIntegrationsID(i.ID)
+}
+
 // AddScanLabelIDs adds the "scan_labels" edge to the ScanLabels entity by IDs.
 func (suo *ScansUpdateOne) AddScanLabelIDs(ids ...int) *ScansUpdateOne {
 	suo.mutation.AddScanLabelIDs(ids...)
@@ -562,6 +656,12 @@ func (suo *ScansUpdateOne) Mutation() *ScansMutation {
 // ClearPolicy clears the "policy" edge to the Policies entity.
 func (suo *ScansUpdateOne) ClearPolicy() *ScansUpdateOne {
 	suo.mutation.ClearPolicy()
+	return suo
+}
+
+// ClearIntegrations clears the "integrations" edge to the Integrations entity.
+func (suo *ScansUpdateOne) ClearIntegrations() *ScansUpdateOne {
+	suo.mutation.ClearIntegrations()
 	return suo
 }
 
@@ -649,8 +749,16 @@ func (suo *ScansUpdateOne) ExecX(ctx context.Context) {
 
 // check runs all checks and user-defined validators on the builder.
 func (suo *ScansUpdateOne) check() error {
+	if v, ok := suo.mutation.Status(); ok {
+		if err := scans.StatusValidator(v); err != nil {
+			return &ValidationError{Name: "status", err: fmt.Errorf(`ent: validator failed for field "Scans.status": %w`, err)}
+		}
+	}
 	if suo.mutation.PolicyCleared() && len(suo.mutation.PolicyIDs()) > 0 {
 		return errors.New(`ent: clearing a required unique edge "Scans.policy"`)
+	}
+	if suo.mutation.IntegrationsCleared() && len(suo.mutation.IntegrationsIDs()) > 0 {
+		return errors.New(`ent: clearing a required unique edge "Scans.integrations"`)
 	}
 	return nil
 }
@@ -727,6 +835,35 @@ func (suo *ScansUpdateOne) sqlSave(ctx context.Context) (_node *Scans, err error
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(policies.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if suo.mutation.IntegrationsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: true,
+			Table:   scans.IntegrationsTable,
+			Columns: []string{scans.IntegrationsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(integrations.FieldID, field.TypeUUID),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := suo.mutation.IntegrationsIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: true,
+			Table:   scans.IntegrationsTable,
+			Columns: []string{scans.IntegrationsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(integrations.FieldID, field.TypeUUID),
 			},
 		}
 		for _, k := range nodes {

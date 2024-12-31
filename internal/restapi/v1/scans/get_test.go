@@ -21,12 +21,18 @@ func TestListScans_Valid(t *testing.T) {
 		SetImage(schema.Image{Registry: "test-registry", Name: "test-name", Tags: []string{"v1.0"}}).
 		SetScanner("trivy").
 		SaveX(context.Background())
+	integrations := client.Integrations.Create().
+		SetName("Integration 1").
+		SetType("docker-hub").
+		SetConfig(map[string]interface{}{"key": "value1"}).
+		SaveX(context.Background())
 
 	client.Scans.Create().
 		SetPolicyID(policy.ID).
 		SetImage("test-image-1").
 		SetStatus("scan_pending").
 		SetScanner(policy.Scanner).
+		SetIntegrationID(integrations.ID).
 		SaveX(context.Background())
 
 	client.Scans.Create().
@@ -34,6 +40,7 @@ func TestListScans_Valid(t *testing.T) {
 		SetImage("test-image-2").
 		SetScanner(policy.Scanner).
 		SetStatus("success").
+		SetIntegrationID(integrations.ID).
 		SaveX(context.Background())
 
 	req := scans.ListScanRequest{}
@@ -53,12 +60,18 @@ func TestGetScan_Valid(t *testing.T) {
 		SetImage(schema.Image{Registry: "test-registry", Name: "test-name", Tags: []string{"v1.0"}}).
 		SetScanner("trivy").
 		SaveX(context.Background())
+	integrations := client.Integrations.Create().
+		SetName("Integration 1").
+		SetType("docker-hub").
+		SetConfig(map[string]interface{}{"key": "value1"}).
+		SaveX(context.Background())
 
 	scan := client.Scans.Create().
 		SetPolicyID(policy.ID).
 		SetImage("test-image").
 		SetScanner(policy.Scanner).
 		SetStatus("scan_pending").
+		SetIntegrationID(integrations.ID).
 		SaveX(context.Background())
 
 	res := scans.GetScanResponse{}

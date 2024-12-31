@@ -19,6 +19,8 @@ const (
 	FieldStatus = "status"
 	// FieldImage holds the string denoting the image field in the database.
 	FieldImage = "image"
+	// FieldIntegrationID holds the string denoting the integration_id field in the database.
+	FieldIntegrationID = "integration_id"
 	// FieldScanner holds the string denoting the scanner field in the database.
 	FieldScanner = "scanner"
 	// FieldCheck holds the string denoting the check field in the database.
@@ -27,6 +29,8 @@ const (
 	FieldReport = "report"
 	// EdgePolicy holds the string denoting the policy edge name in mutations.
 	EdgePolicy = "policy"
+	// EdgeIntegrations holds the string denoting the integrations edge name in mutations.
+	EdgeIntegrations = "integrations"
 	// EdgeScanLabels holds the string denoting the scan_labels edge name in mutations.
 	EdgeScanLabels = "scan_labels"
 	// EdgeAgentTasks holds the string denoting the agent_tasks edge name in mutations.
@@ -40,6 +44,13 @@ const (
 	PolicyInverseTable = "policies"
 	// PolicyColumn is the table column denoting the policy relation/edge.
 	PolicyColumn = "policy_id"
+	// IntegrationsTable is the table that holds the integrations relation/edge.
+	IntegrationsTable = "scans"
+	// IntegrationsInverseTable is the table name for the Integrations entity.
+	// It exists in this package in order to avoid circular dependency with the "integrations" package.
+	IntegrationsInverseTable = "integrations"
+	// IntegrationsColumn is the table column denoting the integrations relation/edge.
+	IntegrationsColumn = "integration_id"
 	// ScanLabelsTable is the table that holds the scan_labels relation/edge.
 	ScanLabelsTable = "scan_labels"
 	// ScanLabelsInverseTable is the table name for the ScanLabels entity.
@@ -62,6 +73,7 @@ var Columns = []string{
 	FieldPolicyID,
 	FieldStatus,
 	FieldImage,
+	FieldIntegrationID,
 	FieldScanner,
 	FieldCheck,
 	FieldReport,
@@ -80,6 +92,8 @@ func ValidColumn(column string) bool {
 var (
 	// DefaultStatus holds the default value on creation for the "status" field.
 	DefaultStatus string
+	// StatusValidator is a validator for the "status" field. It is called by the builders before save.
+	StatusValidator func(string) error
 	// DefaultID holds the default value on creation for the "id" field.
 	DefaultID func() uuid.UUID
 )
@@ -107,6 +121,11 @@ func ByImage(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldImage, opts...).ToFunc()
 }
 
+// ByIntegrationID orders the results by the integration_id field.
+func ByIntegrationID(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldIntegrationID, opts...).ToFunc()
+}
+
 // ByScanner orders the results by the scanner field.
 func ByScanner(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldScanner, opts...).ToFunc()
@@ -121,6 +140,13 @@ func ByReport(opts ...sql.OrderTermOption) OrderOption {
 func ByPolicyField(field string, opts ...sql.OrderTermOption) OrderOption {
 	return func(s *sql.Selector) {
 		sqlgraph.OrderByNeighborTerms(s, newPolicyStep(), sql.OrderByField(field, opts...))
+	}
+}
+
+// ByIntegrationsField orders the results by integrations field.
+func ByIntegrationsField(field string, opts ...sql.OrderTermOption) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborTerms(s, newIntegrationsStep(), sql.OrderByField(field, opts...))
 	}
 }
 
@@ -156,6 +182,13 @@ func newPolicyStep() *sqlgraph.Step {
 		sqlgraph.From(Table, FieldID),
 		sqlgraph.To(PolicyInverseTable, FieldID),
 		sqlgraph.Edge(sqlgraph.M2O, true, PolicyTable, PolicyColumn),
+	)
+}
+func newIntegrationsStep() *sqlgraph.Step {
+	return sqlgraph.NewStep(
+		sqlgraph.From(Table, FieldID),
+		sqlgraph.To(IntegrationsInverseTable, FieldID),
+		sqlgraph.Edge(sqlgraph.M2O, true, IntegrationsTable, IntegrationsColumn),
 	)
 }
 func newScanLabelsStep() *sqlgraph.Step {
