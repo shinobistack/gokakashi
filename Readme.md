@@ -26,7 +26,7 @@ gokakashi is a security platform to help ship secure software.
 
 ### Container Image Scanning
 
-This is useful for finding and remediating vulnerabilities present in your container images.
+Find, analyze, and remediate vulnerabilities present in your container images.
 
 - Multiple registries support - scan images from various container image registries — all in one place!
 - Vulnerability scanner of your choice.
