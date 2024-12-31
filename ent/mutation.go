@@ -2214,6 +2214,7 @@ type PoliciesMutation struct {
 	id                   *uuid.UUID
 	name                 *string
 	image                *schema.Image
+	scanner              *string
 	labels               *schema.PolicyLabels
 	trigger              *map[string]interface{}
 	check                *schema.Check
@@ -2403,6 +2404,42 @@ func (m *PoliciesMutation) OldImage(ctx context.Context) (v schema.Image, err er
 // ResetImage resets all changes to the "image" field.
 func (m *PoliciesMutation) ResetImage() {
 	m.image = nil
+}
+
+// SetScanner sets the "scanner" field.
+func (m *PoliciesMutation) SetScanner(s string) {
+	m.scanner = &s
+}
+
+// Scanner returns the value of the "scanner" field in the mutation.
+func (m *PoliciesMutation) Scanner() (r string, exists bool) {
+	v := m.scanner
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldScanner returns the old "scanner" field's value of the Policies entity.
+// If the Policies object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *PoliciesMutation) OldScanner(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldScanner is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldScanner requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldScanner: %w", err)
+	}
+	return oldValue.Scanner, nil
+}
+
+// ResetScanner resets all changes to the "scanner" field.
+func (m *PoliciesMutation) ResetScanner() {
+	m.scanner = nil
 }
 
 // SetLabels sets the "labels" field.
@@ -2694,12 +2731,15 @@ func (m *PoliciesMutation) Type() string {
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
 func (m *PoliciesMutation) Fields() []string {
-	fields := make([]string, 0, 5)
+	fields := make([]string, 0, 6)
 	if m.name != nil {
 		fields = append(fields, policies.FieldName)
 	}
 	if m.image != nil {
 		fields = append(fields, policies.FieldImage)
+	}
+	if m.scanner != nil {
+		fields = append(fields, policies.FieldScanner)
 	}
 	if m.labels != nil {
 		fields = append(fields, policies.FieldLabels)
@@ -2722,6 +2762,8 @@ func (m *PoliciesMutation) Field(name string) (ent.Value, bool) {
 		return m.Name()
 	case policies.FieldImage:
 		return m.Image()
+	case policies.FieldScanner:
+		return m.Scanner()
 	case policies.FieldLabels:
 		return m.Labels()
 	case policies.FieldTrigger:
@@ -2741,6 +2783,8 @@ func (m *PoliciesMutation) OldField(ctx context.Context, name string) (ent.Value
 		return m.OldName(ctx)
 	case policies.FieldImage:
 		return m.OldImage(ctx)
+	case policies.FieldScanner:
+		return m.OldScanner(ctx)
 	case policies.FieldLabels:
 		return m.OldLabels(ctx)
 	case policies.FieldTrigger:
@@ -2769,6 +2813,13 @@ func (m *PoliciesMutation) SetField(name string, value ent.Value) error {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetImage(v)
+		return nil
+	case policies.FieldScanner:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetScanner(v)
 		return nil
 	case policies.FieldLabels:
 		v, ok := value.(schema.PolicyLabels)
@@ -2866,6 +2917,9 @@ func (m *PoliciesMutation) ResetField(name string) error {
 		return nil
 	case policies.FieldImage:
 		m.ResetImage()
+		return nil
+	case policies.FieldScanner:
+		m.ResetScanner()
 		return nil
 	case policies.FieldLabels:
 		m.ResetLabels()

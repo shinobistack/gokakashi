@@ -14,9 +14,10 @@ import (
 )
 
 type CreatePolicyRequest struct {
-	Name   string               `json:"name"`
-	Image  schema.Image         `json:"image"`
-	Labels []schema.PolicyLabel `json:"labels"`
+	Name    string               `json:"name"`
+	Image   schema.Image         `json:"image"`
+	Scanner string               `json:"scanner"`
+	Labels  []schema.PolicyLabel `json:"labels"`
 	// Todo: Implement the logic of Type:cron etc
 	Trigger map[string]interface{} `json:"trigger"`
 	Check   *schema.Check          `json:"check"`
@@ -70,6 +71,7 @@ func CreatePolicy(client *ent.Client) func(ctx context.Context, req CreatePolicy
 		policy, err := tx.Policies.Create().
 			SetName(req.Name).
 			SetImage(req.Image).
+			SetScanner(req.Scanner).
 			SetTrigger(req.Trigger).
 			SetNillableCheck(req.Check).
 			Save(ctx)

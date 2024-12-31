@@ -19,6 +19,7 @@ func TestUpdatePolicy_ValidUpdate(t *testing.T) {
 	policy := client.Policies.Create().
 		SetName("test-policy").
 		SetImage(schema.Image{Registry: "example-registry", Name: "example-name", Tags: []string{"v1.0"}}).
+		SetScanner("trivy").
 		SaveX(context.Background())
 
 	req := policies.UpdatePolicyRequest{

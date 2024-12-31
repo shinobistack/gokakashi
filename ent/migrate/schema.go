@@ -89,6 +89,7 @@ var (
 		{Name: "id", Type: field.TypeUUID, Unique: true},
 		{Name: "name", Type: field.TypeString, Unique: true},
 		{Name: "image", Type: field.TypeJSON},
+		{Name: "scanner", Type: field.TypeString},
 		{Name: "labels", Type: field.TypeJSON, Nullable: true},
 		{Name: "trigger", Type: field.TypeJSON, Nullable: true},
 		{Name: "check", Type: field.TypeJSON, Nullable: true},

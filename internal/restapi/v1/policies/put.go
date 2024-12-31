@@ -13,6 +13,7 @@ import (
 type UpdatePolicyRequest struct {
 	ID      uuid.UUID               `path:"id"`
 	Name    *string                 `json:"name"`
+	Scanner *string                 `json:"scanner"`
 	Image   *schema.Image           `json:"image"`
 	Trigger *map[string]interface{} `json:"trigger"`
 	Check   *schema.Check           `json:"check"`
@@ -55,6 +56,10 @@ func UpdatePolicy(client *ent.Client) func(ctx context.Context, req UpdatePolicy
 			update.SetTrigger(*req.Trigger)
 		}
 
+		if req.Scanner != nil {
+			update.SetScanner(*req.Scanner)
+		}
+
 		if req.Check != nil {
 			update.SetCheck(*req.Check)
 		}
@@ -68,6 +73,7 @@ func UpdatePolicy(client *ent.Client) func(ctx context.Context, req UpdatePolicy
 		res.ID = updatedPolicy.ID
 		res.Name = policy.Name
 		res.Image = policy.Image
+		res.Scanner = policy.Scanner
 		res.Trigger = policy.Trigger
 		res.Check = convertToPointer(policy.Check)
 		return nil
