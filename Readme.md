@@ -35,10 +35,6 @@ This is useful for finding and remediating vulnerabilities present in your conta
 
 TODO: Add screenshot and link to docs.
 
-### Integrations
-
-gokakshi integrates with your existing tools. Please find the support matrix below:
-
 #### Image Registries
 
 | Regisry | Status |
