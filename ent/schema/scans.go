@@ -26,6 +26,8 @@ func (Scans) Fields() []ent.Field {
 			Comment("Enum: { scan_pending, scan_in_progress, check_pending, check_in_progress,  success, error }."),
 		field.String("image").
 			Comment("Details of the image being scanned."),
+		field.String("scanner").
+			Comment("Scanners like Trivy."),
 		field.JSON("check", Check{}).
 			Optional().
 			Comment("Conditions checked during the scan."),

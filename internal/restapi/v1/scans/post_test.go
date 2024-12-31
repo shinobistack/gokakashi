@@ -20,6 +20,7 @@ func TestCreateScan_ValidInput(t *testing.T) {
 	policy := client.Policies.Create().
 		SetName("to-be-deleted-test-policy").
 		SetImage(schema.Image{Registry: "example-registry", Name: "example-name", Tags: []string{"v1.0"}}).
+		SetScanner("trivy").
 		SaveX(context.Background())
 
 	req := scans.CreateScanRequest{
@@ -27,6 +28,7 @@ func TestCreateScan_ValidInput(t *testing.T) {
 		Image:    "dockerhub/nginx:latest",
 		Check:    schema.Check{Condition: "severity > high", Notify: []string{"email"}},
 		Status:   "scan_pending",
+		Scanner:  policy.Scanner,
 		Report:   "",
 	}
 	res := &scans.CreateScanResponse{}
@@ -44,6 +46,7 @@ func TestCreateScan_MissingFields(t *testing.T) {
 	policy := client.Policies.Create().
 		SetName("to-be-deleted-test-policy").
 		SetImage(schema.Image{Registry: "example-registry", Name: "example-name", Tags: []string{"v1.0"}}).
+		SetScanner("trivy").
 		SaveX(context.Background())
 
 	req := scans.CreateScanRequest{
@@ -51,6 +54,7 @@ func TestCreateScan_MissingFields(t *testing.T) {
 		Image:    "",
 		Check:    schema.Check{Condition: "severity > high", Notify: []string{"email"}},
 		Status:   "scan_pending",
+		Scanner:  policy.Scanner,
 		Report:   "",
 	}
 	res := &scans.CreateScanResponse{}
@@ -70,6 +74,7 @@ func TestCreateScan_InvalidPolicyID(t *testing.T) {
 		Image:    "dockerhub/nginx:latest",
 		Check:    schema.Check{Condition: "severity > high", Notify: []string{"email"}},
 		Status:   "scan_pending",
+		Scanner:  "trivy",
 		Report:   "",
 	}
 	res := &scans.CreateScanResponse{}

@@ -69,6 +69,11 @@ func Image(v string) predicate.Scans {
 	return predicate.Scans(sql.FieldEQ(FieldImage, v))
 }
 
+// Scanner applies equality check predicate on the "scanner" field. It's identical to ScannerEQ.
+func Scanner(v string) predicate.Scans {
+	return predicate.Scans(sql.FieldEQ(FieldScanner, v))
+}
+
 // Report applies equality check predicate on the "report" field. It's identical to ReportEQ.
 func Report(v string) predicate.Scans {
 	return predicate.Scans(sql.FieldEQ(FieldReport, v))
@@ -222,6 +227,71 @@ func ImageEqualFold(v string) predicate.Scans {
 // ImageContainsFold applies the ContainsFold predicate on the "image" field.
 func ImageContainsFold(v string) predicate.Scans {
 	return predicate.Scans(sql.FieldContainsFold(FieldImage, v))
+}
+
+// ScannerEQ applies the EQ predicate on the "scanner" field.
+func ScannerEQ(v string) predicate.Scans {
+	return predicate.Scans(sql.FieldEQ(FieldScanner, v))
+}
+
+// ScannerNEQ applies the NEQ predicate on the "scanner" field.
+func ScannerNEQ(v string) predicate.Scans {
+	return predicate.Scans(sql.FieldNEQ(FieldScanner, v))
+}
+
+// ScannerIn applies the In predicate on the "scanner" field.
+func ScannerIn(vs ...string) predicate.Scans {
+	return predicate.Scans(sql.FieldIn(FieldScanner, vs...))
+}
+
+// ScannerNotIn applies the NotIn predicate on the "scanner" field.
+func ScannerNotIn(vs ...string) predicate.Scans {
+	return predicate.Scans(sql.FieldNotIn(FieldScanner, vs...))
+}
+
+// ScannerGT applies the GT predicate on the "scanner" field.
+func ScannerGT(v string) predicate.Scans {
+	return predicate.Scans(sql.FieldGT(FieldScanner, v))
+}
+
+// ScannerGTE applies the GTE predicate on the "scanner" field.
+func ScannerGTE(v string) predicate.Scans {
+	return predicate.Scans(sql.FieldGTE(FieldScanner, v))
+}
+
+// ScannerLT applies the LT predicate on the "scanner" field.
+func ScannerLT(v string) predicate.Scans {
+	return predicate.Scans(sql.FieldLT(FieldScanner, v))
+}
+
+// ScannerLTE applies the LTE predicate on the "scanner" field.
+func ScannerLTE(v string) predicate.Scans {
+	return predicate.Scans(sql.FieldLTE(FieldScanner, v))
+}
+
+// ScannerContains applies the Contains predicate on the "scanner" field.
+func ScannerContains(v string) predicate.Scans {
+	return predicate.Scans(sql.FieldContains(FieldScanner, v))
+}
+
+// ScannerHasPrefix applies the HasPrefix predicate on the "scanner" field.
+func ScannerHasPrefix(v string) predicate.Scans {
+	return predicate.Scans(sql.FieldHasPrefix(FieldScanner, v))
+}
+
+// ScannerHasSuffix applies the HasSuffix predicate on the "scanner" field.
+func ScannerHasSuffix(v string) predicate.Scans {
+	return predicate.Scans(sql.FieldHasSuffix(FieldScanner, v))
+}
+
+// ScannerEqualFold applies the EqualFold predicate on the "scanner" field.
+func ScannerEqualFold(v string) predicate.Scans {
+	return predicate.Scans(sql.FieldEqualFold(FieldScanner, v))
+}
+
+// ScannerContainsFold applies the ContainsFold predicate on the "scanner" field.
+func ScannerContainsFold(v string) predicate.Scans {
+	return predicate.Scans(sql.FieldContainsFold(FieldScanner, v))
 }
 
 // CheckIsNil applies the IsNil predicate on the "check" field.

@@ -50,6 +50,12 @@ func (sc *ScansCreate) SetImage(s string) *ScansCreate {
 	return sc
 }
 
+// SetScanner sets the "scanner" field.
+func (sc *ScansCreate) SetScanner(s string) *ScansCreate {
+	sc.mutation.SetScanner(s)
+	return sc
+}
+
 // SetCheck sets the "check" field.
 func (sc *ScansCreate) SetCheck(s schema.Check) *ScansCreate {
 	sc.mutation.SetCheck(s)
@@ -183,6 +189,9 @@ func (sc *ScansCreate) check() error {
 	if _, ok := sc.mutation.Image(); !ok {
 		return &ValidationError{Name: "image", err: errors.New(`ent: missing required field "Scans.image"`)}
 	}
+	if _, ok := sc.mutation.Scanner(); !ok {
+		return &ValidationError{Name: "scanner", err: errors.New(`ent: missing required field "Scans.scanner"`)}
+	}
 	if len(sc.mutation.PolicyIDs()) == 0 {
 		return &ValidationError{Name: "policy", err: errors.New(`ent: missing required edge "Scans.policy"`)}
 	}
@@ -228,6 +237,10 @@ func (sc *ScansCreate) createSpec() (*Scans, *sqlgraph.CreateSpec) {
 	if value, ok := sc.mutation.Image(); ok {
 		_spec.SetField(scans.FieldImage, field.TypeString, value)
 		_node.Image = value
+	}
+	if value, ok := sc.mutation.Scanner(); ok {
+		_spec.SetField(scans.FieldScanner, field.TypeString, value)
+		_node.Scanner = value
 	}
 	if value, ok := sc.mutation.Check(); ok {
 		_spec.SetField(scans.FieldCheck, field.TypeJSON, value)

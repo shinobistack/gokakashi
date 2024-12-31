@@ -19,11 +19,13 @@ func TestUpdateScanLabel_Valid(t *testing.T) {
 	policy := client.Policies.Create().
 		SetName("test-policy").
 		SetImage(schema.Image{Registry: "test-registry", Name: "test-name", Tags: []string{"v1.0"}}).
+		SetScanner("trivy").
 		SaveX(context.Background())
 
 	scan := client.Scans.Create().
 		SetPolicyID(policy.ID).
 		SetImage("example-image:latest").
+		SetScanner(policy.Scanner).
 		SetStatus("scan_pending").
 		SaveX(context.Background())
 
@@ -53,11 +55,13 @@ func TestUpdateScanLabel_MissingFields(t *testing.T) {
 	policy := client.Policies.Create().
 		SetName("test-policy").
 		SetImage(schema.Image{Registry: "test-registry", Name: "test-name", Tags: []string{"v1.0"}}).
+		SetScanner("trivy").
 		SaveX(context.Background())
 
 	scan := client.Scans.Create().
 		SetPolicyID(policy.ID).
 		SetImage("example-image:latest").
+		SetScanner(policy.Scanner).
 		SetStatus("scan_pending").
 		SaveX(context.Background())
 
@@ -85,12 +89,14 @@ func TestUpdateScanLabel_LabelNotFound(t *testing.T) {
 	policy := client.Policies.Create().
 		SetName("test-policy").
 		SetImage(schema.Image{Registry: "test-registry", Name: "test-name", Tags: []string{"v1.0"}}).
+		SetScanner("trivy").
 		SaveX(context.Background())
 
 	scan := client.Scans.Create().
 		SetPolicyID(policy.ID).
 		SetImage("example-image:latest").
 		SetStatus("scan_pending").
+		SetScanner(policy.Scanner).
 		SaveX(context.Background())
 
 	client.ScanLabels.Create().

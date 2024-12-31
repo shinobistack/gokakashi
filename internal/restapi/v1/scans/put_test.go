@@ -19,6 +19,7 @@ func TestUpdateScan_Valid(t *testing.T) {
 	policy := client.Policies.Create().
 		SetName("test-policy").
 		SetImage(schema.Image{Registry: "test-registry", Name: "test-name", Tags: []string{"v1.0"}}).
+		SetScanner("trivy").
 		SaveX(context.Background())
 
 	// Create a test scan
@@ -26,6 +27,7 @@ func TestUpdateScan_Valid(t *testing.T) {
 		SetPolicyID(policy.ID).
 		SetImage("example-image:latest").
 		SetStatus("scan_pending").
+		SetScanner(policy.Scanner).
 		SaveX(context.Background())
 
 	req := scans.UpdateScanRequest{
@@ -49,6 +51,7 @@ func TestUpdateScan_MissingFields(t *testing.T) {
 	policy := client.Policies.Create().
 		SetName("test-policy").
 		SetImage(schema.Image{Registry: "test-registry", Name: "test-name", Tags: []string{"v1.0"}}).
+		SetScanner("trivy").
 		SaveX(context.Background())
 
 	req := scans.UpdateScanRequest{

@@ -147,6 +147,7 @@ var (
 		{Name: "id", Type: field.TypeUUID, Unique: true},
 		{Name: "status", Type: field.TypeString, Default: "scan_pending"},
 		{Name: "image", Type: field.TypeString},
+		{Name: "scanner", Type: field.TypeString},
 		{Name: "check", Type: field.TypeJSON, Nullable: true},
 		{Name: "report", Type: field.TypeString, Nullable: true},
 		{Name: "policy_id", Type: field.TypeUUID},
@@ -159,7 +160,7 @@ var (
 		ForeignKeys: []*schema.ForeignKey{
 			{
 				Symbol:     "scans_policies_scans",
-				Columns:    []*schema.Column{ScansColumns[5]},
+				Columns:    []*schema.Column{ScansColumns[6]},
 				RefColumns: []*schema.Column{PoliciesColumns[0]},
 				OnDelete:   schema.NoAction,
 			},

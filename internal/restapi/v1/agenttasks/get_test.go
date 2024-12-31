@@ -19,11 +19,13 @@ func TestGetAgentTask_Valid(t *testing.T) {
 	policy := client.Policies.Create().
 		SetName("to-be-deleted-test-policy").
 		SetImage(schema.Image{Registry: "example-registry", Name: "example-name", Tags: []string{"v1.0"}}).
+		SetScanner("trivy").
 		SaveX(context.Background())
 
 	scan := client.Scans.Create().
 		SetPolicyID(policy.ID).
 		SetImage("example-image:latest").
+		SetScanner(policy.Scanner).
 		SetStatus("scan_pending").
 		SaveX(context.Background())
 
@@ -69,12 +71,14 @@ func TestListAgentTasks_Valid(t *testing.T) {
 	policy := client.Policies.Create().
 		SetName("to-be-deleted-test-policy").
 		SetImage(schema.Image{Registry: "example-registry", Name: "example-name", Tags: []string{"v1.0"}}).
+		SetScanner("trivy").
 		SaveX(context.Background())
 
 	scan := client.Scans.Create().
 		SetPolicyID(policy.ID).
 		SetImage("example-image:latest").
 		SetStatus("scan_pending").
+		SetScanner(policy.Scanner).
 		SaveX(context.Background())
 
 	agent := client.Agents.Create().
@@ -92,10 +96,10 @@ func TestListAgentTasks_Valid(t *testing.T) {
 		SetStatus("pending").
 		SaveX(context.Background())
 
-	req := agenttasks.ListAgentTasksRequest{}
+	req := agenttasks.ListAgentTasksRequest{agent.ID}
 	res := []agenttasks.GetAgentTaskResponse{}
 
-	err := agenttasks.ListAgentTasks(client)(context.Background(), req, &res)
+	err := agenttasks.ListAgentTasksByAgentID(client)(context.Background(), req, &res)
 
 	assert.NoError(t, err)
 	assert.Equal(t, 2, len(res))

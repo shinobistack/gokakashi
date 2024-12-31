@@ -74,6 +74,20 @@ func (su *ScansUpdate) SetNillableImage(s *string) *ScansUpdate {
 	return su
 }
 
+// SetScanner sets the "scanner" field.
+func (su *ScansUpdate) SetScanner(s string) *ScansUpdate {
+	su.mutation.SetScanner(s)
+	return su
+}
+
+// SetNillableScanner sets the "scanner" field if the given value is not nil.
+func (su *ScansUpdate) SetNillableScanner(s *string) *ScansUpdate {
+	if s != nil {
+		su.SetScanner(*s)
+	}
+	return su
+}
+
 // SetCheck sets the "check" field.
 func (su *ScansUpdate) SetCheck(s schema.Check) *ScansUpdate {
 	su.mutation.SetCheck(s)
@@ -254,6 +268,9 @@ func (su *ScansUpdate) sqlSave(ctx context.Context) (n int, err error) {
 	}
 	if value, ok := su.mutation.Image(); ok {
 		_spec.SetField(scans.FieldImage, field.TypeString, value)
+	}
+	if value, ok := su.mutation.Scanner(); ok {
+		_spec.SetField(scans.FieldScanner, field.TypeString, value)
 	}
 	if value, ok := su.mutation.Check(); ok {
 		_spec.SetField(scans.FieldCheck, field.TypeJSON, value)
@@ -444,6 +461,20 @@ func (suo *ScansUpdateOne) SetImage(s string) *ScansUpdateOne {
 func (suo *ScansUpdateOne) SetNillableImage(s *string) *ScansUpdateOne {
 	if s != nil {
 		suo.SetImage(*s)
+	}
+	return suo
+}
+
+// SetScanner sets the "scanner" field.
+func (suo *ScansUpdateOne) SetScanner(s string) *ScansUpdateOne {
+	suo.mutation.SetScanner(s)
+	return suo
+}
+
+// SetNillableScanner sets the "scanner" field if the given value is not nil.
+func (suo *ScansUpdateOne) SetNillableScanner(s *string) *ScansUpdateOne {
+	if s != nil {
+		suo.SetScanner(*s)
 	}
 	return suo
 }
@@ -658,6 +689,9 @@ func (suo *ScansUpdateOne) sqlSave(ctx context.Context) (_node *Scans, err error
 	}
 	if value, ok := suo.mutation.Image(); ok {
 		_spec.SetField(scans.FieldImage, field.TypeString, value)
+	}
+	if value, ok := suo.mutation.Scanner(); ok {
+		_spec.SetField(scans.FieldScanner, field.TypeString, value)
 	}
 	if value, ok := suo.mutation.Check(); ok {
 		_spec.SetField(scans.FieldCheck, field.TypeJSON, value)

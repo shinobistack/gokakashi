@@ -16,6 +16,7 @@ func TestListPolicyLabels_Valid(t *testing.T) {
 	policy := client.Policies.Create().
 		SetName("to-be-deleted-test-policy").
 		SetImage(schema.Image{Registry: "example-registry", Name: "example-name", Tags: []string{"v1.0"}}).
+		SetScanner("trivy").
 		SaveX(context.Background())
 
 	client.PolicyLabels.Create().
@@ -42,6 +43,7 @@ func TestListPolicyLabels_NoLabels(t *testing.T) {
 	policy := client.Policies.Create().
 		SetName("to-be-deleted-test-policy").
 		SetImage(schema.Image{Registry: "example-registry", Name: "example-name", Tags: []string{"v1.0"}}).
+		SetScanner("trivy").
 		SaveX(context.Background())
 	req := policylabels.ListPolicyLabelsRequest{PolicyID: policy.ID}
 	res := &policylabels.ListPolicyLabelsResponse{}
@@ -59,6 +61,7 @@ func TestGetPolicyLabel_SpecificLabel(t *testing.T) {
 	policy := client.Policies.Create().
 		SetName("to-be-deleted-test-policy").
 		SetImage(schema.Image{Registry: "example-registry", Name: "example-name", Tags: []string{"v1.0"}}).
+		SetScanner("trivy").
 		SaveX(context.Background())
 
 	client.PolicyLabels.Create().
@@ -90,6 +93,7 @@ func TestGetPolicyLabel_NonExistentLabel(t *testing.T) {
 	policy := client.Policies.Create().
 		SetName("to-be-deleted-test-policy").
 		SetImage(schema.Image{Registry: "example-registry", Name: "example-name", Tags: []string{"v1.0"}}).
+		SetScanner("trivy").
 		SaveX(context.Background())
 	client.PolicyLabels.Create().
 		SetPolicyID(policy.ID).

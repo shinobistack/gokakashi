@@ -27,6 +27,8 @@ type Scans struct {
 	Status string `json:"status,omitempty"`
 	// Details of the image being scanned.
 	Image string `json:"image,omitempty"`
+	// Scanners like Trivy.
+	Scanner string `json:"scanner,omitempty"`
 	// Conditions checked during the scan.
 	Check schema.Check `json:"check,omitempty"`
 	// Stores the scan results or report.
@@ -86,7 +88,7 @@ func (*Scans) scanValues(columns []string) ([]any, error) {
 		switch columns[i] {
 		case scans.FieldCheck:
 			values[i] = new([]byte)
-		case scans.FieldStatus, scans.FieldImage, scans.FieldReport:
+		case scans.FieldStatus, scans.FieldImage, scans.FieldScanner, scans.FieldReport:
 			values[i] = new(sql.NullString)
 		case scans.FieldID, scans.FieldPolicyID:
 			values[i] = new(uuid.UUID)
@@ -128,6 +130,12 @@ func (s *Scans) assignValues(columns []string, values []any) error {
 				return fmt.Errorf("unexpected type %T for field image", values[i])
 			} else if value.Valid {
 				s.Image = value.String
+			}
+		case scans.FieldScanner:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field scanner", values[i])
+			} else if value.Valid {
+				s.Scanner = value.String
 			}
 		case scans.FieldCheck:
 			if value, ok := values[i].(*[]byte); !ok {
@@ -202,6 +210,9 @@ func (s *Scans) String() string {
 	builder.WriteString(", ")
 	builder.WriteString("image=")
 	builder.WriteString(s.Image)
+	builder.WriteString(", ")
+	builder.WriteString("scanner=")
+	builder.WriteString(s.Scanner)
 	builder.WriteString(", ")
 	builder.WriteString("check=")
 	builder.WriteString(fmt.Sprintf("%v", s.Check))

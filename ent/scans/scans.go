@@ -19,6 +19,8 @@ const (
 	FieldStatus = "status"
 	// FieldImage holds the string denoting the image field in the database.
 	FieldImage = "image"
+	// FieldScanner holds the string denoting the scanner field in the database.
+	FieldScanner = "scanner"
 	// FieldCheck holds the string denoting the check field in the database.
 	FieldCheck = "check"
 	// FieldReport holds the string denoting the report field in the database.
@@ -60,6 +62,7 @@ var Columns = []string{
 	FieldPolicyID,
 	FieldStatus,
 	FieldImage,
+	FieldScanner,
 	FieldCheck,
 	FieldReport,
 }
@@ -102,6 +105,11 @@ func ByStatus(opts ...sql.OrderTermOption) OrderOption {
 // ByImage orders the results by the image field.
 func ByImage(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldImage, opts...).ToFunc()
+}
+
+// ByScanner orders the results by the scanner field.
+func ByScanner(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldScanner, opts...).ToFunc()
 }
 
 // ByReport orders the results by the report field.

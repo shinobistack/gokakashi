@@ -14,7 +14,8 @@ import (
 type CreateScanRequest struct {
 	PolicyID uuid.UUID `json:"policy_id"`
 	// ToDo: To think if the image stored would be single registery/image:tag.
-	Image string `json:"image"`
+	Image   string `json:"image"`
+	Scanner string `json:"scanner"`
 	//ToDo: Similarly to think if the check should have the evaluate conditions. How would the notify work.
 	Check schema.Check `json:"check"`
 	// ToDo: can we pre-define the values for scan status that can be used?
@@ -62,6 +63,7 @@ func CreateScan(client *ent.Client) func(ctx context.Context, req CreateScanRequ
 		scan, err := client.Scans.Create().
 			SetPolicyID(req.PolicyID).
 			SetImage(req.Image).
+			SetScanner(req.Scanner).
 			SetCheck(req.Check).
 			SetStatus(req.Status).
 			SetReport(req.Report).
