@@ -12,9 +12,16 @@
 
 &nbsp;
 
-Make vulnerability management effortless with **gokakashi**! 
-This tool simplifies the process of pulling, scanning, reporting, and notifying across all your container images. Gone are the days of manually juggling multiple tools and managing disparate processes—**gokakashi** brings everything under one roof.
+gokakashi is a security platform to help ship secure software.
 
+## Motivation
+
+- Be vendor-agnostic and open(-sourced).
+- Centralized: You need one place to understand your security posture.
+- Help teams adopt industry standards like [SLSA](https://slsa.dev/).
+- Educate: Security is not an afterthought.
+- Any team, any size.
+  
 ## Key Features
 1. **Multi-Platform Image Aggregation**
    Pull images from Dockerhub, ECR, GCR, ACR or private hosted repositories—all in one place!  
