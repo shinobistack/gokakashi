@@ -22,7 +22,7 @@ gokakashi is a security platform to help ship secure software.
 - Educate: Security is not an afterthought.
 - Any team, any size.
 
-## Features 🛠️
+## Features 🎁
 
 ### Container Image Scanning
 
@@ -31,8 +31,13 @@ This is useful for finding and remediating vulnerabilities present in your conta
 - Multiple registries support - scan images from various container image registries — all in one place!
 - Vulnerability scanner of your choice.
 - Custom notifications - Customize notifications to suit your needs, including where to get notified and control over priority, assignment, due dates etc.
-- Scheduled scans - Automate your scans with in-built cron jobs.
-- On-demand scans - Scan in your CI or local machine whenever you want.
+- Scheduled and on-demand scans - Automate your scans with in-built cron jobs.
+
+TODO: Add screenshot and link to docs.
+
+### Integrations
+
+gokakshi integrates with your existing tools. Please find the support matrix below:
 
 #### Image Registries
 
@@ -44,7 +49,7 @@ This is useful for finding and remediating vulnerabilities present in your conta
 | Amazon Elastic Container Registry | [Open for contribution](https://github.com/shinobistack/gokakashi/issues/84)  |
 | Azure Container Registry | [Open for contribution](https://github.com/shinobistack/gokakashi/issues/85) |
 
-#### Scanners
+#### Image Scanners
 
 | Scanner | Status |
 |---------|:------:|
@@ -53,8 +58,7 @@ This is useful for finding and remediating vulnerabilities present in your conta
 | Clair | [Open for contribution](https://github.com/shinobistack/gokakashi/issues/88) |
 
 
-
-## Install
+## Install 🛠️
 
 ### Server
 
@@ -64,7 +68,7 @@ TODO
 
 TODO
 
-## Configuration
+## Configuration ⚙️
 
 TODO
 
