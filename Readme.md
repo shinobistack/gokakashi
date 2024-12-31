@@ -1,8 +1,16 @@
-# gokakashi - The Centralized Image Vulnerability Platform 🔍🚀
+<p align="center">
+   <img src="https://github.com/user-attachments/assets/d5a52847-eeac-4cbc-a047-7991a003a523">
+  <br><br>
+  <span><b>gokakashi</b></span>
+  <br><br>
+  <i>The Centralized Security Platform </i>
+  <br><br>
+  <span>🚧 Heavy work in progress 🚧</span>
+  <br><br>
+  <a href="https://github.com/shinobistack/gokakashi/actions/workflows/build.yml"><image src="https://github.com/shinobistack/gokakashi/actions/workflows/build.yml/badge.svg" /></a>
+</p>
 
-[![Build](https://github.com/shinobistack/gokakashi/actions/workflows/build.yml/badge.svg)](https://github.com/shinobistack/gokakashi/actions/workflows/build.yml)
-
-🚧 Heavy work in progress 🚧
+&nbsp;
 
 Make vulnerability management effortless with **gokakashi**! 
 This tool simplifies the process of pulling, scanning, reporting, and notifying across all your container images. Gone are the days of manually juggling multiple tools and managing disparate processes—**gokakashi** brings everything under one roof.
