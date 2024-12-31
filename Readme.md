@@ -3,7 +3,7 @@
   <br><br>
   <span><b>gokakashi</b></span>
   <br><br>
-  <i>The Centralized Security Platform </i>
+  <i>The Centralized Security Platform 🔍 🚀</i>
   <br><br>
   <span>🚧 Heavy work in progress 🚧</span>
   <br><br>
