@@ -39,7 +39,7 @@ var (
 	// AgentsColumns holds the columns for the "agents" table.
 	AgentsColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeInt, Increment: true},
-		{Name: "name", Type: field.TypeString, Nullable: true},
+		{Name: "name", Type: field.TypeString, Unique: true, Nullable: true},
 		{Name: "status", Type: field.TypeString, Default: "connected"},
 		{Name: "workspace", Type: field.TypeString, Nullable: true},
 		{Name: "server", Type: field.TypeString, Nullable: true},

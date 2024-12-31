@@ -60,6 +60,8 @@ func ValidColumn(column string) bool {
 var (
 	// DefaultStatus holds the default value on creation for the "status" field.
 	DefaultStatus string
+	// StatusValidator is a validator for the "status" field. It is called by the builders before save.
+	StatusValidator func(string) error
 	// DefaultLastSeen holds the default value on creation for the "last_seen" field.
 	DefaultLastSeen func() time.Time
 	// UpdateDefaultLastSeen holds the default value on update for the "last_seen" field.

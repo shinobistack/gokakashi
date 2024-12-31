@@ -163,6 +163,11 @@ func (ac *AgentsCreate) check() error {
 	if _, ok := ac.mutation.Status(); !ok {
 		return &ValidationError{Name: "status", err: errors.New(`ent: missing required field "Agents.status"`)}
 	}
+	if v, ok := ac.mutation.Status(); ok {
+		if err := agents.StatusValidator(v); err != nil {
+			return &ValidationError{Name: "status", err: fmt.Errorf(`ent: validator failed for field "Agents.status": %w`, err)}
+		}
+	}
 	if _, ok := ac.mutation.LastSeen(); !ok {
 		return &ValidationError{Name: "last_seen", err: errors.New(`ent: missing required field "Agents.last_seen"`)}
 	}

@@ -4,6 +4,7 @@ import (
 	"entgo.io/ent"
 	"entgo.io/ent/schema/edge"
 	"entgo.io/ent/schema/field"
+	"errors"
 	"time"
 )
 
@@ -20,10 +21,20 @@ func (Agents) Fields() []ent.Field {
 			Comment("Primary key, unique identifier."),
 		field.String("name").
 			Optional().
+			Unique().
 			Comment("Unique name or identifier for the agent."),
 		field.String("status").
 			Default("connected").
-			Comment("Enum: { connected, in_progress, disconnected }."),
+			Validate(func(s string) error {
+				validStatuses := []string{"connected", "scan_in_progress", "disconnected"}
+				for _, status := range validStatuses {
+					if s == status {
+						return nil
+					}
+				}
+				return errors.New("invalid status")
+			}).
+			Comment("Enum: { connected, scan_in_progress, disconnected }."),
 		field.String("workspace").
 			Optional().
 			Comment("Optional workspace path for the agent."),

@@ -20,7 +20,7 @@ type Agents struct {
 	ID int `json:"id,omitempty"`
 	// Unique name or identifier for the agent.
 	Name string `json:"name,omitempty"`
-	// Enum: { connected, in_progress, disconnected }.
+	// Enum: { connected, scan_in_progress, disconnected }.
 	Status string `json:"status,omitempty"`
 	// Optional workspace path for the agent.
 	Workspace string `json:"workspace,omitempty"`

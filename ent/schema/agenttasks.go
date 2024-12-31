@@ -4,6 +4,7 @@ import (
 	"entgo.io/ent"
 	"entgo.io/ent/schema/edge"
 	"entgo.io/ent/schema/field"
+	"errors"
 	"github.com/google/uuid"
 	"time"
 )
@@ -26,6 +27,15 @@ func (AgentTasks) Fields() []ent.Field {
 			Comment("Foreign key to Scans.ID."),
 		field.String("status").
 			Default("pending").
+			Validate(func(s string) error {
+				validStatuses := []string{"pending", "in_progress", "complete"}
+				for _, status := range validStatuses {
+					if s == status {
+						return nil
+					}
+				}
+				return errors.New("invalid status")
+			}).
 			Comment("Enum: { pending, in_progress, complete }."),
 		field.Time("created_at").
 			Default(time.Now).

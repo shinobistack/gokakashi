@@ -187,7 +187,20 @@ func (au *AgentsUpdate) defaults() {
 	}
 }
 
+// check runs all checks and user-defined validators on the builder.
+func (au *AgentsUpdate) check() error {
+	if v, ok := au.mutation.Status(); ok {
+		if err := agents.StatusValidator(v); err != nil {
+			return &ValidationError{Name: "status", err: fmt.Errorf(`ent: validator failed for field "Agents.status": %w`, err)}
+		}
+	}
+	return nil
+}
+
 func (au *AgentsUpdate) sqlSave(ctx context.Context) (n int, err error) {
+	if err := au.check(); err != nil {
+		return n, err
+	}
 	_spec := sqlgraph.NewUpdateSpec(agents.Table, agents.Columns, sqlgraph.NewFieldSpec(agents.FieldID, field.TypeInt))
 	if ps := au.mutation.predicates; len(ps) > 0 {
 		_spec.Predicate = func(selector *sql.Selector) {
@@ -455,7 +468,20 @@ func (auo *AgentsUpdateOne) defaults() {
 	}
 }
 
+// check runs all checks and user-defined validators on the builder.
+func (auo *AgentsUpdateOne) check() error {
+	if v, ok := auo.mutation.Status(); ok {
+		if err := agents.StatusValidator(v); err != nil {
+			return &ValidationError{Name: "status", err: fmt.Errorf(`ent: validator failed for field "Agents.status": %w`, err)}
+		}
+	}
+	return nil
+}
+
 func (auo *AgentsUpdateOne) sqlSave(ctx context.Context) (_node *Agents, err error) {
+	if err := auo.check(); err != nil {
+		return _node, err
+	}
 	_spec := sqlgraph.NewUpdateSpec(agents.Table, agents.Columns, sqlgraph.NewFieldSpec(agents.FieldID, field.TypeInt))
 	id, ok := auo.mutation.ID()
 	if !ok {
