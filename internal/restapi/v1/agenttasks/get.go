@@ -57,6 +57,8 @@ func ListAgentTasksByAgentID(client *ent.Client) func(ctx context.Context, req L
 
 		tasks, err := client.AgentTasks.Query().
 			Where(agenttasks.AgentID(req.AgentID)).
+			// orders by created_at ASC
+			Order(ent.Asc(agenttasks.FieldCreatedAt)).
 			All(ctx)
 		if err != nil {
 			return status.Wrap(err, status.Internal)
