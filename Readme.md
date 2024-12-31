@@ -31,9 +31,7 @@ This is useful for finding and remediating vulnerabilities present in your conta
 - Multiple registries support - scan images from various container image registries — all in one place!
 - Vulnerability scanner of your choice.
 - Custom notifications - Customize notifications to suit your needs, including where to get notified and control over priority, assignment, due dates etc.
-- Scheduled and on-demand scans - Automate your scans with in-built cron jobs.
-
-TODO: Add screenshot and link to docs.
+- Scheduled and on-demand scans - Automate your scans with in-built cron jobs or trigger them from your CI.
 
 #### Image Registries
 
@@ -58,15 +56,15 @@ TODO: Add screenshot and link to docs.
 
 ### Server
 
-TODO
+```sh
+docker run -d ghcr.io/shinobistack/gokakashi server 
+```
 
 ### Agent
 
-TODO
-
-## Configuration ⚙️
-
-TODO
+```sh
+docker run --rm -it ghcr.io/shinobistack/gokakashi agent
+```
 
 ## Transparency & Feedback ✨
 We’re excited to share gokakashi early with the community to gather feedback and improve quickly.
