@@ -99,6 +99,7 @@ func handleConfigV1() {
 	configDB := restapiv1.InitDB()
 	defer configDB.Close()
 
+	db.RunMigrations(configDB)
 	// Populate the database
 	db.PopulateDatabase(configDB, cfg)
 

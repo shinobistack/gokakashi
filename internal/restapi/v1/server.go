@@ -1,7 +1,6 @@
 package v1
 
 import (
-	"context"
 	"encoding/json"
 	"entgo.io/ent/dialect"
 	_ "github.com/lib/pq"
@@ -117,19 +116,10 @@ func (srv *Server) Service() *web.Service {
 func InitDB() *ent.Client {
 	// ToDo: To take DB connection as input
 	client, err := ent.Open(dialect.Postgres, "host=localhost port=5432 user=postgres password=secret dbname=postgres sslmode=disable")
-
 	if err != nil {
 		log.Fatalf("Failed to connect to database: %v", err)
 	}
-
-	// Automatically run migrations
-	if err := client.Schema.Create(context.Background()); err != nil {
-		log.Fatalf("Failed to create database schema: %v", err)
-	}
-
-	log.Println("Database initialized successfully")
 	return client
-
 }
 
 func specHandler(s *openapi31.Spec) http.Handler {
