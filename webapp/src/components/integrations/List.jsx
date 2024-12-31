@@ -157,7 +157,7 @@ const IntegrationsList = () => {
         alert("Please fill in all fields.");
       }
     } catch (e) {
-      alert("Configuration must be a valid JSON.");
+      alert("Configuration must be a valid JSON.", e);
     }
   };
 
