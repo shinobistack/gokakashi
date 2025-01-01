@@ -1,6 +1,7 @@
 package schema
 
 import (
+	"encoding/json"
 	"entgo.io/ent"
 	"entgo.io/ent/schema/edge"
 	"entgo.io/ent/schema/field"
@@ -43,9 +44,9 @@ func (Scans) Fields() []ent.Field {
 		field.JSON("check", Check{}).
 			Optional().
 			Comment("Conditions checked during the scan."),
-		field.String("report").
+		field.JSON("report", json.RawMessage{}).
 			Optional().
-			Comment("Stores the scan results or report."),
+			Comment("Stores the scan results."),
 	}
 }
 

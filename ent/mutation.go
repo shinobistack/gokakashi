@@ -4,6 +4,7 @@ package ent
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"sync"
@@ -4123,7 +4124,8 @@ type ScansMutation struct {
 	image               *string
 	scanner             *string
 	check               *schema.Check
-	report              *string
+	report              *json.RawMessage
+	appendreport        json.RawMessage
 	clearedFields       map[string]struct{}
 	policy              *uuid.UUID
 	clearedpolicy       bool
@@ -4474,12 +4476,13 @@ func (m *ScansMutation) ResetCheck() {
 }
 
 // SetReport sets the "report" field.
-func (m *ScansMutation) SetReport(s string) {
-	m.report = &s
+func (m *ScansMutation) SetReport(jm json.RawMessage) {
+	m.report = &jm
+	m.appendreport = nil
 }
 
 // Report returns the value of the "report" field in the mutation.
-func (m *ScansMutation) Report() (r string, exists bool) {
+func (m *ScansMutation) Report() (r json.RawMessage, exists bool) {
 	v := m.report
 	if v == nil {
 		return
@@ -4490,7 +4493,7 @@ func (m *ScansMutation) Report() (r string, exists bool) {
 // OldReport returns the old "report" field's value of the Scans entity.
 // If the Scans object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *ScansMutation) OldReport(ctx context.Context) (v string, err error) {
+func (m *ScansMutation) OldReport(ctx context.Context) (v json.RawMessage, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldReport is only allowed on UpdateOne operations")
 	}
@@ -4504,9 +4507,23 @@ func (m *ScansMutation) OldReport(ctx context.Context) (v string, err error) {
 	return oldValue.Report, nil
 }
 
+// AppendReport adds jm to the "report" field.
+func (m *ScansMutation) AppendReport(jm json.RawMessage) {
+	m.appendreport = append(m.appendreport, jm...)
+}
+
+// AppendedReport returns the list of values that were appended to the "report" field in this mutation.
+func (m *ScansMutation) AppendedReport() (json.RawMessage, bool) {
+	if len(m.appendreport) == 0 {
+		return nil, false
+	}
+	return m.appendreport, true
+}
+
 // ClearReport clears the value of the "report" field.
 func (m *ScansMutation) ClearReport() {
 	m.report = nil
+	m.appendreport = nil
 	m.clearedFields[scans.FieldReport] = struct{}{}
 }
 
@@ -4519,6 +4536,7 @@ func (m *ScansMutation) ReportCleared() bool {
 // ResetReport resets all changes to the "report" field.
 func (m *ScansMutation) ResetReport() {
 	m.report = nil
+	m.appendreport = nil
 	delete(m.clearedFields, scans.FieldReport)
 }
 
@@ -4850,7 +4868,7 @@ func (m *ScansMutation) SetField(name string, value ent.Value) error {
 		m.SetCheck(v)
 		return nil
 	case scans.FieldReport:
-		v, ok := value.(string)
+		v, ok := value.(json.RawMessage)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}

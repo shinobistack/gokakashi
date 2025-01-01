@@ -34,8 +34,8 @@ type Scans struct {
 	Scanner string `json:"scanner,omitempty"`
 	// Conditions checked during the scan.
 	Check schema.Check `json:"check,omitempty"`
-	// Stores the scan results or report.
-	Report string `json:"report,omitempty"`
+	// Stores the scan results.
+	Report json.RawMessage `json:"report,omitempty"`
 	// Edges holds the relations/edges for other nodes in the graph.
 	// The values are being populated by the ScansQuery when eager-loading is set.
 	Edges        ScansEdges `json:"edges"`
@@ -102,9 +102,9 @@ func (*Scans) scanValues(columns []string) ([]any, error) {
 	values := make([]any, len(columns))
 	for i := range columns {
 		switch columns[i] {
-		case scans.FieldCheck:
+		case scans.FieldCheck, scans.FieldReport:
 			values[i] = new([]byte)
-		case scans.FieldStatus, scans.FieldImage, scans.FieldScanner, scans.FieldReport:
+		case scans.FieldStatus, scans.FieldImage, scans.FieldScanner:
 			values[i] = new(sql.NullString)
 		case scans.FieldID, scans.FieldPolicyID, scans.FieldIntegrationID:
 			values[i] = new(uuid.UUID)
@@ -168,10 +168,12 @@ func (s *Scans) assignValues(columns []string, values []any) error {
 				}
 			}
 		case scans.FieldReport:
-			if value, ok := values[i].(*sql.NullString); !ok {
+			if value, ok := values[i].(*[]byte); !ok {
 				return fmt.Errorf("unexpected type %T for field report", values[i])
-			} else if value.Valid {
-				s.Report = value.String
+			} else if value != nil && len(*value) > 0 {
+				if err := json.Unmarshal(*value, &s.Report); err != nil {
+					return fmt.Errorf("unmarshal field report: %w", err)
+				}
 			}
 		default:
 			s.selectValues.Set(columns[i], values[i])
@@ -248,7 +250,7 @@ func (s *Scans) String() string {
 	builder.WriteString(fmt.Sprintf("%v", s.Check))
 	builder.WriteString(", ")
 	builder.WriteString("report=")
-	builder.WriteString(s.Report)
+	builder.WriteString(fmt.Sprintf("%v", s.Report))
 	builder.WriteByte(')')
 	return builder.String()
 }

@@ -2,6 +2,7 @@ package scans
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"github.com/google/uuid"
 	"github.com/shinobistack/gokakashi/ent"
@@ -23,7 +24,7 @@ type CreateScanRequest struct {
 	// ToDo: can we pre-define the values for scan status that can be used?
 	Status string `json:"status"`
 	// ToDo: Just the report URL or status of public or private
-	Report string `json:"report"`
+	Report json.RawMessage `json:"report,omitempty"`
 }
 
 type CreateScanResponse struct {

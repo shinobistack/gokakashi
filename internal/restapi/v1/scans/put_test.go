@@ -39,7 +39,7 @@ func TestUpdateScan_Valid(t *testing.T) {
 	req := scans.UpdateScanRequest{
 		ID:     scan.ID,
 		Status: strPtr("scan_in_progress"),
-		Report: "https://reports.server.com/scan/123",
+		Report: nil,
 	}
 
 	res := &scans.UpdateScanResponse{}

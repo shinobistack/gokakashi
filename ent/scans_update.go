@@ -4,11 +4,13 @@ package ent
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
+	"entgo.io/ent/dialect/sql/sqljson"
 	"entgo.io/ent/schema/field"
 	"github.com/google/uuid"
 	"github.com/shinobistack/gokakashi/ent/agenttasks"
@@ -124,16 +126,14 @@ func (su *ScansUpdate) ClearCheck() *ScansUpdate {
 }
 
 // SetReport sets the "report" field.
-func (su *ScansUpdate) SetReport(s string) *ScansUpdate {
-	su.mutation.SetReport(s)
+func (su *ScansUpdate) SetReport(jm json.RawMessage) *ScansUpdate {
+	su.mutation.SetReport(jm)
 	return su
 }
 
-// SetNillableReport sets the "report" field if the given value is not nil.
-func (su *ScansUpdate) SetNillableReport(s *string) *ScansUpdate {
-	if s != nil {
-		su.SetReport(*s)
-	}
+// AppendReport appends jm to the "report" field.
+func (su *ScansUpdate) AppendReport(jm json.RawMessage) *ScansUpdate {
+	su.mutation.AppendReport(jm)
 	return su
 }
 
@@ -319,10 +319,15 @@ func (su *ScansUpdate) sqlSave(ctx context.Context) (n int, err error) {
 		_spec.ClearField(scans.FieldCheck, field.TypeJSON)
 	}
 	if value, ok := su.mutation.Report(); ok {
-		_spec.SetField(scans.FieldReport, field.TypeString, value)
+		_spec.SetField(scans.FieldReport, field.TypeJSON, value)
+	}
+	if value, ok := su.mutation.AppendedReport(); ok {
+		_spec.AddModifier(func(u *sql.UpdateBuilder) {
+			sqljson.Append(u, scans.FieldReport, value)
+		})
 	}
 	if su.mutation.ReportCleared() {
-		_spec.ClearField(scans.FieldReport, field.TypeString)
+		_spec.ClearField(scans.FieldReport, field.TypeJSON)
 	}
 	if su.mutation.PolicyCleared() {
 		edge := &sqlgraph.EdgeSpec{
@@ -583,16 +588,14 @@ func (suo *ScansUpdateOne) ClearCheck() *ScansUpdateOne {
 }
 
 // SetReport sets the "report" field.
-func (suo *ScansUpdateOne) SetReport(s string) *ScansUpdateOne {
-	suo.mutation.SetReport(s)
+func (suo *ScansUpdateOne) SetReport(jm json.RawMessage) *ScansUpdateOne {
+	suo.mutation.SetReport(jm)
 	return suo
 }
 
-// SetNillableReport sets the "report" field if the given value is not nil.
-func (suo *ScansUpdateOne) SetNillableReport(s *string) *ScansUpdateOne {
-	if s != nil {
-		suo.SetReport(*s)
-	}
+// AppendReport appends jm to the "report" field.
+func (suo *ScansUpdateOne) AppendReport(jm json.RawMessage) *ScansUpdateOne {
+	suo.mutation.AppendReport(jm)
 	return suo
 }
 
@@ -808,10 +811,15 @@ func (suo *ScansUpdateOne) sqlSave(ctx context.Context) (_node *Scans, err error
 		_spec.ClearField(scans.FieldCheck, field.TypeJSON)
 	}
 	if value, ok := suo.mutation.Report(); ok {
-		_spec.SetField(scans.FieldReport, field.TypeString, value)
+		_spec.SetField(scans.FieldReport, field.TypeJSON, value)
+	}
+	if value, ok := suo.mutation.AppendedReport(); ok {
+		_spec.AddModifier(func(u *sql.UpdateBuilder) {
+			sqljson.Append(u, scans.FieldReport, value)
+		})
 	}
 	if suo.mutation.ReportCleared() {
-		_spec.ClearField(scans.FieldReport, field.TypeString)
+		_spec.ClearField(scans.FieldReport, field.TypeJSON)
 	}
 	if suo.mutation.PolicyCleared() {
 		edge := &sqlgraph.EdgeSpec{

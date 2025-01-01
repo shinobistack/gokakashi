@@ -2,6 +2,7 @@ package scans
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"github.com/google/uuid"
@@ -11,14 +12,14 @@ import (
 )
 
 type GetScanResponse struct {
-	ID            uuid.UUID    `json:"id"`
-	PolicyID      uuid.UUID    `json:"policy_id"`
-	Image         string       `json:"image"`
-	Scanner       string       `json:"scanner"`
-	IntegrationID uuid.UUID    `json:"integration_id"`
-	Status        string       `json:"status"`
-	Check         schema.Check `json:"check"`
-	Report        interface{}  `json:"report"`
+	ID            uuid.UUID       `json:"id"`
+	PolicyID      uuid.UUID       `json:"policy_id"`
+	Image         string          `json:"image"`
+	Scanner       string          `json:"scanner"`
+	IntegrationID uuid.UUID       `json:"integration_id"`
+	Status        string          `json:"status"`
+	Check         schema.Check    `json:"check"`
+	Report        json.RawMessage `json:"report,omitempty"`
 }
 
 type ListScanRequest struct{}

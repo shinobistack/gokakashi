@@ -149,7 +149,7 @@ var (
 		{Name: "image", Type: field.TypeString},
 		{Name: "scanner", Type: field.TypeString},
 		{Name: "check", Type: field.TypeJSON, Nullable: true},
-		{Name: "report", Type: field.TypeString, Nullable: true},
+		{Name: "report", Type: field.TypeJSON, Nullable: true},
 		{Name: "integration_id", Type: field.TypeUUID},
 		{Name: "policy_id", Type: field.TypeUUID},
 	}

@@ -131,11 +131,6 @@ func ByScanner(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldScanner, opts...).ToFunc()
 }
 
-// ByReport orders the results by the report field.
-func ByReport(opts ...sql.OrderTermOption) OrderOption {
-	return sql.OrderByField(FieldReport, opts...).ToFunc()
-}
-
 // ByPolicyField orders the results by policy field.
 func ByPolicyField(field string, opts ...sql.OrderTermOption) OrderOption {
 	return func(s *sql.Selector) {

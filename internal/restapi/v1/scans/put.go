@@ -2,6 +2,7 @@ package scans
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"github.com/google/uuid"
@@ -10,9 +11,9 @@ import (
 )
 
 type UpdateScanRequest struct {
-	ID     uuid.UUID `path:"id"`
-	Status *string   `json:"status"`
-	Report string    `json:"report,omitempty"`
+	ID     uuid.UUID       `path:"id"`
+	Status *string         `json:"status"`
+	Report json.RawMessage `json:"report,omitempty"`
 }
 
 type UpdateScanResponse struct {
@@ -40,7 +41,7 @@ func UpdateScan(client *ent.Client) func(ctx context.Context, req UpdateScanRequ
 			update.SetStatus(*req.Status)
 		}
 
-		if req.Report != "" {
+		if len(req.Report) > 0 {
 			update.SetReport(req.Report)
 		}
 

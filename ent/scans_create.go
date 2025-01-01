@@ -4,6 +4,7 @@ package ent
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 
@@ -78,16 +79,8 @@ func (sc *ScansCreate) SetNillableCheck(s *schema.Check) *ScansCreate {
 }
 
 // SetReport sets the "report" field.
-func (sc *ScansCreate) SetReport(s string) *ScansCreate {
-	sc.mutation.SetReport(s)
-	return sc
-}
-
-// SetNillableReport sets the "report" field if the given value is not nil.
-func (sc *ScansCreate) SetNillableReport(s *string) *ScansCreate {
-	if s != nil {
-		sc.SetReport(*s)
-	}
+func (sc *ScansCreate) SetReport(jm json.RawMessage) *ScansCreate {
+	sc.mutation.SetReport(jm)
 	return sc
 }
 
@@ -276,7 +269,7 @@ func (sc *ScansCreate) createSpec() (*Scans, *sqlgraph.CreateSpec) {
 		_node.Check = value
 	}
 	if value, ok := sc.mutation.Report(); ok {
-		_spec.SetField(scans.FieldReport, field.TypeString, value)
+		_spec.SetField(scans.FieldReport, field.TypeJSON, value)
 		_node.Report = value
 	}
 	if nodes := sc.mutation.PolicyIDs(); len(nodes) > 0 {

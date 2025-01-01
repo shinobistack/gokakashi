@@ -36,7 +36,7 @@ func TestCreateScan_ValidInput(t *testing.T) {
 		Status:        "scan_pending",
 		Scanner:       policy.Scanner,
 		IntegrationID: integrations.ID,
-		Report:        "",
+		Report:        nil,
 	}
 	res := &scans.CreateScanResponse{}
 
@@ -68,7 +68,7 @@ func TestCreateScan_MissingFields(t *testing.T) {
 		Status:        "scan_pending",
 		Scanner:       policy.Scanner,
 		IntegrationID: integrations.ID,
-		Report:        "",
+		Report:        nil,
 	}
 	res := &scans.CreateScanResponse{}
 
@@ -95,7 +95,7 @@ func TestCreateScan_InvalidPolicyID(t *testing.T) {
 		Status:        "scan_pending",
 		Scanner:       "trivy",
 		IntegrationID: integrations.ID,
-		Report:        "",
+		Report:        nil,
 	}
 	res := &scans.CreateScanResponse{}
 
