@@ -156,6 +156,7 @@ func PopulateDatabase(client *ent.Client, cfg *v1.Config) {
 				log.Printf("Error querying integrationID for policy %s and integrationName %s : %v", policy.Name, policy.Image.Registry, err)
 				continue
 			}
+			// Todo: update existing scan if existing policy is updated
 			// Create new scan
 			_, err = client.Scans.
 				Create().
