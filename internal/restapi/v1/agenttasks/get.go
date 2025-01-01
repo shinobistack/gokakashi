@@ -23,7 +23,8 @@ type GetAgentTaskResponse struct {
 	CreatedAt time.Time `json:"created_at"`
 }
 type ListAgentTasksRequest struct {
-	AgentID int `path:"agent_id"`
+	AgentID int    `path:"agent_id"`
+	Status  string `query:"status"`
 }
 
 func GetAgentTask(client *ent.Client) func(ctx context.Context, req GetAgentTaskRequest, res *GetAgentTaskResponse) error {
@@ -55,11 +56,17 @@ func ListAgentTasksByAgentID(client *ent.Client) func(ctx context.Context, req L
 			return status.Wrap(errors.New("invalid agent ID"), status.InvalidArgument)
 		}
 
-		tasks, err := client.AgentTasks.Query().
+		// Query builder
+		query := client.AgentTasks.Query().
 			Where(agenttasks.AgentID(req.AgentID)).
-			// orders by created_at ASC
-			Order(ent.Asc(agenttasks.FieldCreatedAt)).
-			All(ctx)
+			Order(ent.Asc(agenttasks.FieldCreatedAt)) // Order by created_at ASC
+
+		// Filter by status if provided
+		if req.Status != "" {
+			query = query.Where(agenttasks.Status(req.Status))
+		}
+
+		tasks, err := query.All(ctx)
 		if err != nil {
 			return status.Wrap(err, status.Internal)
 		}
