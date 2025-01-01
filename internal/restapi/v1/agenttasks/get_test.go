@@ -111,7 +111,7 @@ func TestListAgentTasks_Valid(t *testing.T) {
 		SetStatus("pending").
 		SaveX(context.Background())
 
-	req := agenttasks.ListAgentTasksRequest{agent.ID}
+	req := agenttasks.ListAgentTasksRequest{agent.ID, ""}
 	res := []agenttasks.GetAgentTaskResponse{}
 
 	err := agenttasks.ListAgentTasksByAgentID(client)(context.Background(), req, &res)

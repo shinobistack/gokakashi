@@ -12,7 +12,7 @@ import (
 
 type GetAgentTaskRequest struct {
 	ID      uuid.UUID `path:"id"`
-	AgentID int       `path:"agent_id"`
+	AgentID *int      `path:"agent_id"`
 }
 
 type GetAgentTaskResponse struct {
@@ -63,7 +63,7 @@ func ListAgentTasksByAgentID(client *ent.Client) func(ctx context.Context, req L
 
 		// Filter by status if provided
 		if req.Status != "" {
-			query = query.Where(agenttasks.Status(req.Status))
+			query = query.Where(agenttasks.Status((req.Status)))
 		}
 
 		tasks, err := query.All(ctx)
