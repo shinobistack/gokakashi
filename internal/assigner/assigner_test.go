@@ -80,7 +80,10 @@ func TestAssignTasksWithNoAgents(t *testing.T) {
 			}
 		} else if r.URL.Path == "/api/v1/agents" {
 			w.WriteHeader(http.StatusOK)
-			json.NewEncoder(w).Encode([]MockAgent{}) // No agents available
+			if err := json.NewEncoder(w).Encode([]MockAgent{}); err != nil {
+				http.Error(w, "Failed to encode mock agents", http.StatusInternalServerError)
+				return
+			} // No agents available
 		} else {
 			w.WriteHeader(http.StatusNotFound)
 		}
@@ -102,10 +105,16 @@ func TestAssignTasksWithNoScans(t *testing.T) {
 	scanHandler := func(w http.ResponseWriter, r *http.Request) {
 		if r.URL.Path == "/api/v1/scans" {
 			w.WriteHeader(http.StatusOK)
-			json.NewEncoder(w).Encode([]MockScan{}) // No scans available
+			if err := json.NewEncoder(w).Encode([]MockScan{}); err != nil {
+				http.Error(w, "Failed to encode mock scans", http.StatusInternalServerError)
+				return
+			} // No scans available
 		} else if r.URL.Path == "/api/v1/agents" && r.URL.Query().Get("status") == "connected" {
 			w.WriteHeader(http.StatusOK)
-			json.NewEncoder(w).Encode(mockAgents)
+			if err := json.NewEncoder(w).Encode(mockAgents); err != nil {
+				http.Error(w, "Failed to encode mock agents", http.StatusInternalServerError)
+				return
+			}
 		} else {
 			w.WriteHeader(http.StatusNotFound)
 		}
