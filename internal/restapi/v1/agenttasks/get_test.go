@@ -111,7 +111,7 @@ func TestListAgentTasks_Valid(t *testing.T) {
 		SetStatus("pending").
 		SaveX(context.Background())
 
-	req := agenttasks.ListAgentTasksRequest{agent.ID, ""}
+	req := agenttasks.ListAgentTasksRequest{AgentID: intPtr(agent.ID), Status: ""}
 	res := []agenttasks.GetAgentTaskResponse{}
 
 	err := agenttasks.ListAgentTasksByAgentID(client)(context.Background(), req, &res)
@@ -163,7 +163,7 @@ func TestListAgentTasks_OrderedByCreatedAt(t *testing.T) {
 		SetCreatedAt(time.Now()). // Newer task
 		SaveX(context.Background())
 
-	req := agenttasks.ListAgentTasksRequest{AgentID: agent.ID}
+	req := agenttasks.ListAgentTasksRequest{AgentID: intPtr(agent.ID)}
 	res := []agenttasks.GetAgentTaskResponse{}
 
 	err := agenttasks.ListAgentTasksByAgentID(client)(context.Background(), req, &res)
@@ -172,4 +172,8 @@ func TestListAgentTasks_OrderedByCreatedAt(t *testing.T) {
 	assert.Equal(t, 2, len(res))
 	assert.Equal(t, task1.ID, res[0].ID) // Oldest task first
 	assert.Equal(t, task2.ID, res[1].ID) // Newest task last
+}
+
+func uuidPtr(u uuid.UUID) *uuid.UUID {
+	return &u
 }

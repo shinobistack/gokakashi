@@ -23,8 +23,19 @@ type GetAgentTaskResponse struct {
 	CreatedAt time.Time `json:"created_at"`
 }
 type ListAgentTasksRequest struct {
-	AgentID int    `path:"agent_id"`
-	Status  string `query:"status"`
+	AgentID *int       `path:"agent_id"`
+	ScanID  *uuid.UUID `query:"scan_id"`
+	Status  string     `query:"status"`
+}
+
+type ListAgentTasksQueryRequest struct {
+	AgentID *int       `query:"agent_id"`
+	ScanID  *uuid.UUID `query:"scan_id"`
+	Status  string     `query:"status"`
+}
+
+type ListAgentTasksByScanIDRequest struct {
+	ScanID uuid.UUID `query:"scan_id"`
 }
 
 func GetAgentTask(client *ent.Client) func(ctx context.Context, req GetAgentTaskRequest, res *GetAgentTaskResponse) error {
@@ -52,13 +63,13 @@ func GetAgentTask(client *ent.Client) func(ctx context.Context, req GetAgentTask
 
 func ListAgentTasksByAgentID(client *ent.Client) func(ctx context.Context, req ListAgentTasksRequest, res *[]GetAgentTaskResponse) error {
 	return func(ctx context.Context, req ListAgentTasksRequest, res *[]GetAgentTaskResponse) error {
-		if req.AgentID <= 0 {
+		if req.AgentID == nil || *req.AgentID <= 0 {
 			return status.Wrap(errors.New("invalid agent ID"), status.InvalidArgument)
 		}
 
 		// Query builder
 		query := client.AgentTasks.Query().
-			Where(agenttasks.AgentID(req.AgentID)).
+			Where(agenttasks.AgentID(*req.AgentID)).
 			Order(ent.Asc(agenttasks.FieldCreatedAt)) // Order by created_at ASC
 
 		// Filter by status if provided
@@ -71,6 +82,46 @@ func ListAgentTasksByAgentID(client *ent.Client) func(ctx context.Context, req L
 			return status.Wrap(err, status.Internal)
 		}
 
+		*res = make([]GetAgentTaskResponse, len(tasks))
+		for i, task := range tasks {
+			(*res)[i] = GetAgentTaskResponse{
+				ID:        task.ID,
+				AgentID:   task.AgentID,
+				ScanID:    task.ScanID,
+				Status:    task.Status,
+				CreatedAt: task.CreatedAt,
+			}
+		}
+		return nil
+	}
+}
+
+func ListAgentTasks(client *ent.Client) func(ctx context.Context, req ListAgentTasksQueryRequest, res *[]GetAgentTaskResponse) error {
+	return func(ctx context.Context, req ListAgentTasksQueryRequest, res *[]GetAgentTaskResponse) error {
+		query := client.AgentTasks.Query()
+
+		// Filter by agent ID if provided
+		if req.AgentID != nil {
+			query = query.Where(agenttasks.AgentID(*req.AgentID))
+		}
+
+		// Filter by scan ID if provided
+		if req.ScanID != nil && *req.ScanID != uuid.Nil {
+			query = query.Where(agenttasks.ScanID(*req.ScanID))
+		}
+
+		// Filter by status if provided
+		if req.Status != "" {
+			query = query.Where(agenttasks.Status(req.Status))
+		}
+
+		// Execute query
+		tasks, err := query.Order(ent.Asc(agenttasks.FieldCreatedAt)).All(ctx)
+		if err != nil {
+			return status.Wrap(err, status.Internal)
+		}
+
+		// Populate response
 		*res = make([]GetAgentTaskResponse, len(tasks))
 		for i, task := range tasks {
 			(*res)[i] = GetAgentTaskResponse{
