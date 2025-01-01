@@ -40,10 +40,16 @@ func TestAssignTasks(t *testing.T) {
 	scanHandler := func(w http.ResponseWriter, r *http.Request) {
 		if r.URL.Path == "/api/v1/scans" && r.URL.Query().Get("status") == "scan_pending" {
 			w.WriteHeader(http.StatusOK)
-			json.NewEncoder(w).Encode(mockScans)
+			if err := json.NewEncoder(w).Encode(mockScans); err != nil {
+				http.Error(w, "Failed to encode mock scans", http.StatusInternalServerError)
+				return
+			}
 		} else if r.URL.Path == "/api/v1/agents" && r.URL.Query().Get("status") == "connected" {
 			w.WriteHeader(http.StatusOK)
-			json.NewEncoder(w).Encode(mockAgents)
+			if err := json.NewEncoder(w).Encode(mockAgents); err != nil {
+				http.Error(w, "Failed to encode mock agents", http.StatusInternalServerError)
+				return
+			}
 		} else if r.URL.Path == "/api/v1/agents/tasks" {
 			w.WriteHeader(http.StatusOK)
 		} else {
@@ -68,7 +74,10 @@ func TestAssignTasksWithNoAgents(t *testing.T) {
 	scanHandler := func(w http.ResponseWriter, r *http.Request) {
 		if r.URL.Path == "/api/v1/scans" && r.URL.Query().Get("status") == "scan_pending" {
 			w.WriteHeader(http.StatusOK)
-			json.NewEncoder(w).Encode(mockScans)
+			if err := json.NewEncoder(w).Encode(mockScans); err != nil {
+				http.Error(w, "Failed to encode mock scans", http.StatusInternalServerError)
+				return
+			}
 		} else if r.URL.Path == "/api/v1/agents" {
 			w.WriteHeader(http.StatusOK)
 			json.NewEncoder(w).Encode([]MockAgent{}) // No agents available

@@ -40,12 +40,10 @@ func StartAssigner(server string, port int, token string, interval time.Duration
 	ticker := time.NewTicker(interval)
 	defer ticker.Stop()
 
-	for {
-		select {
-		case <-ticker.C:
-			AssignTasks(server, port, token)
-		}
+	for range ticker.C {
+		AssignTasks(server, port, token)
 	}
+
 }
 
 func AssignTasks(server string, port int, token string) {
@@ -167,11 +165,7 @@ func isScanAssigned(server string, port int, token string, scanID uuid.UUID) boo
 	}
 	defer resp.Body.Close()
 
-	if resp.StatusCode == http.StatusOK {
-		return true
-	}
-
-	return false
+	return resp.StatusCode == http.StatusOK
 }
 
 func createAgentTask(server string, port int, token string, agentID int, scanID uuid.UUID) error {
@@ -206,31 +200,3 @@ func createAgentTask(server string, port int, token string, agentID int, scanID 
 
 	return nil
 }
-
-//func updateAgentStatus(server, token string, agentID int, status string) error {
-//	reqBody := agents.UpdateAgentRequest{
-//		Status: &status,
-//	}
-//
-//	reqBodyJSON, _ := json.Marshal(reqBody)
-//
-//	req, err := http.NewRequest("PUT", fmt.Sprintf("%s/api/v1/agents/%d", server, agentID), bytes.NewBuffer(reqBodyJSON))
-//	if err != nil {
-//		return err
-//	}
-//
-//	req.Header.Set("Authorization", "Bearer "+token)
-//	req.Header.Set("Content-Type", "application/json")
-//
-//	resp, err := http.DefaultClient.Do(req)
-//	if err != nil {
-//		return err
-//	}
-//	defer resp.Body.Close()
-//
-//	if resp.StatusCode != http.StatusOK {
-//		return fmt.Errorf("server responded with status: %d", resp.StatusCode)
-//	}
-//
-//	return nil
-//}

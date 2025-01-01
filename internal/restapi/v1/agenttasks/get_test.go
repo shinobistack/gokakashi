@@ -173,7 +173,3 @@ func TestListAgentTasks_OrderedByCreatedAt(t *testing.T) {
 	assert.Equal(t, task1.ID, res[0].ID) // Oldest task first
 	assert.Equal(t, task2.ID, res[1].ID) // Newest task last
 }
-
-func uuidPtr(u uuid.UUID) *uuid.UUID {
-	return &u
-}
