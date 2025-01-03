@@ -39,7 +39,11 @@ var (
 	// AgentsColumns holds the columns for the "agents" table.
 	AgentsColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeInt, Increment: true},
+		{Name: "name", Type: field.TypeString, Unique: true, Nullable: true},
 		{Name: "status", Type: field.TypeString, Default: "connected"},
+		{Name: "workspace", Type: field.TypeString, Nullable: true},
+		{Name: "server", Type: field.TypeString, Nullable: true},
+		{Name: "last_seen", Type: field.TypeTime},
 	}
 	// AgentsTable holds the schema information for the "agents" table.
 	AgentsTable = &schema.Table{
@@ -85,6 +89,7 @@ var (
 		{Name: "id", Type: field.TypeUUID, Unique: true},
 		{Name: "name", Type: field.TypeString, Unique: true},
 		{Name: "image", Type: field.TypeJSON},
+		{Name: "scanner", Type: field.TypeString},
 		{Name: "labels", Type: field.TypeJSON, Nullable: true},
 		{Name: "trigger", Type: field.TypeJSON, Nullable: true},
 		{Name: "check", Type: field.TypeJSON, Nullable: true},
@@ -142,8 +147,10 @@ var (
 		{Name: "id", Type: field.TypeUUID, Unique: true},
 		{Name: "status", Type: field.TypeString, Default: "scan_pending"},
 		{Name: "image", Type: field.TypeString},
+		{Name: "scanner", Type: field.TypeString},
 		{Name: "check", Type: field.TypeJSON, Nullable: true},
-		{Name: "report", Type: field.TypeString, Nullable: true},
+		{Name: "report", Type: field.TypeJSON, Nullable: true},
+		{Name: "integration_id", Type: field.TypeUUID},
 		{Name: "policy_id", Type: field.TypeUUID},
 	}
 	// ScansTable holds the schema information for the "scans" table.
@@ -153,8 +160,14 @@ var (
 		PrimaryKey: []*schema.Column{ScansColumns[0]},
 		ForeignKeys: []*schema.ForeignKey{
 			{
+				Symbol:     "scans_integrations_scans",
+				Columns:    []*schema.Column{ScansColumns[6]},
+				RefColumns: []*schema.Column{IntegrationsColumns[0]},
+				OnDelete:   schema.NoAction,
+			},
+			{
 				Symbol:     "scans_policies_scans",
-				Columns:    []*schema.Column{ScansColumns[5]},
+				Columns:    []*schema.Column{ScansColumns[7]},
 				RefColumns: []*schema.Column{PoliciesColumns[0]},
 				OnDelete:   schema.NoAction,
 			},
@@ -179,5 +192,6 @@ func init() {
 	IntegrationsTable.ForeignKeys[0].RefTable = IntegrationTypesTable
 	PolicyLabelsTable.ForeignKeys[0].RefTable = PoliciesTable
 	ScanLabelsTable.ForeignKeys[0].RefTable = ScansTable
-	ScansTable.ForeignKeys[0].RefTable = PoliciesTable
+	ScansTable.ForeignKeys[0].RefTable = IntegrationsTable
+	ScansTable.ForeignKeys[1].RefTable = PoliciesTable
 }

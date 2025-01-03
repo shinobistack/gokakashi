@@ -6,6 +6,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"time"
 
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
@@ -29,6 +30,26 @@ func (au *AgentsUpdate) Where(ps ...predicate.Agents) *AgentsUpdate {
 	return au
 }
 
+// SetName sets the "name" field.
+func (au *AgentsUpdate) SetName(s string) *AgentsUpdate {
+	au.mutation.SetName(s)
+	return au
+}
+
+// SetNillableName sets the "name" field if the given value is not nil.
+func (au *AgentsUpdate) SetNillableName(s *string) *AgentsUpdate {
+	if s != nil {
+		au.SetName(*s)
+	}
+	return au
+}
+
+// ClearName clears the value of the "name" field.
+func (au *AgentsUpdate) ClearName() *AgentsUpdate {
+	au.mutation.ClearName()
+	return au
+}
+
 // SetStatus sets the "status" field.
 func (au *AgentsUpdate) SetStatus(s string) *AgentsUpdate {
 	au.mutation.SetStatus(s)
@@ -40,6 +61,52 @@ func (au *AgentsUpdate) SetNillableStatus(s *string) *AgentsUpdate {
 	if s != nil {
 		au.SetStatus(*s)
 	}
+	return au
+}
+
+// SetWorkspace sets the "workspace" field.
+func (au *AgentsUpdate) SetWorkspace(s string) *AgentsUpdate {
+	au.mutation.SetWorkspace(s)
+	return au
+}
+
+// SetNillableWorkspace sets the "workspace" field if the given value is not nil.
+func (au *AgentsUpdate) SetNillableWorkspace(s *string) *AgentsUpdate {
+	if s != nil {
+		au.SetWorkspace(*s)
+	}
+	return au
+}
+
+// ClearWorkspace clears the value of the "workspace" field.
+func (au *AgentsUpdate) ClearWorkspace() *AgentsUpdate {
+	au.mutation.ClearWorkspace()
+	return au
+}
+
+// SetServer sets the "server" field.
+func (au *AgentsUpdate) SetServer(s string) *AgentsUpdate {
+	au.mutation.SetServer(s)
+	return au
+}
+
+// SetNillableServer sets the "server" field if the given value is not nil.
+func (au *AgentsUpdate) SetNillableServer(s *string) *AgentsUpdate {
+	if s != nil {
+		au.SetServer(*s)
+	}
+	return au
+}
+
+// ClearServer clears the value of the "server" field.
+func (au *AgentsUpdate) ClearServer() *AgentsUpdate {
+	au.mutation.ClearServer()
+	return au
+}
+
+// SetLastSeen sets the "last_seen" field.
+func (au *AgentsUpdate) SetLastSeen(t time.Time) *AgentsUpdate {
+	au.mutation.SetLastSeen(t)
 	return au
 }
 
@@ -86,6 +153,7 @@ func (au *AgentsUpdate) RemoveAgentTasks(a ...*AgentTasks) *AgentsUpdate {
 
 // Save executes the query and returns the number of nodes affected by the update operation.
 func (au *AgentsUpdate) Save(ctx context.Context) (int, error) {
+	au.defaults()
 	return withHooks(ctx, au.sqlSave, au.mutation, au.hooks)
 }
 
@@ -111,7 +179,28 @@ func (au *AgentsUpdate) ExecX(ctx context.Context) {
 	}
 }
 
+// defaults sets the default values of the builder before save.
+func (au *AgentsUpdate) defaults() {
+	if _, ok := au.mutation.LastSeen(); !ok {
+		v := agents.UpdateDefaultLastSeen()
+		au.mutation.SetLastSeen(v)
+	}
+}
+
+// check runs all checks and user-defined validators on the builder.
+func (au *AgentsUpdate) check() error {
+	if v, ok := au.mutation.Status(); ok {
+		if err := agents.StatusValidator(v); err != nil {
+			return &ValidationError{Name: "status", err: fmt.Errorf(`ent: validator failed for field "Agents.status": %w`, err)}
+		}
+	}
+	return nil
+}
+
 func (au *AgentsUpdate) sqlSave(ctx context.Context) (n int, err error) {
+	if err := au.check(); err != nil {
+		return n, err
+	}
 	_spec := sqlgraph.NewUpdateSpec(agents.Table, agents.Columns, sqlgraph.NewFieldSpec(agents.FieldID, field.TypeInt))
 	if ps := au.mutation.predicates; len(ps) > 0 {
 		_spec.Predicate = func(selector *sql.Selector) {
@@ -120,8 +209,29 @@ func (au *AgentsUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			}
 		}
 	}
+	if value, ok := au.mutation.Name(); ok {
+		_spec.SetField(agents.FieldName, field.TypeString, value)
+	}
+	if au.mutation.NameCleared() {
+		_spec.ClearField(agents.FieldName, field.TypeString)
+	}
 	if value, ok := au.mutation.Status(); ok {
 		_spec.SetField(agents.FieldStatus, field.TypeString, value)
+	}
+	if value, ok := au.mutation.Workspace(); ok {
+		_spec.SetField(agents.FieldWorkspace, field.TypeString, value)
+	}
+	if au.mutation.WorkspaceCleared() {
+		_spec.ClearField(agents.FieldWorkspace, field.TypeString)
+	}
+	if value, ok := au.mutation.Server(); ok {
+		_spec.SetField(agents.FieldServer, field.TypeString, value)
+	}
+	if au.mutation.ServerCleared() {
+		_spec.ClearField(agents.FieldServer, field.TypeString)
+	}
+	if value, ok := au.mutation.LastSeen(); ok {
+		_spec.SetField(agents.FieldLastSeen, field.TypeTime, value)
 	}
 	if au.mutation.AgentTasksCleared() {
 		edge := &sqlgraph.EdgeSpec{
@@ -188,6 +298,26 @@ type AgentsUpdateOne struct {
 	mutation *AgentsMutation
 }
 
+// SetName sets the "name" field.
+func (auo *AgentsUpdateOne) SetName(s string) *AgentsUpdateOne {
+	auo.mutation.SetName(s)
+	return auo
+}
+
+// SetNillableName sets the "name" field if the given value is not nil.
+func (auo *AgentsUpdateOne) SetNillableName(s *string) *AgentsUpdateOne {
+	if s != nil {
+		auo.SetName(*s)
+	}
+	return auo
+}
+
+// ClearName clears the value of the "name" field.
+func (auo *AgentsUpdateOne) ClearName() *AgentsUpdateOne {
+	auo.mutation.ClearName()
+	return auo
+}
+
 // SetStatus sets the "status" field.
 func (auo *AgentsUpdateOne) SetStatus(s string) *AgentsUpdateOne {
 	auo.mutation.SetStatus(s)
@@ -199,6 +329,52 @@ func (auo *AgentsUpdateOne) SetNillableStatus(s *string) *AgentsUpdateOne {
 	if s != nil {
 		auo.SetStatus(*s)
 	}
+	return auo
+}
+
+// SetWorkspace sets the "workspace" field.
+func (auo *AgentsUpdateOne) SetWorkspace(s string) *AgentsUpdateOne {
+	auo.mutation.SetWorkspace(s)
+	return auo
+}
+
+// SetNillableWorkspace sets the "workspace" field if the given value is not nil.
+func (auo *AgentsUpdateOne) SetNillableWorkspace(s *string) *AgentsUpdateOne {
+	if s != nil {
+		auo.SetWorkspace(*s)
+	}
+	return auo
+}
+
+// ClearWorkspace clears the value of the "workspace" field.
+func (auo *AgentsUpdateOne) ClearWorkspace() *AgentsUpdateOne {
+	auo.mutation.ClearWorkspace()
+	return auo
+}
+
+// SetServer sets the "server" field.
+func (auo *AgentsUpdateOne) SetServer(s string) *AgentsUpdateOne {
+	auo.mutation.SetServer(s)
+	return auo
+}
+
+// SetNillableServer sets the "server" field if the given value is not nil.
+func (auo *AgentsUpdateOne) SetNillableServer(s *string) *AgentsUpdateOne {
+	if s != nil {
+		auo.SetServer(*s)
+	}
+	return auo
+}
+
+// ClearServer clears the value of the "server" field.
+func (auo *AgentsUpdateOne) ClearServer() *AgentsUpdateOne {
+	auo.mutation.ClearServer()
+	return auo
+}
+
+// SetLastSeen sets the "last_seen" field.
+func (auo *AgentsUpdateOne) SetLastSeen(t time.Time) *AgentsUpdateOne {
+	auo.mutation.SetLastSeen(t)
 	return auo
 }
 
@@ -258,6 +434,7 @@ func (auo *AgentsUpdateOne) Select(field string, fields ...string) *AgentsUpdate
 
 // Save executes the query and returns the updated Agents entity.
 func (auo *AgentsUpdateOne) Save(ctx context.Context) (*Agents, error) {
+	auo.defaults()
 	return withHooks(ctx, auo.sqlSave, auo.mutation, auo.hooks)
 }
 
@@ -283,7 +460,28 @@ func (auo *AgentsUpdateOne) ExecX(ctx context.Context) {
 	}
 }
 
+// defaults sets the default values of the builder before save.
+func (auo *AgentsUpdateOne) defaults() {
+	if _, ok := auo.mutation.LastSeen(); !ok {
+		v := agents.UpdateDefaultLastSeen()
+		auo.mutation.SetLastSeen(v)
+	}
+}
+
+// check runs all checks and user-defined validators on the builder.
+func (auo *AgentsUpdateOne) check() error {
+	if v, ok := auo.mutation.Status(); ok {
+		if err := agents.StatusValidator(v); err != nil {
+			return &ValidationError{Name: "status", err: fmt.Errorf(`ent: validator failed for field "Agents.status": %w`, err)}
+		}
+	}
+	return nil
+}
+
 func (auo *AgentsUpdateOne) sqlSave(ctx context.Context) (_node *Agents, err error) {
+	if err := auo.check(); err != nil {
+		return _node, err
+	}
 	_spec := sqlgraph.NewUpdateSpec(agents.Table, agents.Columns, sqlgraph.NewFieldSpec(agents.FieldID, field.TypeInt))
 	id, ok := auo.mutation.ID()
 	if !ok {
@@ -309,8 +507,29 @@ func (auo *AgentsUpdateOne) sqlSave(ctx context.Context) (_node *Agents, err err
 			}
 		}
 	}
+	if value, ok := auo.mutation.Name(); ok {
+		_spec.SetField(agents.FieldName, field.TypeString, value)
+	}
+	if auo.mutation.NameCleared() {
+		_spec.ClearField(agents.FieldName, field.TypeString)
+	}
 	if value, ok := auo.mutation.Status(); ok {
 		_spec.SetField(agents.FieldStatus, field.TypeString, value)
+	}
+	if value, ok := auo.mutation.Workspace(); ok {
+		_spec.SetField(agents.FieldWorkspace, field.TypeString, value)
+	}
+	if auo.mutation.WorkspaceCleared() {
+		_spec.ClearField(agents.FieldWorkspace, field.TypeString)
+	}
+	if value, ok := auo.mutation.Server(); ok {
+		_spec.SetField(agents.FieldServer, field.TypeString, value)
+	}
+	if auo.mutation.ServerCleared() {
+		_spec.ClearField(agents.FieldServer, field.TypeString)
+	}
+	if value, ok := auo.mutation.LastSeen(); ok {
+		_spec.SetField(agents.FieldLastSeen, field.TypeTime, value)
 	}
 	if auo.mutation.AgentTasksCleared() {
 		edge := &sqlgraph.EdgeSpec{

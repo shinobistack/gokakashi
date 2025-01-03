@@ -13,6 +13,13 @@ import (
 	"github.com/shinobistack/gokakashi/internal/config/v1"
 )
 
+func RunMigrations(client *ent.Client) {
+	if err := client.Schema.Create(context.Background()); err != nil {
+		log.Fatalf("Failed to create database schema: %v", err)
+	}
+	log.Println("Database schema created successfully")
+}
+
 func PopulateDatabase(client *ent.Client, cfg *v1.Config) {
 	log.Println("Populating database from configuration...")
 
@@ -63,6 +70,8 @@ func PopulateDatabase(client *ent.Client, cfg *v1.Config) {
 					"type":     policy.Trigger.Type,
 					"schedule": policy.Trigger.Schedule,
 				}).
+				// ToDo: to update the scanner field to takein tools and tool's argument
+				SetScanner(policy.Scanner).
 				SetCheck(schema.Check(policy.Check)).
 				Save(context.Background())
 			if err != nil {
@@ -85,6 +94,7 @@ func PopulateDatabase(client *ent.Client, cfg *v1.Config) {
 				"type":     policy.Trigger.Type,
 				"schedule": policy.Trigger.Schedule,
 			}).
+			SetScanner(policy.Scanner).
 			SetCheck(schema.Check(policy.Check)).
 			Save(context.Background())
 		if err != nil {
@@ -129,21 +139,31 @@ func PopulateDatabase(client *ent.Client, cfg *v1.Config) {
 		// Populate scans for each policy image tag
 		for _, tag := range policy.Image.Tags {
 			existingScan, err := client.Scans.Query().
-				Where(scans.PolicyID(policyRecord.ID), scans.Image(policy.Image.Registry+"/"+policy.Image.Name+":"+tag)).
+				Where(scans.PolicyID(policyRecord.ID), scans.Image(policy.Image.Name+":"+tag)).
 				Only(context.Background())
 			if err == nil && existingScan != nil {
-				log.Printf("Scan for policy %s, tag %s already exists. Skipping.", policy.Name, tag)
+				log.Printf("Scan for policy %s, image:tag %s:%s already exists. Skipping.", policy.Name, policy.Image.Name, tag)
 				continue
 			} else if !ent.IsNotFound(err) {
-				log.Printf("Error querying scan for policy %s, tag %s: %v", policy.Name, tag, err)
+				log.Printf("Error querying scan for policy %s, image:tag %s:%s: %v", policy.Name, policy.Image.Name, tag, err)
 				continue
 			}
 
+			existingIntegration, err := client.Integrations.Query().
+				Where(integrations.Name(policy.Image.Registry)).
+				OnlyID(context.Background())
+			if err != nil {
+				log.Printf("Error querying integrationID for policy %s and integrationName %s : %v", policy.Name, policy.Image.Registry, err)
+				continue
+			}
+			// Todo: update existing scan if existing policy is updated
 			// Create new scan
 			_, err = client.Scans.
 				Create().
 				SetPolicyID(policyRecord.ID).
-				SetImage(policy.Image.Registry + "/" + policy.Image.Name + ":" + tag).
+				SetImage(policy.Image.Name + ":" + tag).
+				SetScanner(policy.Scanner).
+				SetIntegrationID(existingIntegration).
 				Save(context.Background())
 			if err != nil {
 				log.Printf("Failed to add scan for policy %s, tag %s: %v", policy.Name, tag, err)

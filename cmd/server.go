@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"fmt"
+	"github.com/shinobistack/gokakashi/internal/assigner"
 	"github.com/shinobistack/gokakashi/internal/db"
 	"log"
 	"os"
@@ -99,10 +100,13 @@ func handleConfigV1() {
 	configDB := restapiv1.InitDB()
 	defer configDB.Close()
 
+	db.RunMigrations(configDB)
 	// Populate the database
 	db.PopulateDatabase(configDB, cfg)
 
-	// log.Println("Shutting down goKakashi gracefully...")
+	// ToDo: To be go routine who independently and routinely checks and assigns scans in agentTasks table
+	go assigner.StartAssigner(cfg.Site.Host, cfg.Site.Port, cfg.Site.APIToken, 1*time.Minute)
+
 }
 
 func handleConfigV0() {

@@ -18,12 +18,22 @@ func TestCreateScanLabel_Valid(t *testing.T) {
 	policy := client.Policies.Create().
 		SetName("test-policy").
 		SetImage(schema.Image{Registry: "test-registry", Name: "test-name", Tags: []string{"v1.0"}}).
+		SetScanner("trivy").
 		SaveX(context.Background())
+
+	integrations := client.Integrations.Create().
+		SetName("integration").
+		SetType("linear").
+		SetConfig(map[string]interface{}{"key": "value"}).
+		SaveX(context.Background())
+
 	// Create a test scan
 	scan := client.Scans.Create().
 		SetPolicyID(policy.ID).
 		SetImage("example-image:latest").
+		SetScanner(policy.Scanner).
 		SetStatus("scan_pending").
+		SetIntegrationID(integrations.ID).
 		SaveX(context.Background())
 
 	req := scanlabels.CreateScanLabelRequest{
@@ -48,6 +58,7 @@ func TestCreateScanLabel_MissingFields(t *testing.T) {
 	policy := client.Policies.Create().
 		SetName("test-policy").
 		SetImage(schema.Image{Registry: "test-registry", Name: "test-name", Tags: []string{"v1.0"}}).
+		SetScanner("trivy").
 		SaveX(context.Background())
 
 	req := scanlabels.CreateScanLabelRequest{
@@ -85,6 +96,13 @@ func TestCreateScanLabel_DuplicateKey(t *testing.T) {
 	policy := client.Policies.Create().
 		SetName("test-policy").
 		SetImage(schema.Image{Registry: "test-registry", Name: "test-name", Tags: []string{"v1.0"}}).
+		SetScanner("trivy").
+		SaveX(context.Background())
+
+	integrations := client.Integrations.Create().
+		SetName("integration").
+		SetType("linear").
+		SetConfig(map[string]interface{}{"key": "value"}).
 		SaveX(context.Background())
 
 	// Create a test scan
@@ -92,6 +110,8 @@ func TestCreateScanLabel_DuplicateKey(t *testing.T) {
 		SetPolicyID(policy.ID).
 		SetImage("example-image:latest").
 		SetStatus("scan_pending").
+		SetScanner(policy.Scanner).
+		SetIntegrationID(integrations.ID).
 		SaveX(context.Background())
 
 	// Create a label

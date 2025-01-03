@@ -11,8 +11,8 @@ import (
 
 type UpdateAgentTaskRequest struct {
 	ID      uuid.UUID `path:"id"`
-	AgentID int       `path:"agent_id"`
-	Status  string    `json:"status"`
+	AgentID *int      `path:"agent_id"`
+	Status  *string   `json:"status"`
 	// Todo: Should the created_AT be updated to time.now whenever an update call is made?
 }
 
@@ -23,11 +23,12 @@ type UpdateAgentTaskResponse struct {
 
 func UpdateAgentTask(client *ent.Client) func(ctx context.Context, req UpdateAgentTaskRequest, res *UpdateAgentTaskResponse) error {
 	return func(ctx context.Context, req UpdateAgentTaskRequest, res *UpdateAgentTaskResponse) error {
-		if req.ID == uuid.Nil || req.Status == "" {
-			return status.Wrap(errors.New("invalid ID or Status"), status.InvalidArgument)
+		// Validate required fields
+		if req.ID == uuid.Nil {
+			return status.Wrap(errors.New("invalid ID"), status.InvalidArgument)
 		}
 
-		// Fetch the task and validate the AgentID
+		// Fetch the task
 		task, err := client.AgentTasks.Query().
 			Where(agenttasks.ID(req.ID)).
 			Only(ctx)
@@ -38,20 +39,24 @@ func UpdateAgentTask(client *ent.Client) func(ctx context.Context, req UpdateAge
 			return status.Wrap(err, status.Internal)
 		}
 
-		if task.AgentID != req.AgentID {
+		// Optional field updates
+		update := client.AgentTasks.UpdateOneID(req.ID)
+		if req.Status != nil {
+			update.SetStatus(*req.Status)
+		}
+		if req.AgentID != nil && *req.AgentID != task.AgentID {
 			return status.Wrap(errors.New("agent ID mismatch"), status.InvalidArgument)
 		}
 
-		task, err = client.AgentTasks.UpdateOneID(req.ID).
-			SetStatus(req.Status).
-			Save(ctx)
+		// Save changes
+		updatedTask, err := update.Save(ctx)
 		if err != nil {
 			return status.Wrap(err, status.Internal)
 		}
 
-		res.ID = task.ID
-		res.Status = task.Status
+		// Prepare response
+		res.ID = updatedTask.ID
+		res.Status = updatedTask.Status
 		return nil
-
 	}
 }

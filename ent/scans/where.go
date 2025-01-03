@@ -69,9 +69,14 @@ func Image(v string) predicate.Scans {
 	return predicate.Scans(sql.FieldEQ(FieldImage, v))
 }
 
-// Report applies equality check predicate on the "report" field. It's identical to ReportEQ.
-func Report(v string) predicate.Scans {
-	return predicate.Scans(sql.FieldEQ(FieldReport, v))
+// IntegrationID applies equality check predicate on the "integration_id" field. It's identical to IntegrationIDEQ.
+func IntegrationID(v uuid.UUID) predicate.Scans {
+	return predicate.Scans(sql.FieldEQ(FieldIntegrationID, v))
+}
+
+// Scanner applies equality check predicate on the "scanner" field. It's identical to ScannerEQ.
+func Scanner(v string) predicate.Scans {
+	return predicate.Scans(sql.FieldEQ(FieldScanner, v))
 }
 
 // PolicyIDEQ applies the EQ predicate on the "policy_id" field.
@@ -224,6 +229,91 @@ func ImageContainsFold(v string) predicate.Scans {
 	return predicate.Scans(sql.FieldContainsFold(FieldImage, v))
 }
 
+// IntegrationIDEQ applies the EQ predicate on the "integration_id" field.
+func IntegrationIDEQ(v uuid.UUID) predicate.Scans {
+	return predicate.Scans(sql.FieldEQ(FieldIntegrationID, v))
+}
+
+// IntegrationIDNEQ applies the NEQ predicate on the "integration_id" field.
+func IntegrationIDNEQ(v uuid.UUID) predicate.Scans {
+	return predicate.Scans(sql.FieldNEQ(FieldIntegrationID, v))
+}
+
+// IntegrationIDIn applies the In predicate on the "integration_id" field.
+func IntegrationIDIn(vs ...uuid.UUID) predicate.Scans {
+	return predicate.Scans(sql.FieldIn(FieldIntegrationID, vs...))
+}
+
+// IntegrationIDNotIn applies the NotIn predicate on the "integration_id" field.
+func IntegrationIDNotIn(vs ...uuid.UUID) predicate.Scans {
+	return predicate.Scans(sql.FieldNotIn(FieldIntegrationID, vs...))
+}
+
+// ScannerEQ applies the EQ predicate on the "scanner" field.
+func ScannerEQ(v string) predicate.Scans {
+	return predicate.Scans(sql.FieldEQ(FieldScanner, v))
+}
+
+// ScannerNEQ applies the NEQ predicate on the "scanner" field.
+func ScannerNEQ(v string) predicate.Scans {
+	return predicate.Scans(sql.FieldNEQ(FieldScanner, v))
+}
+
+// ScannerIn applies the In predicate on the "scanner" field.
+func ScannerIn(vs ...string) predicate.Scans {
+	return predicate.Scans(sql.FieldIn(FieldScanner, vs...))
+}
+
+// ScannerNotIn applies the NotIn predicate on the "scanner" field.
+func ScannerNotIn(vs ...string) predicate.Scans {
+	return predicate.Scans(sql.FieldNotIn(FieldScanner, vs...))
+}
+
+// ScannerGT applies the GT predicate on the "scanner" field.
+func ScannerGT(v string) predicate.Scans {
+	return predicate.Scans(sql.FieldGT(FieldScanner, v))
+}
+
+// ScannerGTE applies the GTE predicate on the "scanner" field.
+func ScannerGTE(v string) predicate.Scans {
+	return predicate.Scans(sql.FieldGTE(FieldScanner, v))
+}
+
+// ScannerLT applies the LT predicate on the "scanner" field.
+func ScannerLT(v string) predicate.Scans {
+	return predicate.Scans(sql.FieldLT(FieldScanner, v))
+}
+
+// ScannerLTE applies the LTE predicate on the "scanner" field.
+func ScannerLTE(v string) predicate.Scans {
+	return predicate.Scans(sql.FieldLTE(FieldScanner, v))
+}
+
+// ScannerContains applies the Contains predicate on the "scanner" field.
+func ScannerContains(v string) predicate.Scans {
+	return predicate.Scans(sql.FieldContains(FieldScanner, v))
+}
+
+// ScannerHasPrefix applies the HasPrefix predicate on the "scanner" field.
+func ScannerHasPrefix(v string) predicate.Scans {
+	return predicate.Scans(sql.FieldHasPrefix(FieldScanner, v))
+}
+
+// ScannerHasSuffix applies the HasSuffix predicate on the "scanner" field.
+func ScannerHasSuffix(v string) predicate.Scans {
+	return predicate.Scans(sql.FieldHasSuffix(FieldScanner, v))
+}
+
+// ScannerEqualFold applies the EqualFold predicate on the "scanner" field.
+func ScannerEqualFold(v string) predicate.Scans {
+	return predicate.Scans(sql.FieldEqualFold(FieldScanner, v))
+}
+
+// ScannerContainsFold applies the ContainsFold predicate on the "scanner" field.
+func ScannerContainsFold(v string) predicate.Scans {
+	return predicate.Scans(sql.FieldContainsFold(FieldScanner, v))
+}
+
 // CheckIsNil applies the IsNil predicate on the "check" field.
 func CheckIsNil() predicate.Scans {
 	return predicate.Scans(sql.FieldIsNull(FieldCheck))
@@ -234,61 +324,6 @@ func CheckNotNil() predicate.Scans {
 	return predicate.Scans(sql.FieldNotNull(FieldCheck))
 }
 
-// ReportEQ applies the EQ predicate on the "report" field.
-func ReportEQ(v string) predicate.Scans {
-	return predicate.Scans(sql.FieldEQ(FieldReport, v))
-}
-
-// ReportNEQ applies the NEQ predicate on the "report" field.
-func ReportNEQ(v string) predicate.Scans {
-	return predicate.Scans(sql.FieldNEQ(FieldReport, v))
-}
-
-// ReportIn applies the In predicate on the "report" field.
-func ReportIn(vs ...string) predicate.Scans {
-	return predicate.Scans(sql.FieldIn(FieldReport, vs...))
-}
-
-// ReportNotIn applies the NotIn predicate on the "report" field.
-func ReportNotIn(vs ...string) predicate.Scans {
-	return predicate.Scans(sql.FieldNotIn(FieldReport, vs...))
-}
-
-// ReportGT applies the GT predicate on the "report" field.
-func ReportGT(v string) predicate.Scans {
-	return predicate.Scans(sql.FieldGT(FieldReport, v))
-}
-
-// ReportGTE applies the GTE predicate on the "report" field.
-func ReportGTE(v string) predicate.Scans {
-	return predicate.Scans(sql.FieldGTE(FieldReport, v))
-}
-
-// ReportLT applies the LT predicate on the "report" field.
-func ReportLT(v string) predicate.Scans {
-	return predicate.Scans(sql.FieldLT(FieldReport, v))
-}
-
-// ReportLTE applies the LTE predicate on the "report" field.
-func ReportLTE(v string) predicate.Scans {
-	return predicate.Scans(sql.FieldLTE(FieldReport, v))
-}
-
-// ReportContains applies the Contains predicate on the "report" field.
-func ReportContains(v string) predicate.Scans {
-	return predicate.Scans(sql.FieldContains(FieldReport, v))
-}
-
-// ReportHasPrefix applies the HasPrefix predicate on the "report" field.
-func ReportHasPrefix(v string) predicate.Scans {
-	return predicate.Scans(sql.FieldHasPrefix(FieldReport, v))
-}
-
-// ReportHasSuffix applies the HasSuffix predicate on the "report" field.
-func ReportHasSuffix(v string) predicate.Scans {
-	return predicate.Scans(sql.FieldHasSuffix(FieldReport, v))
-}
-
 // ReportIsNil applies the IsNil predicate on the "report" field.
 func ReportIsNil() predicate.Scans {
 	return predicate.Scans(sql.FieldIsNull(FieldReport))
@@ -297,16 +332,6 @@ func ReportIsNil() predicate.Scans {
 // ReportNotNil applies the NotNil predicate on the "report" field.
 func ReportNotNil() predicate.Scans {
 	return predicate.Scans(sql.FieldNotNull(FieldReport))
-}
-
-// ReportEqualFold applies the EqualFold predicate on the "report" field.
-func ReportEqualFold(v string) predicate.Scans {
-	return predicate.Scans(sql.FieldEqualFold(FieldReport, v))
-}
-
-// ReportContainsFold applies the ContainsFold predicate on the "report" field.
-func ReportContainsFold(v string) predicate.Scans {
-	return predicate.Scans(sql.FieldContainsFold(FieldReport, v))
 }
 
 // HasPolicy applies the HasEdge predicate on the "policy" edge.
@@ -324,6 +349,29 @@ func HasPolicy() predicate.Scans {
 func HasPolicyWith(preds ...predicate.Policies) predicate.Scans {
 	return predicate.Scans(func(s *sql.Selector) {
 		step := newPolicyStep()
+		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
+			for _, p := range preds {
+				p(s)
+			}
+		})
+	})
+}
+
+// HasIntegrations applies the HasEdge predicate on the "integrations" edge.
+func HasIntegrations() predicate.Scans {
+	return predicate.Scans(func(s *sql.Selector) {
+		step := sqlgraph.NewStep(
+			sqlgraph.From(Table, FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, true, IntegrationsTable, IntegrationsColumn),
+		)
+		sqlgraph.HasNeighbors(s, step)
+	})
+}
+
+// HasIntegrationsWith applies the HasEdge predicate on the "integrations" edge with a given conditions (other predicates).
+func HasIntegrationsWith(preds ...predicate.Integrations) predicate.Scans {
+	return predicate.Scans(func(s *sql.Selector) {
+		step := newIntegrationsStep()
 		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
 			for _, p := range preds {
 				p(s)

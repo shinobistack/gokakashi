@@ -11,6 +11,7 @@ import (
 	"entgo.io/ent/schema/field"
 	"github.com/google/uuid"
 	"github.com/shinobistack/gokakashi/ent/integrations"
+	"github.com/shinobistack/gokakashi/ent/scans"
 )
 
 // IntegrationsCreate is the builder for creating a Integrations entity.
@@ -50,6 +51,21 @@ func (ic *IntegrationsCreate) SetNillableID(u *uuid.UUID) *IntegrationsCreate {
 		ic.SetID(*u)
 	}
 	return ic
+}
+
+// AddScanIDs adds the "scans" edge to the Scans entity by IDs.
+func (ic *IntegrationsCreate) AddScanIDs(ids ...uuid.UUID) *IntegrationsCreate {
+	ic.mutation.AddScanIDs(ids...)
+	return ic
+}
+
+// AddScans adds the "scans" edges to the Scans entity.
+func (ic *IntegrationsCreate) AddScans(s ...*Scans) *IntegrationsCreate {
+	ids := make([]uuid.UUID, len(s))
+	for i := range s {
+		ids[i] = s[i].ID
+	}
+	return ic.AddScanIDs(ids...)
 }
 
 // Mutation returns the IntegrationsMutation object of the builder.
@@ -160,6 +176,22 @@ func (ic *IntegrationsCreate) createSpec() (*Integrations, *sqlgraph.CreateSpec)
 	if value, ok := ic.mutation.Config(); ok {
 		_spec.SetField(integrations.FieldConfig, field.TypeJSON, value)
 		_node.Config = value
+	}
+	if nodes := ic.mutation.ScansIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   integrations.ScansTable,
+			Columns: []string{integrations.ScansColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(scans.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges = append(_spec.Edges, edge)
 	}
 	return _node, _spec
 }
