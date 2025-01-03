@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"github.com/shinobistack/gokakashi/ent"
+	"github.com/shinobistack/gokakashi/ent/agents"
 	"github.com/swaggest/usecase/status"
 	"time"
 )
@@ -24,6 +25,7 @@ type ListAgentsResponse struct {
 }
 
 type PollAgentsRequest struct {
+	Status string `query:"status"`
 }
 
 type PollAgentsResponse struct {
@@ -78,7 +80,13 @@ func GetAgent(client *ent.Client) func(ctx context.Context, req GetAgentRequest,
 
 func PollAgents(client *ent.Client) func(ctx context.Context, req PollAgentsRequest, res *[]PollAgentsResponse) error {
 	return func(ctx context.Context, req PollAgentsRequest, res *[]PollAgentsResponse) error {
-		agentsList, err := client.Agents.Query().All(ctx)
+		query := client.Agents.Query()
+
+		if req.Status != "" {
+			query = query.Where(agents.Status(req.Status))
+		}
+
+		agentsList, err := query.All(ctx)
 		if err != nil {
 			return status.Wrap(err, status.Internal)
 		}
