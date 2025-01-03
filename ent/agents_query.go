@@ -299,12 +299,12 @@ func (aq *AgentsQuery) WithAgentTasks(opts ...func(*AgentTasksQuery)) *AgentsQue
 // Example:
 //
 //	var v []struct {
-//		Status string `json:"status,omitempty"`
+//		Name string `json:"name,omitempty"`
 //		Count int `json:"count,omitempty"`
 //	}
 //
 //	client.Agents.Query().
-//		GroupBy(agents.FieldStatus).
+//		GroupBy(agents.FieldName).
 //		Aggregate(ent.Count()).
 //		Scan(ctx, &v)
 func (aq *AgentsQuery) GroupBy(field string, fields ...string) *AgentsGroupBy {
@@ -322,11 +322,11 @@ func (aq *AgentsQuery) GroupBy(field string, fields ...string) *AgentsGroupBy {
 // Example:
 //
 //	var v []struct {
-//		Status string `json:"status,omitempty"`
+//		Name string `json:"name,omitempty"`
 //	}
 //
 //	client.Agents.Query().
-//		Select(agents.FieldStatus).
+//		Select(agents.FieldName).
 //		Scan(ctx, &v)
 func (aq *AgentsQuery) Select(fields ...string) *AgentsSelect {
 	aq.ctx.Fields = append(aq.ctx.Fields, fields...)

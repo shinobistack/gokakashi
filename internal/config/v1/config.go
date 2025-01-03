@@ -60,7 +60,8 @@ type Policy struct {
 	Trigger Trigger           `yaml:"trigger"`
 	Labels  map[string]string `yaml:"labels,omitempty"`
 	Check   CheckCondition    `yaml:"check"`
-	// Scanner []string   `yaml:"scanner"`
+	// ToDo: to update the scanner field to takein tools and tool's argument
+	Scanner string `yaml:"scanner"`
 }
 
 // Config represents the complete configuration for GoKakashi

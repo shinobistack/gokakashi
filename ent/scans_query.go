@@ -14,6 +14,7 @@ import (
 	"entgo.io/ent/schema/field"
 	"github.com/google/uuid"
 	"github.com/shinobistack/gokakashi/ent/agenttasks"
+	"github.com/shinobistack/gokakashi/ent/integrations"
 	"github.com/shinobistack/gokakashi/ent/policies"
 	"github.com/shinobistack/gokakashi/ent/predicate"
 	"github.com/shinobistack/gokakashi/ent/scanlabels"
@@ -23,13 +24,14 @@ import (
 // ScansQuery is the builder for querying Scans entities.
 type ScansQuery struct {
 	config
-	ctx            *QueryContext
-	order          []scans.OrderOption
-	inters         []Interceptor
-	predicates     []predicate.Scans
-	withPolicy     *PoliciesQuery
-	withScanLabels *ScanLabelsQuery
-	withAgentTasks *AgentTasksQuery
+	ctx              *QueryContext
+	order            []scans.OrderOption
+	inters           []Interceptor
+	predicates       []predicate.Scans
+	withPolicy       *PoliciesQuery
+	withIntegrations *IntegrationsQuery
+	withScanLabels   *ScanLabelsQuery
+	withAgentTasks   *AgentTasksQuery
 	// intermediate query (i.e. traversal path).
 	sql  *sql.Selector
 	path func(context.Context) (*sql.Selector, error)
@@ -81,6 +83,28 @@ func (sq *ScansQuery) QueryPolicy() *PoliciesQuery {
 			sqlgraph.From(scans.Table, scans.FieldID, selector),
 			sqlgraph.To(policies.Table, policies.FieldID),
 			sqlgraph.Edge(sqlgraph.M2O, true, scans.PolicyTable, scans.PolicyColumn),
+		)
+		fromU = sqlgraph.SetNeighbors(sq.driver.Dialect(), step)
+		return fromU, nil
+	}
+	return query
+}
+
+// QueryIntegrations chains the current query on the "integrations" edge.
+func (sq *ScansQuery) QueryIntegrations() *IntegrationsQuery {
+	query := (&IntegrationsClient{config: sq.config}).Query()
+	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
+		if err := sq.prepareQuery(ctx); err != nil {
+			return nil, err
+		}
+		selector := sq.sqlQuery(ctx)
+		if err := selector.Err(); err != nil {
+			return nil, err
+		}
+		step := sqlgraph.NewStep(
+			sqlgraph.From(scans.Table, scans.FieldID, selector),
+			sqlgraph.To(integrations.Table, integrations.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, true, scans.IntegrationsTable, scans.IntegrationsColumn),
 		)
 		fromU = sqlgraph.SetNeighbors(sq.driver.Dialect(), step)
 		return fromU, nil
@@ -319,14 +343,15 @@ func (sq *ScansQuery) Clone() *ScansQuery {
 		return nil
 	}
 	return &ScansQuery{
-		config:         sq.config,
-		ctx:            sq.ctx.Clone(),
-		order:          append([]scans.OrderOption{}, sq.order...),
-		inters:         append([]Interceptor{}, sq.inters...),
-		predicates:     append([]predicate.Scans{}, sq.predicates...),
-		withPolicy:     sq.withPolicy.Clone(),
-		withScanLabels: sq.withScanLabels.Clone(),
-		withAgentTasks: sq.withAgentTasks.Clone(),
+		config:           sq.config,
+		ctx:              sq.ctx.Clone(),
+		order:            append([]scans.OrderOption{}, sq.order...),
+		inters:           append([]Interceptor{}, sq.inters...),
+		predicates:       append([]predicate.Scans{}, sq.predicates...),
+		withPolicy:       sq.withPolicy.Clone(),
+		withIntegrations: sq.withIntegrations.Clone(),
+		withScanLabels:   sq.withScanLabels.Clone(),
+		withAgentTasks:   sq.withAgentTasks.Clone(),
 		// clone intermediate query.
 		sql:  sq.sql.Clone(),
 		path: sq.path,
@@ -341,6 +366,17 @@ func (sq *ScansQuery) WithPolicy(opts ...func(*PoliciesQuery)) *ScansQuery {
 		opt(query)
 	}
 	sq.withPolicy = query
+	return sq
+}
+
+// WithIntegrations tells the query-builder to eager-load the nodes that are connected to
+// the "integrations" edge. The optional arguments are used to configure the query builder of the edge.
+func (sq *ScansQuery) WithIntegrations(opts ...func(*IntegrationsQuery)) *ScansQuery {
+	query := (&IntegrationsClient{config: sq.config}).Query()
+	for _, opt := range opts {
+		opt(query)
+	}
+	sq.withIntegrations = query
 	return sq
 }
 
@@ -444,8 +480,9 @@ func (sq *ScansQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Scans,
 	var (
 		nodes       = []*Scans{}
 		_spec       = sq.querySpec()
-		loadedTypes = [3]bool{
+		loadedTypes = [4]bool{
 			sq.withPolicy != nil,
+			sq.withIntegrations != nil,
 			sq.withScanLabels != nil,
 			sq.withAgentTasks != nil,
 		}
@@ -471,6 +508,12 @@ func (sq *ScansQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Scans,
 	if query := sq.withPolicy; query != nil {
 		if err := sq.loadPolicy(ctx, query, nodes, nil,
 			func(n *Scans, e *Policies) { n.Edges.Policy = e }); err != nil {
+			return nil, err
+		}
+	}
+	if query := sq.withIntegrations; query != nil {
+		if err := sq.loadIntegrations(ctx, query, nodes, nil,
+			func(n *Scans, e *Integrations) { n.Edges.Integrations = e }); err != nil {
 			return nil, err
 		}
 	}
@@ -513,6 +556,35 @@ func (sq *ScansQuery) loadPolicy(ctx context.Context, query *PoliciesQuery, node
 		nodes, ok := nodeids[n.ID]
 		if !ok {
 			return fmt.Errorf(`unexpected foreign-key "policy_id" returned %v`, n.ID)
+		}
+		for i := range nodes {
+			assign(nodes[i], n)
+		}
+	}
+	return nil
+}
+func (sq *ScansQuery) loadIntegrations(ctx context.Context, query *IntegrationsQuery, nodes []*Scans, init func(*Scans), assign func(*Scans, *Integrations)) error {
+	ids := make([]uuid.UUID, 0, len(nodes))
+	nodeids := make(map[uuid.UUID][]*Scans)
+	for i := range nodes {
+		fk := nodes[i].IntegrationID
+		if _, ok := nodeids[fk]; !ok {
+			ids = append(ids, fk)
+		}
+		nodeids[fk] = append(nodeids[fk], nodes[i])
+	}
+	if len(ids) == 0 {
+		return nil
+	}
+	query.Where(integrations.IDIn(ids...))
+	neighbors, err := query.All(ctx)
+	if err != nil {
+		return err
+	}
+	for _, n := range neighbors {
+		nodes, ok := nodeids[n.ID]
+		if !ok {
+			return fmt.Errorf(`unexpected foreign-key "integration_id" returned %v`, n.ID)
 		}
 		for i := range nodes {
 			assign(nodes[i], n)
@@ -608,6 +680,9 @@ func (sq *ScansQuery) querySpec() *sqlgraph.QuerySpec {
 		}
 		if sq.withPolicy != nil {
 			_spec.Node.AddColumnOnce(scans.FieldPolicyID)
+		}
+		if sq.withIntegrations != nil {
+			_spec.Node.AddColumnOnce(scans.FieldIntegrationID)
 		}
 	}
 	if ps := sq.predicates; len(ps) > 0 {

@@ -17,13 +17,22 @@ func TestListScanLabels_Valid(t *testing.T) {
 	policy := client.Policies.Create().
 		SetName("test-policy").
 		SetImage(schema.Image{Registry: "test-registry", Name: "test-name", Tags: []string{"v1.0"}}).
+		SetScanner("trivy").
+		SaveX(context.Background())
+
+	integrations := client.Integrations.Create().
+		SetName("integration").
+		SetType("linear").
+		SetConfig(map[string]interface{}{"key": "value"}).
 		SaveX(context.Background())
 
 	// Create a test scan
 	scan := client.Scans.Create().
 		SetPolicyID(policy.ID).
 		SetImage("example-image:latest").
+		SetScanner(policy.Scanner).
 		SetStatus("scan_pending").
+		SetIntegrationID(integrations.ID).
 		SaveX(context.Background())
 
 	// Add labels
@@ -57,13 +66,22 @@ func TestListScanLabels_NoLabels(t *testing.T) {
 	policy := client.Policies.Create().
 		SetName("test-policy").
 		SetImage(schema.Image{Registry: "test-registry", Name: "test-name", Tags: []string{"v1.0"}}).
+		SetScanner("trivy").
+		SaveX(context.Background())
+
+	integrations := client.Integrations.Create().
+		SetName("integration").
+		SetType("linear").
+		SetConfig(map[string]interface{}{"key": "value"}).
 		SaveX(context.Background())
 
 	// Create a test scan
 	scan := client.Scans.Create().
 		SetPolicyID(policy.ID).
 		SetImage("example-image:latest").
+		SetScanner(policy.Scanner).
 		SetStatus("scan_pending").
+		SetIntegrationID(integrations.ID).
 		SaveX(context.Background())
 
 	req := scanlabels.ListScanLabelsRequest{
@@ -83,13 +101,22 @@ func TestGetScanLabel_Valid(t *testing.T) {
 	policy := client.Policies.Create().
 		SetName("test-policy").
 		SetImage(schema.Image{Registry: "test-registry", Name: "test-name", Tags: []string{"v1.0"}}).
+		SetScanner("trivy").
+		SaveX(context.Background())
+
+	integrations := client.Integrations.Create().
+		SetName("integration").
+		SetType("linear").
+		SetConfig(map[string]interface{}{"key": "value"}).
 		SaveX(context.Background())
 
 	// Create a test scan
 	scan := client.Scans.Create().
 		SetPolicyID(policy.ID).
 		SetImage("example-image:latest").
+		SetScanner("trivy").
 		SetStatus("scan_pending").
+		SetIntegrationID(integrations.ID).
 		SaveX(context.Background())
 
 	// Add a label
@@ -118,13 +145,22 @@ func TestGetScanLabel_NotFound(t *testing.T) {
 	policy := client.Policies.Create().
 		SetName("test-policy").
 		SetImage(schema.Image{Registry: "test-registry", Name: "test-name", Tags: []string{"v1.0"}}).
+		SetScanner("trivy").
+		SaveX(context.Background())
+
+	integrations := client.Integrations.Create().
+		SetName("integration").
+		SetType("linear").
+		SetConfig(map[string]interface{}{"key": "value"}).
 		SaveX(context.Background())
 
 	// Create a test scan
 	scan := client.Scans.Create().
 		SetPolicyID(policy.ID).
 		SetImage("example-image:latest").
+		SetScanner("trivy").
 		SetStatus("scan_pending").
+		SetIntegrationID(integrations.ID).
 		SaveX(context.Background())
 
 	req := scanlabels.GetScanLabelRequest{

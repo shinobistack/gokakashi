@@ -147,6 +147,11 @@ func (atc *AgentTasksCreate) check() error {
 	if _, ok := atc.mutation.Status(); !ok {
 		return &ValidationError{Name: "status", err: errors.New(`ent: missing required field "AgentTasks.status"`)}
 	}
+	if v, ok := atc.mutation.Status(); ok {
+		if err := agenttasks.StatusValidator(v); err != nil {
+			return &ValidationError{Name: "status", err: fmt.Errorf(`ent: validator failed for field "AgentTasks.status": %w`, err)}
+		}
+	}
 	if _, ok := atc.mutation.CreatedAt(); !ok {
 		return &ValidationError{Name: "created_at", err: errors.New(`ent: missing required field "AgentTasks.created_at"`)}
 	}

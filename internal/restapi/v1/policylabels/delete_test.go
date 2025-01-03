@@ -16,6 +16,7 @@ func TestDeletePolicyLabel_Valid(t *testing.T) {
 	policy := client.Policies.Create().
 		SetName("to-be-deleted-test-policy").
 		SetImage(schema.Image{Registry: "example-registry", Name: "example-name", Tags: []string{"v1.0"}}).
+		SetScanner("trivy").
 		SaveX(context.Background())
 
 	client.PolicyLabels.Create().
@@ -44,6 +45,7 @@ func TestDeletePolicyLabel_NonExistentLabel(t *testing.T) {
 	policy := client.Policies.Create().
 		SetName("to-be-deleted-test-policy").
 		SetImage(schema.Image{Registry: "example-registry", Name: "example-name", Tags: []string{"v1.0"}}).
+		SetScanner("trivy").
 		SaveX(context.Background())
 
 	client.PolicyLabels.Create().

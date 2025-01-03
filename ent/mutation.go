@@ -4,6 +4,7 @@ package ent
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"sync"
@@ -646,7 +647,11 @@ type AgentsMutation struct {
 	op                 Op
 	typ                string
 	id                 *int
+	name               *string
 	status             *string
+	workspace          *string
+	server             *string
+	last_seen          *time.Time
 	clearedFields      map[string]struct{}
 	agent_tasks        map[uuid.UUID]struct{}
 	removedagent_tasks map[uuid.UUID]struct{}
@@ -760,6 +765,55 @@ func (m *AgentsMutation) IDs(ctx context.Context) ([]int, error) {
 	}
 }
 
+// SetName sets the "name" field.
+func (m *AgentsMutation) SetName(s string) {
+	m.name = &s
+}
+
+// Name returns the value of the "name" field in the mutation.
+func (m *AgentsMutation) Name() (r string, exists bool) {
+	v := m.name
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldName returns the old "name" field's value of the Agents entity.
+// If the Agents object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *AgentsMutation) OldName(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldName is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldName requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldName: %w", err)
+	}
+	return oldValue.Name, nil
+}
+
+// ClearName clears the value of the "name" field.
+func (m *AgentsMutation) ClearName() {
+	m.name = nil
+	m.clearedFields[agents.FieldName] = struct{}{}
+}
+
+// NameCleared returns if the "name" field was cleared in this mutation.
+func (m *AgentsMutation) NameCleared() bool {
+	_, ok := m.clearedFields[agents.FieldName]
+	return ok
+}
+
+// ResetName resets all changes to the "name" field.
+func (m *AgentsMutation) ResetName() {
+	m.name = nil
+	delete(m.clearedFields, agents.FieldName)
+}
+
 // SetStatus sets the "status" field.
 func (m *AgentsMutation) SetStatus(s string) {
 	m.status = &s
@@ -794,6 +848,140 @@ func (m *AgentsMutation) OldStatus(ctx context.Context) (v string, err error) {
 // ResetStatus resets all changes to the "status" field.
 func (m *AgentsMutation) ResetStatus() {
 	m.status = nil
+}
+
+// SetWorkspace sets the "workspace" field.
+func (m *AgentsMutation) SetWorkspace(s string) {
+	m.workspace = &s
+}
+
+// Workspace returns the value of the "workspace" field in the mutation.
+func (m *AgentsMutation) Workspace() (r string, exists bool) {
+	v := m.workspace
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldWorkspace returns the old "workspace" field's value of the Agents entity.
+// If the Agents object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *AgentsMutation) OldWorkspace(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldWorkspace is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldWorkspace requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldWorkspace: %w", err)
+	}
+	return oldValue.Workspace, nil
+}
+
+// ClearWorkspace clears the value of the "workspace" field.
+func (m *AgentsMutation) ClearWorkspace() {
+	m.workspace = nil
+	m.clearedFields[agents.FieldWorkspace] = struct{}{}
+}
+
+// WorkspaceCleared returns if the "workspace" field was cleared in this mutation.
+func (m *AgentsMutation) WorkspaceCleared() bool {
+	_, ok := m.clearedFields[agents.FieldWorkspace]
+	return ok
+}
+
+// ResetWorkspace resets all changes to the "workspace" field.
+func (m *AgentsMutation) ResetWorkspace() {
+	m.workspace = nil
+	delete(m.clearedFields, agents.FieldWorkspace)
+}
+
+// SetServer sets the "server" field.
+func (m *AgentsMutation) SetServer(s string) {
+	m.server = &s
+}
+
+// Server returns the value of the "server" field in the mutation.
+func (m *AgentsMutation) Server() (r string, exists bool) {
+	v := m.server
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldServer returns the old "server" field's value of the Agents entity.
+// If the Agents object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *AgentsMutation) OldServer(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldServer is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldServer requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldServer: %w", err)
+	}
+	return oldValue.Server, nil
+}
+
+// ClearServer clears the value of the "server" field.
+func (m *AgentsMutation) ClearServer() {
+	m.server = nil
+	m.clearedFields[agents.FieldServer] = struct{}{}
+}
+
+// ServerCleared returns if the "server" field was cleared in this mutation.
+func (m *AgentsMutation) ServerCleared() bool {
+	_, ok := m.clearedFields[agents.FieldServer]
+	return ok
+}
+
+// ResetServer resets all changes to the "server" field.
+func (m *AgentsMutation) ResetServer() {
+	m.server = nil
+	delete(m.clearedFields, agents.FieldServer)
+}
+
+// SetLastSeen sets the "last_seen" field.
+func (m *AgentsMutation) SetLastSeen(t time.Time) {
+	m.last_seen = &t
+}
+
+// LastSeen returns the value of the "last_seen" field in the mutation.
+func (m *AgentsMutation) LastSeen() (r time.Time, exists bool) {
+	v := m.last_seen
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldLastSeen returns the old "last_seen" field's value of the Agents entity.
+// If the Agents object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *AgentsMutation) OldLastSeen(ctx context.Context) (v time.Time, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldLastSeen is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldLastSeen requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldLastSeen: %w", err)
+	}
+	return oldValue.LastSeen, nil
+}
+
+// ResetLastSeen resets all changes to the "last_seen" field.
+func (m *AgentsMutation) ResetLastSeen() {
+	m.last_seen = nil
 }
 
 // AddAgentTaskIDs adds the "agent_tasks" edge to the AgentTasks entity by ids.
@@ -884,9 +1072,21 @@ func (m *AgentsMutation) Type() string {
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
 func (m *AgentsMutation) Fields() []string {
-	fields := make([]string, 0, 1)
+	fields := make([]string, 0, 5)
+	if m.name != nil {
+		fields = append(fields, agents.FieldName)
+	}
 	if m.status != nil {
 		fields = append(fields, agents.FieldStatus)
+	}
+	if m.workspace != nil {
+		fields = append(fields, agents.FieldWorkspace)
+	}
+	if m.server != nil {
+		fields = append(fields, agents.FieldServer)
+	}
+	if m.last_seen != nil {
+		fields = append(fields, agents.FieldLastSeen)
 	}
 	return fields
 }
@@ -896,8 +1096,16 @@ func (m *AgentsMutation) Fields() []string {
 // schema.
 func (m *AgentsMutation) Field(name string) (ent.Value, bool) {
 	switch name {
+	case agents.FieldName:
+		return m.Name()
 	case agents.FieldStatus:
 		return m.Status()
+	case agents.FieldWorkspace:
+		return m.Workspace()
+	case agents.FieldServer:
+		return m.Server()
+	case agents.FieldLastSeen:
+		return m.LastSeen()
 	}
 	return nil, false
 }
@@ -907,8 +1115,16 @@ func (m *AgentsMutation) Field(name string) (ent.Value, bool) {
 // database failed.
 func (m *AgentsMutation) OldField(ctx context.Context, name string) (ent.Value, error) {
 	switch name {
+	case agents.FieldName:
+		return m.OldName(ctx)
 	case agents.FieldStatus:
 		return m.OldStatus(ctx)
+	case agents.FieldWorkspace:
+		return m.OldWorkspace(ctx)
+	case agents.FieldServer:
+		return m.OldServer(ctx)
+	case agents.FieldLastSeen:
+		return m.OldLastSeen(ctx)
 	}
 	return nil, fmt.Errorf("unknown Agents field %s", name)
 }
@@ -918,12 +1134,40 @@ func (m *AgentsMutation) OldField(ctx context.Context, name string) (ent.Value, 
 // type.
 func (m *AgentsMutation) SetField(name string, value ent.Value) error {
 	switch name {
+	case agents.FieldName:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetName(v)
+		return nil
 	case agents.FieldStatus:
 		v, ok := value.(string)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetStatus(v)
+		return nil
+	case agents.FieldWorkspace:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetWorkspace(v)
+		return nil
+	case agents.FieldServer:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetServer(v)
+		return nil
+	case agents.FieldLastSeen:
+		v, ok := value.(time.Time)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetLastSeen(v)
 		return nil
 	}
 	return fmt.Errorf("unknown Agents field %s", name)
@@ -954,7 +1198,17 @@ func (m *AgentsMutation) AddField(name string, value ent.Value) error {
 // ClearedFields returns all nullable fields that were cleared during this
 // mutation.
 func (m *AgentsMutation) ClearedFields() []string {
-	return nil
+	var fields []string
+	if m.FieldCleared(agents.FieldName) {
+		fields = append(fields, agents.FieldName)
+	}
+	if m.FieldCleared(agents.FieldWorkspace) {
+		fields = append(fields, agents.FieldWorkspace)
+	}
+	if m.FieldCleared(agents.FieldServer) {
+		fields = append(fields, agents.FieldServer)
+	}
+	return fields
 }
 
 // FieldCleared returns a boolean indicating if a field with the given name was
@@ -967,6 +1221,17 @@ func (m *AgentsMutation) FieldCleared(name string) bool {
 // ClearField clears the value of the field with the given name. It returns an
 // error if the field is not defined in the schema.
 func (m *AgentsMutation) ClearField(name string) error {
+	switch name {
+	case agents.FieldName:
+		m.ClearName()
+		return nil
+	case agents.FieldWorkspace:
+		m.ClearWorkspace()
+		return nil
+	case agents.FieldServer:
+		m.ClearServer()
+		return nil
+	}
 	return fmt.Errorf("unknown Agents nullable field %s", name)
 }
 
@@ -974,8 +1239,20 @@ func (m *AgentsMutation) ClearField(name string) error {
 // It returns an error if the field is not defined in the schema.
 func (m *AgentsMutation) ResetField(name string) error {
 	switch name {
+	case agents.FieldName:
+		m.ResetName()
+		return nil
 	case agents.FieldStatus:
 		m.ResetStatus()
+		return nil
+	case agents.FieldWorkspace:
+		m.ResetWorkspace()
+		return nil
+	case agents.FieldServer:
+		m.ResetServer()
+		return nil
+	case agents.FieldLastSeen:
+		m.ResetLastSeen()
 		return nil
 	}
 	return fmt.Errorf("unknown Agents field %s", name)
@@ -1500,6 +1777,9 @@ type IntegrationsMutation struct {
 	_type         *string
 	_config       *map[string]interface{}
 	clearedFields map[string]struct{}
+	scans         map[uuid.UUID]struct{}
+	removedscans  map[uuid.UUID]struct{}
+	clearedscans  bool
 	done          bool
 	oldValue      func(context.Context) (*Integrations, error)
 	predicates    []predicate.Integrations
@@ -1717,6 +1997,60 @@ func (m *IntegrationsMutation) ResetConfig() {
 	m._config = nil
 }
 
+// AddScanIDs adds the "scans" edge to the Scans entity by ids.
+func (m *IntegrationsMutation) AddScanIDs(ids ...uuid.UUID) {
+	if m.scans == nil {
+		m.scans = make(map[uuid.UUID]struct{})
+	}
+	for i := range ids {
+		m.scans[ids[i]] = struct{}{}
+	}
+}
+
+// ClearScans clears the "scans" edge to the Scans entity.
+func (m *IntegrationsMutation) ClearScans() {
+	m.clearedscans = true
+}
+
+// ScansCleared reports if the "scans" edge to the Scans entity was cleared.
+func (m *IntegrationsMutation) ScansCleared() bool {
+	return m.clearedscans
+}
+
+// RemoveScanIDs removes the "scans" edge to the Scans entity by IDs.
+func (m *IntegrationsMutation) RemoveScanIDs(ids ...uuid.UUID) {
+	if m.removedscans == nil {
+		m.removedscans = make(map[uuid.UUID]struct{})
+	}
+	for i := range ids {
+		delete(m.scans, ids[i])
+		m.removedscans[ids[i]] = struct{}{}
+	}
+}
+
+// RemovedScans returns the removed IDs of the "scans" edge to the Scans entity.
+func (m *IntegrationsMutation) RemovedScansIDs() (ids []uuid.UUID) {
+	for id := range m.removedscans {
+		ids = append(ids, id)
+	}
+	return
+}
+
+// ScansIDs returns the "scans" edge IDs in the mutation.
+func (m *IntegrationsMutation) ScansIDs() (ids []uuid.UUID) {
+	for id := range m.scans {
+		ids = append(ids, id)
+	}
+	return
+}
+
+// ResetScans resets all changes to the "scans" edge.
+func (m *IntegrationsMutation) ResetScans() {
+	m.scans = nil
+	m.clearedscans = false
+	m.removedscans = nil
+}
+
 // Where appends a list predicates to the IntegrationsMutation builder.
 func (m *IntegrationsMutation) Where(ps ...predicate.Integrations) {
 	m.predicates = append(m.predicates, ps...)
@@ -1884,49 +2218,85 @@ func (m *IntegrationsMutation) ResetField(name string) error {
 
 // AddedEdges returns all edge names that were set/added in this mutation.
 func (m *IntegrationsMutation) AddedEdges() []string {
-	edges := make([]string, 0, 0)
+	edges := make([]string, 0, 1)
+	if m.scans != nil {
+		edges = append(edges, integrations.EdgeScans)
+	}
 	return edges
 }
 
 // AddedIDs returns all IDs (to other nodes) that were added for the given edge
 // name in this mutation.
 func (m *IntegrationsMutation) AddedIDs(name string) []ent.Value {
+	switch name {
+	case integrations.EdgeScans:
+		ids := make([]ent.Value, 0, len(m.scans))
+		for id := range m.scans {
+			ids = append(ids, id)
+		}
+		return ids
+	}
 	return nil
 }
 
 // RemovedEdges returns all edge names that were removed in this mutation.
 func (m *IntegrationsMutation) RemovedEdges() []string {
-	edges := make([]string, 0, 0)
+	edges := make([]string, 0, 1)
+	if m.removedscans != nil {
+		edges = append(edges, integrations.EdgeScans)
+	}
 	return edges
 }
 
 // RemovedIDs returns all IDs (to other nodes) that were removed for the edge with
 // the given name in this mutation.
 func (m *IntegrationsMutation) RemovedIDs(name string) []ent.Value {
+	switch name {
+	case integrations.EdgeScans:
+		ids := make([]ent.Value, 0, len(m.removedscans))
+		for id := range m.removedscans {
+			ids = append(ids, id)
+		}
+		return ids
+	}
 	return nil
 }
 
 // ClearedEdges returns all edge names that were cleared in this mutation.
 func (m *IntegrationsMutation) ClearedEdges() []string {
-	edges := make([]string, 0, 0)
+	edges := make([]string, 0, 1)
+	if m.clearedscans {
+		edges = append(edges, integrations.EdgeScans)
+	}
 	return edges
 }
 
 // EdgeCleared returns a boolean which indicates if the edge with the given name
 // was cleared in this mutation.
 func (m *IntegrationsMutation) EdgeCleared(name string) bool {
+	switch name {
+	case integrations.EdgeScans:
+		return m.clearedscans
+	}
 	return false
 }
 
 // ClearEdge clears the value of the edge with the given name. It returns an error
 // if that edge is not defined in the schema.
 func (m *IntegrationsMutation) ClearEdge(name string) error {
+	switch name {
+	}
 	return fmt.Errorf("unknown Integrations unique edge %s", name)
 }
 
 // ResetEdge resets all changes to the edge with the given name in this mutation.
 // It returns an error if the edge is not defined in the schema.
 func (m *IntegrationsMutation) ResetEdge(name string) error {
+	switch name {
+	case integrations.EdgeScans:
+		m.ResetScans()
+		return nil
+	}
 	return fmt.Errorf("unknown Integrations edge %s", name)
 }
 
@@ -1938,6 +2308,7 @@ type PoliciesMutation struct {
 	id                   *uuid.UUID
 	name                 *string
 	image                *schema.Image
+	scanner              *string
 	labels               *schema.PolicyLabels
 	trigger              *map[string]interface{}
 	check                *schema.Check
@@ -2127,6 +2498,42 @@ func (m *PoliciesMutation) OldImage(ctx context.Context) (v schema.Image, err er
 // ResetImage resets all changes to the "image" field.
 func (m *PoliciesMutation) ResetImage() {
 	m.image = nil
+}
+
+// SetScanner sets the "scanner" field.
+func (m *PoliciesMutation) SetScanner(s string) {
+	m.scanner = &s
+}
+
+// Scanner returns the value of the "scanner" field in the mutation.
+func (m *PoliciesMutation) Scanner() (r string, exists bool) {
+	v := m.scanner
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldScanner returns the old "scanner" field's value of the Policies entity.
+// If the Policies object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *PoliciesMutation) OldScanner(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldScanner is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldScanner requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldScanner: %w", err)
+	}
+	return oldValue.Scanner, nil
+}
+
+// ResetScanner resets all changes to the "scanner" field.
+func (m *PoliciesMutation) ResetScanner() {
+	m.scanner = nil
 }
 
 // SetLabels sets the "labels" field.
@@ -2418,12 +2825,15 @@ func (m *PoliciesMutation) Type() string {
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
 func (m *PoliciesMutation) Fields() []string {
-	fields := make([]string, 0, 5)
+	fields := make([]string, 0, 6)
 	if m.name != nil {
 		fields = append(fields, policies.FieldName)
 	}
 	if m.image != nil {
 		fields = append(fields, policies.FieldImage)
+	}
+	if m.scanner != nil {
+		fields = append(fields, policies.FieldScanner)
 	}
 	if m.labels != nil {
 		fields = append(fields, policies.FieldLabels)
@@ -2446,6 +2856,8 @@ func (m *PoliciesMutation) Field(name string) (ent.Value, bool) {
 		return m.Name()
 	case policies.FieldImage:
 		return m.Image()
+	case policies.FieldScanner:
+		return m.Scanner()
 	case policies.FieldLabels:
 		return m.Labels()
 	case policies.FieldTrigger:
@@ -2465,6 +2877,8 @@ func (m *PoliciesMutation) OldField(ctx context.Context, name string) (ent.Value
 		return m.OldName(ctx)
 	case policies.FieldImage:
 		return m.OldImage(ctx)
+	case policies.FieldScanner:
+		return m.OldScanner(ctx)
 	case policies.FieldLabels:
 		return m.OldLabels(ctx)
 	case policies.FieldTrigger:
@@ -2493,6 +2907,13 @@ func (m *PoliciesMutation) SetField(name string, value ent.Value) error {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetImage(v)
+		return nil
+	case policies.FieldScanner:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetScanner(v)
 		return nil
 	case policies.FieldLabels:
 		v, ok := value.(schema.PolicyLabels)
@@ -2590,6 +3011,9 @@ func (m *PoliciesMutation) ResetField(name string) error {
 		return nil
 	case policies.FieldImage:
 		m.ResetImage()
+		return nil
+	case policies.FieldScanner:
+		m.ResetScanner()
 		return nil
 	case policies.FieldLabels:
 		m.ResetLabels()
@@ -3693,25 +4117,29 @@ func (m *ScanLabelsMutation) ResetEdge(name string) error {
 // ScansMutation represents an operation that mutates the Scans nodes in the graph.
 type ScansMutation struct {
 	config
-	op                 Op
-	typ                string
-	id                 *uuid.UUID
-	status             *string
-	image              *string
-	check              *schema.Check
-	report             *string
-	clearedFields      map[string]struct{}
-	policy             *uuid.UUID
-	clearedpolicy      bool
-	scan_labels        map[int]struct{}
-	removedscan_labels map[int]struct{}
-	clearedscan_labels bool
-	agent_tasks        map[uuid.UUID]struct{}
-	removedagent_tasks map[uuid.UUID]struct{}
-	clearedagent_tasks bool
-	done               bool
-	oldValue           func(context.Context) (*Scans, error)
-	predicates         []predicate.Scans
+	op                  Op
+	typ                 string
+	id                  *uuid.UUID
+	status              *string
+	image               *string
+	scanner             *string
+	check               *schema.Check
+	report              *json.RawMessage
+	appendreport        json.RawMessage
+	clearedFields       map[string]struct{}
+	policy              *uuid.UUID
+	clearedpolicy       bool
+	integrations        *uuid.UUID
+	clearedintegrations bool
+	scan_labels         map[int]struct{}
+	removedscan_labels  map[int]struct{}
+	clearedscan_labels  bool
+	agent_tasks         map[uuid.UUID]struct{}
+	removedagent_tasks  map[uuid.UUID]struct{}
+	clearedagent_tasks  bool
+	done                bool
+	oldValue            func(context.Context) (*Scans, error)
+	predicates          []predicate.Scans
 }
 
 var _ ent.Mutation = (*ScansMutation)(nil)
@@ -3926,6 +4354,78 @@ func (m *ScansMutation) ResetImage() {
 	m.image = nil
 }
 
+// SetIntegrationID sets the "integration_id" field.
+func (m *ScansMutation) SetIntegrationID(u uuid.UUID) {
+	m.integrations = &u
+}
+
+// IntegrationID returns the value of the "integration_id" field in the mutation.
+func (m *ScansMutation) IntegrationID() (r uuid.UUID, exists bool) {
+	v := m.integrations
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldIntegrationID returns the old "integration_id" field's value of the Scans entity.
+// If the Scans object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *ScansMutation) OldIntegrationID(ctx context.Context) (v uuid.UUID, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldIntegrationID is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldIntegrationID requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldIntegrationID: %w", err)
+	}
+	return oldValue.IntegrationID, nil
+}
+
+// ResetIntegrationID resets all changes to the "integration_id" field.
+func (m *ScansMutation) ResetIntegrationID() {
+	m.integrations = nil
+}
+
+// SetScanner sets the "scanner" field.
+func (m *ScansMutation) SetScanner(s string) {
+	m.scanner = &s
+}
+
+// Scanner returns the value of the "scanner" field in the mutation.
+func (m *ScansMutation) Scanner() (r string, exists bool) {
+	v := m.scanner
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldScanner returns the old "scanner" field's value of the Scans entity.
+// If the Scans object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *ScansMutation) OldScanner(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldScanner is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldScanner requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldScanner: %w", err)
+	}
+	return oldValue.Scanner, nil
+}
+
+// ResetScanner resets all changes to the "scanner" field.
+func (m *ScansMutation) ResetScanner() {
+	m.scanner = nil
+}
+
 // SetCheck sets the "check" field.
 func (m *ScansMutation) SetCheck(s schema.Check) {
 	m.check = &s
@@ -3976,12 +4476,13 @@ func (m *ScansMutation) ResetCheck() {
 }
 
 // SetReport sets the "report" field.
-func (m *ScansMutation) SetReport(s string) {
-	m.report = &s
+func (m *ScansMutation) SetReport(jm json.RawMessage) {
+	m.report = &jm
+	m.appendreport = nil
 }
 
 // Report returns the value of the "report" field in the mutation.
-func (m *ScansMutation) Report() (r string, exists bool) {
+func (m *ScansMutation) Report() (r json.RawMessage, exists bool) {
 	v := m.report
 	if v == nil {
 		return
@@ -3992,7 +4493,7 @@ func (m *ScansMutation) Report() (r string, exists bool) {
 // OldReport returns the old "report" field's value of the Scans entity.
 // If the Scans object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *ScansMutation) OldReport(ctx context.Context) (v string, err error) {
+func (m *ScansMutation) OldReport(ctx context.Context) (v json.RawMessage, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldReport is only allowed on UpdateOne operations")
 	}
@@ -4006,9 +4507,23 @@ func (m *ScansMutation) OldReport(ctx context.Context) (v string, err error) {
 	return oldValue.Report, nil
 }
 
+// AppendReport adds jm to the "report" field.
+func (m *ScansMutation) AppendReport(jm json.RawMessage) {
+	m.appendreport = append(m.appendreport, jm...)
+}
+
+// AppendedReport returns the list of values that were appended to the "report" field in this mutation.
+func (m *ScansMutation) AppendedReport() (json.RawMessage, bool) {
+	if len(m.appendreport) == 0 {
+		return nil, false
+	}
+	return m.appendreport, true
+}
+
 // ClearReport clears the value of the "report" field.
 func (m *ScansMutation) ClearReport() {
 	m.report = nil
+	m.appendreport = nil
 	m.clearedFields[scans.FieldReport] = struct{}{}
 }
 
@@ -4021,6 +4536,7 @@ func (m *ScansMutation) ReportCleared() bool {
 // ResetReport resets all changes to the "report" field.
 func (m *ScansMutation) ResetReport() {
 	m.report = nil
+	m.appendreport = nil
 	delete(m.clearedFields, scans.FieldReport)
 }
 
@@ -4049,6 +4565,46 @@ func (m *ScansMutation) PolicyIDs() (ids []uuid.UUID) {
 func (m *ScansMutation) ResetPolicy() {
 	m.policy = nil
 	m.clearedpolicy = false
+}
+
+// SetIntegrationsID sets the "integrations" edge to the Integrations entity by id.
+func (m *ScansMutation) SetIntegrationsID(id uuid.UUID) {
+	m.integrations = &id
+}
+
+// ClearIntegrations clears the "integrations" edge to the Integrations entity.
+func (m *ScansMutation) ClearIntegrations() {
+	m.clearedintegrations = true
+	m.clearedFields[scans.FieldIntegrationID] = struct{}{}
+}
+
+// IntegrationsCleared reports if the "integrations" edge to the Integrations entity was cleared.
+func (m *ScansMutation) IntegrationsCleared() bool {
+	return m.clearedintegrations
+}
+
+// IntegrationsID returns the "integrations" edge ID in the mutation.
+func (m *ScansMutation) IntegrationsID() (id uuid.UUID, exists bool) {
+	if m.integrations != nil {
+		return *m.integrations, true
+	}
+	return
+}
+
+// IntegrationsIDs returns the "integrations" edge IDs in the mutation.
+// Note that IDs always returns len(IDs) <= 1 for unique edges, and you should use
+// IntegrationsID instead. It exists only for internal usage by the builders.
+func (m *ScansMutation) IntegrationsIDs() (ids []uuid.UUID) {
+	if id := m.integrations; id != nil {
+		ids = append(ids, *id)
+	}
+	return
+}
+
+// ResetIntegrations resets all changes to the "integrations" edge.
+func (m *ScansMutation) ResetIntegrations() {
+	m.integrations = nil
+	m.clearedintegrations = false
 }
 
 // AddScanLabelIDs adds the "scan_labels" edge to the ScanLabels entity by ids.
@@ -4193,7 +4749,7 @@ func (m *ScansMutation) Type() string {
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
 func (m *ScansMutation) Fields() []string {
-	fields := make([]string, 0, 5)
+	fields := make([]string, 0, 7)
 	if m.policy != nil {
 		fields = append(fields, scans.FieldPolicyID)
 	}
@@ -4202,6 +4758,12 @@ func (m *ScansMutation) Fields() []string {
 	}
 	if m.image != nil {
 		fields = append(fields, scans.FieldImage)
+	}
+	if m.integrations != nil {
+		fields = append(fields, scans.FieldIntegrationID)
+	}
+	if m.scanner != nil {
+		fields = append(fields, scans.FieldScanner)
 	}
 	if m.check != nil {
 		fields = append(fields, scans.FieldCheck)
@@ -4223,6 +4785,10 @@ func (m *ScansMutation) Field(name string) (ent.Value, bool) {
 		return m.Status()
 	case scans.FieldImage:
 		return m.Image()
+	case scans.FieldIntegrationID:
+		return m.IntegrationID()
+	case scans.FieldScanner:
+		return m.Scanner()
 	case scans.FieldCheck:
 		return m.Check()
 	case scans.FieldReport:
@@ -4242,6 +4808,10 @@ func (m *ScansMutation) OldField(ctx context.Context, name string) (ent.Value, e
 		return m.OldStatus(ctx)
 	case scans.FieldImage:
 		return m.OldImage(ctx)
+	case scans.FieldIntegrationID:
+		return m.OldIntegrationID(ctx)
+	case scans.FieldScanner:
+		return m.OldScanner(ctx)
 	case scans.FieldCheck:
 		return m.OldCheck(ctx)
 	case scans.FieldReport:
@@ -4276,6 +4846,20 @@ func (m *ScansMutation) SetField(name string, value ent.Value) error {
 		}
 		m.SetImage(v)
 		return nil
+	case scans.FieldIntegrationID:
+		v, ok := value.(uuid.UUID)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetIntegrationID(v)
+		return nil
+	case scans.FieldScanner:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetScanner(v)
+		return nil
 	case scans.FieldCheck:
 		v, ok := value.(schema.Check)
 		if !ok {
@@ -4284,7 +4868,7 @@ func (m *ScansMutation) SetField(name string, value ent.Value) error {
 		m.SetCheck(v)
 		return nil
 	case scans.FieldReport:
-		v, ok := value.(string)
+		v, ok := value.(json.RawMessage)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
@@ -4363,6 +4947,12 @@ func (m *ScansMutation) ResetField(name string) error {
 	case scans.FieldImage:
 		m.ResetImage()
 		return nil
+	case scans.FieldIntegrationID:
+		m.ResetIntegrationID()
+		return nil
+	case scans.FieldScanner:
+		m.ResetScanner()
+		return nil
 	case scans.FieldCheck:
 		m.ResetCheck()
 		return nil
@@ -4375,9 +4965,12 @@ func (m *ScansMutation) ResetField(name string) error {
 
 // AddedEdges returns all edge names that were set/added in this mutation.
 func (m *ScansMutation) AddedEdges() []string {
-	edges := make([]string, 0, 3)
+	edges := make([]string, 0, 4)
 	if m.policy != nil {
 		edges = append(edges, scans.EdgePolicy)
+	}
+	if m.integrations != nil {
+		edges = append(edges, scans.EdgeIntegrations)
 	}
 	if m.scan_labels != nil {
 		edges = append(edges, scans.EdgeScanLabels)
@@ -4394,6 +4987,10 @@ func (m *ScansMutation) AddedIDs(name string) []ent.Value {
 	switch name {
 	case scans.EdgePolicy:
 		if id := m.policy; id != nil {
+			return []ent.Value{*id}
+		}
+	case scans.EdgeIntegrations:
+		if id := m.integrations; id != nil {
 			return []ent.Value{*id}
 		}
 	case scans.EdgeScanLabels:
@@ -4414,7 +5011,7 @@ func (m *ScansMutation) AddedIDs(name string) []ent.Value {
 
 // RemovedEdges returns all edge names that were removed in this mutation.
 func (m *ScansMutation) RemovedEdges() []string {
-	edges := make([]string, 0, 3)
+	edges := make([]string, 0, 4)
 	if m.removedscan_labels != nil {
 		edges = append(edges, scans.EdgeScanLabels)
 	}
@@ -4446,9 +5043,12 @@ func (m *ScansMutation) RemovedIDs(name string) []ent.Value {
 
 // ClearedEdges returns all edge names that were cleared in this mutation.
 func (m *ScansMutation) ClearedEdges() []string {
-	edges := make([]string, 0, 3)
+	edges := make([]string, 0, 4)
 	if m.clearedpolicy {
 		edges = append(edges, scans.EdgePolicy)
+	}
+	if m.clearedintegrations {
+		edges = append(edges, scans.EdgeIntegrations)
 	}
 	if m.clearedscan_labels {
 		edges = append(edges, scans.EdgeScanLabels)
@@ -4465,6 +5065,8 @@ func (m *ScansMutation) EdgeCleared(name string) bool {
 	switch name {
 	case scans.EdgePolicy:
 		return m.clearedpolicy
+	case scans.EdgeIntegrations:
+		return m.clearedintegrations
 	case scans.EdgeScanLabels:
 		return m.clearedscan_labels
 	case scans.EdgeAgentTasks:
@@ -4480,6 +5082,9 @@ func (m *ScansMutation) ClearEdge(name string) error {
 	case scans.EdgePolicy:
 		m.ClearPolicy()
 		return nil
+	case scans.EdgeIntegrations:
+		m.ClearIntegrations()
+		return nil
 	}
 	return fmt.Errorf("unknown Scans unique edge %s", name)
 }
@@ -4490,6 +5095,9 @@ func (m *ScansMutation) ResetEdge(name string) error {
 	switch name {
 	case scans.EdgePolicy:
 		m.ResetPolicy()
+		return nil
+	case scans.EdgeIntegrations:
+		m.ResetIntegrations()
 		return nil
 	case scans.EdgeScanLabels:
 		m.ResetScanLabels()

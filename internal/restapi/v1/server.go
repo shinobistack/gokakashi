@@ -1,10 +1,8 @@
 package v1
 
 import (
-	"context"
 	"encoding/json"
 	"entgo.io/ent/dialect"
-	"fmt"
 	_ "github.com/lib/pq"
 	"github.com/shinobistack/gokakashi/ent"
 	"github.com/shinobistack/gokakashi/internal/restapi/server/middleware"
@@ -87,14 +85,15 @@ func (srv *Server) Service() *web.Service {
 	apiV1.Put("/scans/{scan_id}/labels", usecase.NewInteractor(scanlabels1.UpdateScanLabel(srv.DB)))
 	apiV1.Delete("/scans/{scan_id}/labels/{key}", usecase.NewInteractor(scanlabels1.DeleteScanLabel(srv.DB)))
 
-	apiV1.Post("/agents", usecase.NewInteractor(agents1.CreateAgent(srv.DB)))
-	apiV1.Get("/agents", usecase.NewInteractor(agents1.ListAgents(srv.DB)))
+	apiV1.Post("/agents", usecase.NewInteractor(agents1.RegisterAgent(srv.DB)))
+	apiV1.Get("/agents", usecase.NewInteractor(agents1.PollAgents(srv.DB)))
 	apiV1.Get("/agents/{id}", usecase.NewInteractor(agents1.GetAgent(srv.DB)))
 	apiV1.Put("/agents/{id}", usecase.NewInteractor(agents1.UpdateAgent(srv.DB)))
 	apiV1.Delete("/agents/{id}", usecase.NewInteractor(agents1.DeleteAgent(srv.DB)))
 
 	apiV1.Post("/agents/{agent_id}/tasks", usecase.NewInteractor(agenttasks1.CreateAgentTask(srv.DB)))
 	apiV1.Get("/agents/tasks", usecase.NewInteractor(agenttasks1.ListAgentTasks(srv.DB)))
+	apiV1.Get("/agents/{agent_id}/tasks", usecase.NewInteractor(agenttasks1.ListAgentTasksByAgentID(srv.DB)))
 	apiV1.Get("/agents/{agent_id}/tasks/{id}", usecase.NewInteractor(agenttasks1.GetAgentTask(srv.DB)))
 	apiV1.Put("/agents/{agent_id}/tasks/{id}", usecase.NewInteractor(agenttasks1.UpdateAgentTask(srv.DB)))
 	apiV1.Delete("/agents/{agent_id}/tasks/{id}", usecase.NewInteractor(agenttasks1.DeleteAgentTask(srv.DB)))
@@ -116,22 +115,12 @@ func (srv *Server) Service() *web.Service {
 
 // InitDB defaults to postgres
 func InitDB() *ent.Client {
-	fmt.Println("test: inside InitDB")
 	// ToDo: To take DB connection as input
 	client, err := ent.Open(dialect.Postgres, "host=localhost port=5432 user=postgres password=secret dbname=postgres sslmode=disable")
-
 	if err != nil {
 		log.Fatalf("Failed to connect to database: %v", err)
 	}
-
-	// Automatically run migrations
-	if err := client.Schema.Create(context.Background()); err != nil {
-		log.Fatalf("Failed to create database schema: %v", err)
-	}
-
-	log.Println("Database initialized successfully")
 	return client
-
 }
 
 func specHandler(s *openapi31.Spec) http.Handler {

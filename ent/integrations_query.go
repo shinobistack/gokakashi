@@ -4,6 +4,7 @@ package ent
 
 import (
 	"context"
+	"database/sql/driver"
 	"fmt"
 	"math"
 
@@ -14,6 +15,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/shinobistack/gokakashi/ent/integrations"
 	"github.com/shinobistack/gokakashi/ent/predicate"
+	"github.com/shinobistack/gokakashi/ent/scans"
 )
 
 // IntegrationsQuery is the builder for querying Integrations entities.
@@ -23,6 +25,7 @@ type IntegrationsQuery struct {
 	order      []integrations.OrderOption
 	inters     []Interceptor
 	predicates []predicate.Integrations
+	withScans  *ScansQuery
 	withFKs    bool
 	// intermediate query (i.e. traversal path).
 	sql  *sql.Selector
@@ -58,6 +61,28 @@ func (iq *IntegrationsQuery) Unique(unique bool) *IntegrationsQuery {
 func (iq *IntegrationsQuery) Order(o ...integrations.OrderOption) *IntegrationsQuery {
 	iq.order = append(iq.order, o...)
 	return iq
+}
+
+// QueryScans chains the current query on the "scans" edge.
+func (iq *IntegrationsQuery) QueryScans() *ScansQuery {
+	query := (&ScansClient{config: iq.config}).Query()
+	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
+		if err := iq.prepareQuery(ctx); err != nil {
+			return nil, err
+		}
+		selector := iq.sqlQuery(ctx)
+		if err := selector.Err(); err != nil {
+			return nil, err
+		}
+		step := sqlgraph.NewStep(
+			sqlgraph.From(integrations.Table, integrations.FieldID, selector),
+			sqlgraph.To(scans.Table, scans.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, integrations.ScansTable, integrations.ScansColumn),
+		)
+		fromU = sqlgraph.SetNeighbors(iq.driver.Dialect(), step)
+		return fromU, nil
+	}
+	return query
 }
 
 // First returns the first Integrations entity from the query.
@@ -252,10 +277,22 @@ func (iq *IntegrationsQuery) Clone() *IntegrationsQuery {
 		order:      append([]integrations.OrderOption{}, iq.order...),
 		inters:     append([]Interceptor{}, iq.inters...),
 		predicates: append([]predicate.Integrations{}, iq.predicates...),
+		withScans:  iq.withScans.Clone(),
 		// clone intermediate query.
 		sql:  iq.sql.Clone(),
 		path: iq.path,
 	}
+}
+
+// WithScans tells the query-builder to eager-load the nodes that are connected to
+// the "scans" edge. The optional arguments are used to configure the query builder of the edge.
+func (iq *IntegrationsQuery) WithScans(opts ...func(*ScansQuery)) *IntegrationsQuery {
+	query := (&ScansClient{config: iq.config}).Query()
+	for _, opt := range opts {
+		opt(query)
+	}
+	iq.withScans = query
+	return iq
 }
 
 // GroupBy is used to group vertices by one or more fields/columns.
@@ -334,9 +371,12 @@ func (iq *IntegrationsQuery) prepareQuery(ctx context.Context) error {
 
 func (iq *IntegrationsQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Integrations, error) {
 	var (
-		nodes   = []*Integrations{}
-		withFKs = iq.withFKs
-		_spec   = iq.querySpec()
+		nodes       = []*Integrations{}
+		withFKs     = iq.withFKs
+		_spec       = iq.querySpec()
+		loadedTypes = [1]bool{
+			iq.withScans != nil,
+		}
 	)
 	if withFKs {
 		_spec.Node.Columns = append(_spec.Node.Columns, integrations.ForeignKeys...)
@@ -347,6 +387,7 @@ func (iq *IntegrationsQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]
 	_spec.Assign = func(columns []string, values []any) error {
 		node := &Integrations{config: iq.config}
 		nodes = append(nodes, node)
+		node.Edges.loadedTypes = loadedTypes
 		return node.assignValues(columns, values)
 	}
 	for i := range hooks {
@@ -358,7 +399,45 @@ func (iq *IntegrationsQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]
 	if len(nodes) == 0 {
 		return nodes, nil
 	}
+	if query := iq.withScans; query != nil {
+		if err := iq.loadScans(ctx, query, nodes,
+			func(n *Integrations) { n.Edges.Scans = []*Scans{} },
+			func(n *Integrations, e *Scans) { n.Edges.Scans = append(n.Edges.Scans, e) }); err != nil {
+			return nil, err
+		}
+	}
 	return nodes, nil
+}
+
+func (iq *IntegrationsQuery) loadScans(ctx context.Context, query *ScansQuery, nodes []*Integrations, init func(*Integrations), assign func(*Integrations, *Scans)) error {
+	fks := make([]driver.Value, 0, len(nodes))
+	nodeids := make(map[uuid.UUID]*Integrations)
+	for i := range nodes {
+		fks = append(fks, nodes[i].ID)
+		nodeids[nodes[i].ID] = nodes[i]
+		if init != nil {
+			init(nodes[i])
+		}
+	}
+	if len(query.ctx.Fields) > 0 {
+		query.ctx.AppendFieldOnce(scans.FieldIntegrationID)
+	}
+	query.Where(predicate.Scans(func(s *sql.Selector) {
+		s.Where(sql.InValues(s.C(integrations.ScansColumn), fks...))
+	}))
+	neighbors, err := query.All(ctx)
+	if err != nil {
+		return err
+	}
+	for _, n := range neighbors {
+		fk := n.IntegrationID
+		node, ok := nodeids[fk]
+		if !ok {
+			return fmt.Errorf(`unexpected referenced foreign-key "integration_id" returned %v for node %v`, fk, n.ID)
+		}
+		assign(node, n)
+	}
+	return nil
 }
 
 func (iq *IntegrationsQuery) sqlCount(ctx context.Context) (int, error) {

@@ -35,6 +35,12 @@ func (pc *PoliciesCreate) SetImage(s schema.Image) *PoliciesCreate {
 	return pc
 }
 
+// SetScanner sets the "scanner" field.
+func (pc *PoliciesCreate) SetScanner(s string) *PoliciesCreate {
+	pc.mutation.SetScanner(s)
+	return pc
+}
+
 // SetLabels sets the "labels" field.
 func (pc *PoliciesCreate) SetLabels(sl schema.PolicyLabels) *PoliciesCreate {
 	pc.mutation.SetLabels(sl)
@@ -167,6 +173,9 @@ func (pc *PoliciesCreate) check() error {
 	if _, ok := pc.mutation.Image(); !ok {
 		return &ValidationError{Name: "image", err: errors.New(`ent: missing required field "Policies.image"`)}
 	}
+	if _, ok := pc.mutation.Scanner(); !ok {
+		return &ValidationError{Name: "scanner", err: errors.New(`ent: missing required field "Policies.scanner"`)}
+	}
 	return nil
 }
 
@@ -209,6 +218,10 @@ func (pc *PoliciesCreate) createSpec() (*Policies, *sqlgraph.CreateSpec) {
 	if value, ok := pc.mutation.Image(); ok {
 		_spec.SetField(policies.FieldImage, field.TypeJSON, value)
 		_node.Image = value
+	}
+	if value, ok := pc.mutation.Scanner(); ok {
+		_spec.SetField(policies.FieldScanner, field.TypeString, value)
+		_node.Scanner = value
 	}
 	if value, ok := pc.mutation.Labels(); ok {
 		_spec.SetField(policies.FieldLabels, field.TypeJSON, value)

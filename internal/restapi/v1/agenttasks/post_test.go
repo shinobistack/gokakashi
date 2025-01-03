@@ -19,12 +19,21 @@ func TestCreateAgentTask_Valid(t *testing.T) {
 	policy := client.Policies.Create().
 		SetName("to-be-deleted-test-policy").
 		SetImage(schema.Image{Registry: "example-registry", Name: "example-name", Tags: []string{"v1.0"}}).
+		SetScanner("trivy").
+		SaveX(context.Background())
+
+	integrations := client.Integrations.Create().
+		SetName("integration").
+		SetType("linear").
+		SetConfig(map[string]interface{}{"key": "value"}).
 		SaveX(context.Background())
 
 	scan := client.Scans.Create().
 		SetPolicyID(policy.ID).
 		SetImage("example-image:latest").
+		SetScanner(policy.Scanner).
 		SetStatus("scan_pending").
+		SetIntegrationID(integrations.ID).
 		SaveX(context.Background())
 
 	agent := client.Agents.Create().

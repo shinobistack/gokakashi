@@ -6,6 +6,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"time"
 
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
@@ -21,6 +22,20 @@ type AgentsCreate struct {
 	hooks    []Hook
 }
 
+// SetName sets the "name" field.
+func (ac *AgentsCreate) SetName(s string) *AgentsCreate {
+	ac.mutation.SetName(s)
+	return ac
+}
+
+// SetNillableName sets the "name" field if the given value is not nil.
+func (ac *AgentsCreate) SetNillableName(s *string) *AgentsCreate {
+	if s != nil {
+		ac.SetName(*s)
+	}
+	return ac
+}
+
 // SetStatus sets the "status" field.
 func (ac *AgentsCreate) SetStatus(s string) *AgentsCreate {
 	ac.mutation.SetStatus(s)
@@ -31,6 +46,48 @@ func (ac *AgentsCreate) SetStatus(s string) *AgentsCreate {
 func (ac *AgentsCreate) SetNillableStatus(s *string) *AgentsCreate {
 	if s != nil {
 		ac.SetStatus(*s)
+	}
+	return ac
+}
+
+// SetWorkspace sets the "workspace" field.
+func (ac *AgentsCreate) SetWorkspace(s string) *AgentsCreate {
+	ac.mutation.SetWorkspace(s)
+	return ac
+}
+
+// SetNillableWorkspace sets the "workspace" field if the given value is not nil.
+func (ac *AgentsCreate) SetNillableWorkspace(s *string) *AgentsCreate {
+	if s != nil {
+		ac.SetWorkspace(*s)
+	}
+	return ac
+}
+
+// SetServer sets the "server" field.
+func (ac *AgentsCreate) SetServer(s string) *AgentsCreate {
+	ac.mutation.SetServer(s)
+	return ac
+}
+
+// SetNillableServer sets the "server" field if the given value is not nil.
+func (ac *AgentsCreate) SetNillableServer(s *string) *AgentsCreate {
+	if s != nil {
+		ac.SetServer(*s)
+	}
+	return ac
+}
+
+// SetLastSeen sets the "last_seen" field.
+func (ac *AgentsCreate) SetLastSeen(t time.Time) *AgentsCreate {
+	ac.mutation.SetLastSeen(t)
+	return ac
+}
+
+// SetNillableLastSeen sets the "last_seen" field if the given value is not nil.
+func (ac *AgentsCreate) SetNillableLastSeen(t *time.Time) *AgentsCreate {
+	if t != nil {
+		ac.SetLastSeen(*t)
 	}
 	return ac
 }
@@ -95,12 +152,24 @@ func (ac *AgentsCreate) defaults() {
 		v := agents.DefaultStatus
 		ac.mutation.SetStatus(v)
 	}
+	if _, ok := ac.mutation.LastSeen(); !ok {
+		v := agents.DefaultLastSeen()
+		ac.mutation.SetLastSeen(v)
+	}
 }
 
 // check runs all checks and user-defined validators on the builder.
 func (ac *AgentsCreate) check() error {
 	if _, ok := ac.mutation.Status(); !ok {
 		return &ValidationError{Name: "status", err: errors.New(`ent: missing required field "Agents.status"`)}
+	}
+	if v, ok := ac.mutation.Status(); ok {
+		if err := agents.StatusValidator(v); err != nil {
+			return &ValidationError{Name: "status", err: fmt.Errorf(`ent: validator failed for field "Agents.status": %w`, err)}
+		}
+	}
+	if _, ok := ac.mutation.LastSeen(); !ok {
+		return &ValidationError{Name: "last_seen", err: errors.New(`ent: missing required field "Agents.last_seen"`)}
 	}
 	return nil
 }
@@ -134,9 +203,25 @@ func (ac *AgentsCreate) createSpec() (*Agents, *sqlgraph.CreateSpec) {
 		_node.ID = id
 		_spec.ID.Value = id
 	}
+	if value, ok := ac.mutation.Name(); ok {
+		_spec.SetField(agents.FieldName, field.TypeString, value)
+		_node.Name = value
+	}
 	if value, ok := ac.mutation.Status(); ok {
 		_spec.SetField(agents.FieldStatus, field.TypeString, value)
 		_node.Status = value
+	}
+	if value, ok := ac.mutation.Workspace(); ok {
+		_spec.SetField(agents.FieldWorkspace, field.TypeString, value)
+		_node.Workspace = value
+	}
+	if value, ok := ac.mutation.Server(); ok {
+		_spec.SetField(agents.FieldServer, field.TypeString, value)
+		_node.Server = value
+	}
+	if value, ok := ac.mutation.LastSeen(); ok {
+		_spec.SetField(agents.FieldLastSeen, field.TypeTime, value)
+		_node.LastSeen = value
 	}
 	if nodes := ac.mutation.AgentTasksIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{

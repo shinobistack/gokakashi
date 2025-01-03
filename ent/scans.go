@@ -10,6 +10,7 @@ import (
 	"entgo.io/ent"
 	"entgo.io/ent/dialect/sql"
 	"github.com/google/uuid"
+	"github.com/shinobistack/gokakashi/ent/integrations"
 	"github.com/shinobistack/gokakashi/ent/policies"
 	"github.com/shinobistack/gokakashi/ent/scans"
 	"github.com/shinobistack/gokakashi/ent/schema"
@@ -27,10 +28,14 @@ type Scans struct {
 	Status string `json:"status,omitempty"`
 	// Details of the image being scanned.
 	Image string `json:"image,omitempty"`
+	// Foreign key to Integrations.ID
+	IntegrationID uuid.UUID `json:"integration_id,omitempty"`
+	// Scanners like Trivy.
+	Scanner string `json:"scanner,omitempty"`
 	// Conditions checked during the scan.
 	Check schema.Check `json:"check,omitempty"`
-	// Stores the scan results or report.
-	Report string `json:"report,omitempty"`
+	// Stores the scan results.
+	Report json.RawMessage `json:"report,omitempty"`
 	// Edges holds the relations/edges for other nodes in the graph.
 	// The values are being populated by the ScansQuery when eager-loading is set.
 	Edges        ScansEdges `json:"edges"`
@@ -41,13 +46,15 @@ type Scans struct {
 type ScansEdges struct {
 	// Policy holds the value of the policy edge.
 	Policy *Policies `json:"policy,omitempty"`
+	// Integrations holds the value of the integrations edge.
+	Integrations *Integrations `json:"integrations,omitempty"`
 	// ScanLabels holds the value of the scan_labels edge.
 	ScanLabels []*ScanLabels `json:"scan_labels,omitempty"`
 	// AgentTasks holds the value of the agent_tasks edge.
 	AgentTasks []*AgentTasks `json:"agent_tasks,omitempty"`
 	// loadedTypes holds the information for reporting if a
 	// type was loaded (or requested) in eager-loading or not.
-	loadedTypes [3]bool
+	loadedTypes [4]bool
 }
 
 // PolicyOrErr returns the Policy value or an error if the edge
@@ -61,10 +68,21 @@ func (e ScansEdges) PolicyOrErr() (*Policies, error) {
 	return nil, &NotLoadedError{edge: "policy"}
 }
 
+// IntegrationsOrErr returns the Integrations value or an error if the edge
+// was not loaded in eager-loading, or loaded but was not found.
+func (e ScansEdges) IntegrationsOrErr() (*Integrations, error) {
+	if e.Integrations != nil {
+		return e.Integrations, nil
+	} else if e.loadedTypes[1] {
+		return nil, &NotFoundError{label: integrations.Label}
+	}
+	return nil, &NotLoadedError{edge: "integrations"}
+}
+
 // ScanLabelsOrErr returns the ScanLabels value or an error if the edge
 // was not loaded in eager-loading.
 func (e ScansEdges) ScanLabelsOrErr() ([]*ScanLabels, error) {
-	if e.loadedTypes[1] {
+	if e.loadedTypes[2] {
 		return e.ScanLabels, nil
 	}
 	return nil, &NotLoadedError{edge: "scan_labels"}
@@ -73,7 +91,7 @@ func (e ScansEdges) ScanLabelsOrErr() ([]*ScanLabels, error) {
 // AgentTasksOrErr returns the AgentTasks value or an error if the edge
 // was not loaded in eager-loading.
 func (e ScansEdges) AgentTasksOrErr() ([]*AgentTasks, error) {
-	if e.loadedTypes[2] {
+	if e.loadedTypes[3] {
 		return e.AgentTasks, nil
 	}
 	return nil, &NotLoadedError{edge: "agent_tasks"}
@@ -84,11 +102,11 @@ func (*Scans) scanValues(columns []string) ([]any, error) {
 	values := make([]any, len(columns))
 	for i := range columns {
 		switch columns[i] {
-		case scans.FieldCheck:
+		case scans.FieldCheck, scans.FieldReport:
 			values[i] = new([]byte)
-		case scans.FieldStatus, scans.FieldImage, scans.FieldReport:
+		case scans.FieldStatus, scans.FieldImage, scans.FieldScanner:
 			values[i] = new(sql.NullString)
-		case scans.FieldID, scans.FieldPolicyID:
+		case scans.FieldID, scans.FieldPolicyID, scans.FieldIntegrationID:
 			values[i] = new(uuid.UUID)
 		default:
 			values[i] = new(sql.UnknownType)
@@ -129,6 +147,18 @@ func (s *Scans) assignValues(columns []string, values []any) error {
 			} else if value.Valid {
 				s.Image = value.String
 			}
+		case scans.FieldIntegrationID:
+			if value, ok := values[i].(*uuid.UUID); !ok {
+				return fmt.Errorf("unexpected type %T for field integration_id", values[i])
+			} else if value != nil {
+				s.IntegrationID = *value
+			}
+		case scans.FieldScanner:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field scanner", values[i])
+			} else if value.Valid {
+				s.Scanner = value.String
+			}
 		case scans.FieldCheck:
 			if value, ok := values[i].(*[]byte); !ok {
 				return fmt.Errorf("unexpected type %T for field check", values[i])
@@ -138,10 +168,12 @@ func (s *Scans) assignValues(columns []string, values []any) error {
 				}
 			}
 		case scans.FieldReport:
-			if value, ok := values[i].(*sql.NullString); !ok {
+			if value, ok := values[i].(*[]byte); !ok {
 				return fmt.Errorf("unexpected type %T for field report", values[i])
-			} else if value.Valid {
-				s.Report = value.String
+			} else if value != nil && len(*value) > 0 {
+				if err := json.Unmarshal(*value, &s.Report); err != nil {
+					return fmt.Errorf("unmarshal field report: %w", err)
+				}
 			}
 		default:
 			s.selectValues.Set(columns[i], values[i])
@@ -159,6 +191,11 @@ func (s *Scans) Value(name string) (ent.Value, error) {
 // QueryPolicy queries the "policy" edge of the Scans entity.
 func (s *Scans) QueryPolicy() *PoliciesQuery {
 	return NewScansClient(s.config).QueryPolicy(s)
+}
+
+// QueryIntegrations queries the "integrations" edge of the Scans entity.
+func (s *Scans) QueryIntegrations() *IntegrationsQuery {
+	return NewScansClient(s.config).QueryIntegrations(s)
 }
 
 // QueryScanLabels queries the "scan_labels" edge of the Scans entity.
@@ -203,11 +240,17 @@ func (s *Scans) String() string {
 	builder.WriteString("image=")
 	builder.WriteString(s.Image)
 	builder.WriteString(", ")
+	builder.WriteString("integration_id=")
+	builder.WriteString(fmt.Sprintf("%v", s.IntegrationID))
+	builder.WriteString(", ")
+	builder.WriteString("scanner=")
+	builder.WriteString(s.Scanner)
+	builder.WriteString(", ")
 	builder.WriteString("check=")
 	builder.WriteString(fmt.Sprintf("%v", s.Check))
 	builder.WriteString(", ")
 	builder.WriteString("report=")
-	builder.WriteString(s.Report)
+	builder.WriteString(fmt.Sprintf("%v", s.Report))
 	builder.WriteByte(')')
 	return builder.String()
 }

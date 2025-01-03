@@ -17,6 +17,8 @@ const (
 	FieldName = "name"
 	// FieldImage holds the string denoting the image field in the database.
 	FieldImage = "image"
+	// FieldScanner holds the string denoting the scanner field in the database.
+	FieldScanner = "scanner"
 	// FieldLabels holds the string denoting the labels field in the database.
 	FieldLabels = "labels"
 	// FieldTrigger holds the string denoting the trigger field in the database.
@@ -50,6 +52,7 @@ var Columns = []string{
 	FieldID,
 	FieldName,
 	FieldImage,
+	FieldScanner,
 	FieldLabels,
 	FieldTrigger,
 	FieldCheck,
@@ -83,6 +86,11 @@ func ByID(opts ...sql.OrderTermOption) OrderOption {
 // ByName orders the results by the name field.
 func ByName(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldName, opts...).ToFunc()
+}
+
+// ByScanner orders the results by the scanner field.
+func ByScanner(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldScanner, opts...).ToFunc()
 }
 
 // ByPolicyLabelsCount orders the results by policy_labels count.

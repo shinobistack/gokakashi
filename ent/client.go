@@ -835,6 +835,22 @@ func (c *IntegrationsClient) GetX(ctx context.Context, id uuid.UUID) *Integratio
 	return obj
 }
 
+// QueryScans queries the scans edge of a Integrations.
+func (c *IntegrationsClient) QueryScans(i *Integrations) *ScansQuery {
+	query := (&ScansClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := i.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(integrations.Table, integrations.FieldID, id),
+			sqlgraph.To(scans.Table, scans.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, integrations.ScansTable, integrations.ScansColumn),
+		)
+		fromV = sqlgraph.Neighbors(i.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
 // Hooks returns the client hooks.
 func (c *IntegrationsClient) Hooks() []Hook {
 	return c.hooks.Integrations
@@ -1440,6 +1456,22 @@ func (c *ScansClient) QueryPolicy(s *Scans) *PoliciesQuery {
 			sqlgraph.From(scans.Table, scans.FieldID, id),
 			sqlgraph.To(policies.Table, policies.FieldID),
 			sqlgraph.Edge(sqlgraph.M2O, true, scans.PolicyTable, scans.PolicyColumn),
+		)
+		fromV = sqlgraph.Neighbors(s.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryIntegrations queries the integrations edge of a Scans.
+func (c *ScansClient) QueryIntegrations(s *Scans) *IntegrationsQuery {
+	query := (&IntegrationsClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := s.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(scans.Table, scans.FieldID, id),
+			sqlgraph.To(integrations.Table, integrations.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, true, scans.IntegrationsTable, scans.IntegrationsColumn),
 		)
 		fromV = sqlgraph.Neighbors(s.driver.Dialect(), step)
 		return fromV, nil

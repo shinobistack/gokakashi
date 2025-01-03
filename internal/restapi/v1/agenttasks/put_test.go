@@ -19,12 +19,21 @@ func TestUpdateAgentTask_Valid(t *testing.T) {
 	policy := client.Policies.Create().
 		SetName("to-be-deleted-test-policy").
 		SetImage(schema.Image{Registry: "example-registry", Name: "example-name", Tags: []string{"v1.0"}}).
+		SetScanner("trivy").
+		SaveX(context.Background())
+
+	integrations := client.Integrations.Create().
+		SetName("integration").
+		SetType("linear").
+		SetConfig(map[string]interface{}{"key": "value"}).
 		SaveX(context.Background())
 
 	scan := client.Scans.Create().
 		SetPolicyID(policy.ID).
 		SetImage("example-image:latest").
 		SetStatus("scan_pending").
+		SetScanner(policy.Scanner).
+		SetIntegrationID(integrations.ID).
 		SaveX(context.Background())
 
 	agent := client.Agents.Create().
@@ -39,15 +48,15 @@ func TestUpdateAgentTask_Valid(t *testing.T) {
 
 	req := agenttasks.UpdateAgentTaskRequest{
 		ID:      task.ID,
-		AgentID: agent.ID,
-		Status:  "in_progress",
+		AgentID: intPtr(agent.ID),
+		Status:  strPtr("in_progress"),
 	}
 	res := &agenttasks.UpdateAgentTaskResponse{}
 
 	err := agenttasks.UpdateAgentTask(client)(context.Background(), req, res)
 
 	assert.NoError(t, err)
-	assert.Equal(t, req.Status, res.Status)
+	assert.Equal(t, "in_progress", res.Status)
 }
 
 func TestUpdateAgentTask_NotFound(t *testing.T) {
@@ -56,7 +65,7 @@ func TestUpdateAgentTask_NotFound(t *testing.T) {
 
 	req := agenttasks.UpdateAgentTaskRequest{
 		ID:     uuid.New(), // Non-existent ID
-		Status: "in_progress",
+		Status: strPtr("in_progress"),
 	}
 	res := &agenttasks.UpdateAgentTaskResponse{}
 
@@ -64,4 +73,12 @@ func TestUpdateAgentTask_NotFound(t *testing.T) {
 
 	assert.Error(t, err)
 	assert.Contains(t, err.Error(), "agent task not found")
+}
+
+func strPtr(s string) *string {
+	return &s
+}
+
+func intPtr(i int) *int {
+	return &i
 }

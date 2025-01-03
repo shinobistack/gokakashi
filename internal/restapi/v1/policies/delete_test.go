@@ -20,6 +20,7 @@ func TestDeletePolicy_ValidDeletion(t *testing.T) {
 	policy := client.Policies.Create().
 		SetName("to-be-deleted-test-policy").
 		SetImage(schema.Image{Registry: "example-registry", Name: "example-name", Tags: []string{"v1.0"}}).
+		SetScanner("trivy").
 		SaveX(context.Background())
 	req := policies.DeletePolicyRequest{ID: policy.ID}
 	res := &policies.DeletePolicyResponse{}

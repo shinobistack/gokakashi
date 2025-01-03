@@ -10,8 +10,10 @@ import (
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
+	"github.com/google/uuid"
 	"github.com/shinobistack/gokakashi/ent/integrations"
 	"github.com/shinobistack/gokakashi/ent/predicate"
+	"github.com/shinobistack/gokakashi/ent/scans"
 )
 
 // IntegrationsUpdate is the builder for updating Integrations entities.
@@ -61,9 +63,45 @@ func (iu *IntegrationsUpdate) SetConfig(m map[string]interface{}) *IntegrationsU
 	return iu
 }
 
+// AddScanIDs adds the "scans" edge to the Scans entity by IDs.
+func (iu *IntegrationsUpdate) AddScanIDs(ids ...uuid.UUID) *IntegrationsUpdate {
+	iu.mutation.AddScanIDs(ids...)
+	return iu
+}
+
+// AddScans adds the "scans" edges to the Scans entity.
+func (iu *IntegrationsUpdate) AddScans(s ...*Scans) *IntegrationsUpdate {
+	ids := make([]uuid.UUID, len(s))
+	for i := range s {
+		ids[i] = s[i].ID
+	}
+	return iu.AddScanIDs(ids...)
+}
+
 // Mutation returns the IntegrationsMutation object of the builder.
 func (iu *IntegrationsUpdate) Mutation() *IntegrationsMutation {
 	return iu.mutation
+}
+
+// ClearScans clears all "scans" edges to the Scans entity.
+func (iu *IntegrationsUpdate) ClearScans() *IntegrationsUpdate {
+	iu.mutation.ClearScans()
+	return iu
+}
+
+// RemoveScanIDs removes the "scans" edge to Scans entities by IDs.
+func (iu *IntegrationsUpdate) RemoveScanIDs(ids ...uuid.UUID) *IntegrationsUpdate {
+	iu.mutation.RemoveScanIDs(ids...)
+	return iu
+}
+
+// RemoveScans removes "scans" edges to Scans entities.
+func (iu *IntegrationsUpdate) RemoveScans(s ...*Scans) *IntegrationsUpdate {
+	ids := make([]uuid.UUID, len(s))
+	for i := range s {
+		ids[i] = s[i].ID
+	}
+	return iu.RemoveScanIDs(ids...)
 }
 
 // Save executes the query and returns the number of nodes affected by the update operation.
@@ -129,6 +167,51 @@ func (iu *IntegrationsUpdate) sqlSave(ctx context.Context) (n int, err error) {
 	if value, ok := iu.mutation.Config(); ok {
 		_spec.SetField(integrations.FieldConfig, field.TypeJSON, value)
 	}
+	if iu.mutation.ScansCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   integrations.ScansTable,
+			Columns: []string{integrations.ScansColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(scans.FieldID, field.TypeUUID),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := iu.mutation.RemovedScansIDs(); len(nodes) > 0 && !iu.mutation.ScansCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   integrations.ScansTable,
+			Columns: []string{integrations.ScansColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(scans.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := iu.mutation.ScansIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   integrations.ScansTable,
+			Columns: []string{integrations.ScansColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(scans.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
 	if n, err = sqlgraph.UpdateNodes(ctx, iu.driver, _spec); err != nil {
 		if _, ok := err.(*sqlgraph.NotFoundError); ok {
 			err = &NotFoundError{integrations.Label}
@@ -183,9 +266,45 @@ func (iuo *IntegrationsUpdateOne) SetConfig(m map[string]interface{}) *Integrati
 	return iuo
 }
 
+// AddScanIDs adds the "scans" edge to the Scans entity by IDs.
+func (iuo *IntegrationsUpdateOne) AddScanIDs(ids ...uuid.UUID) *IntegrationsUpdateOne {
+	iuo.mutation.AddScanIDs(ids...)
+	return iuo
+}
+
+// AddScans adds the "scans" edges to the Scans entity.
+func (iuo *IntegrationsUpdateOne) AddScans(s ...*Scans) *IntegrationsUpdateOne {
+	ids := make([]uuid.UUID, len(s))
+	for i := range s {
+		ids[i] = s[i].ID
+	}
+	return iuo.AddScanIDs(ids...)
+}
+
 // Mutation returns the IntegrationsMutation object of the builder.
 func (iuo *IntegrationsUpdateOne) Mutation() *IntegrationsMutation {
 	return iuo.mutation
+}
+
+// ClearScans clears all "scans" edges to the Scans entity.
+func (iuo *IntegrationsUpdateOne) ClearScans() *IntegrationsUpdateOne {
+	iuo.mutation.ClearScans()
+	return iuo
+}
+
+// RemoveScanIDs removes the "scans" edge to Scans entities by IDs.
+func (iuo *IntegrationsUpdateOne) RemoveScanIDs(ids ...uuid.UUID) *IntegrationsUpdateOne {
+	iuo.mutation.RemoveScanIDs(ids...)
+	return iuo
+}
+
+// RemoveScans removes "scans" edges to Scans entities.
+func (iuo *IntegrationsUpdateOne) RemoveScans(s ...*Scans) *IntegrationsUpdateOne {
+	ids := make([]uuid.UUID, len(s))
+	for i := range s {
+		ids[i] = s[i].ID
+	}
+	return iuo.RemoveScanIDs(ids...)
 }
 
 // Where appends a list predicates to the IntegrationsUpdate builder.
@@ -280,6 +399,51 @@ func (iuo *IntegrationsUpdateOne) sqlSave(ctx context.Context) (_node *Integrati
 	}
 	if value, ok := iuo.mutation.Config(); ok {
 		_spec.SetField(integrations.FieldConfig, field.TypeJSON, value)
+	}
+	if iuo.mutation.ScansCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   integrations.ScansTable,
+			Columns: []string{integrations.ScansColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(scans.FieldID, field.TypeUUID),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := iuo.mutation.RemovedScansIDs(); len(nodes) > 0 && !iuo.mutation.ScansCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   integrations.ScansTable,
+			Columns: []string{integrations.ScansColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(scans.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := iuo.mutation.ScansIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   integrations.ScansTable,
+			Columns: []string{integrations.ScansColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(scans.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
 	_node = &Integrations{config: iuo.config}
 	_spec.Assign = _node.assignValues

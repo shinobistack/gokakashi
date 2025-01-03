@@ -3,6 +3,7 @@ package imgscan
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/shinobistack/gokakashi/pkg/scanner/v0"
 	"log"
 	"os"
 	"path/filepath"
@@ -10,7 +11,6 @@ import (
 	"sync"
 
 	"github.com/shinobistack/gokakashi/internal/config/v0"
-	"github.com/shinobistack/gokakashi/pkg/scanner"
 	"github.com/shinobistack/gokakashi/pkg/utils"
 )
 

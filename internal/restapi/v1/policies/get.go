@@ -19,6 +19,7 @@ type GetPolicyRequests struct {
 type GetPolicyResponse struct {
 	ID      uuid.UUID              `json:"id"`
 	Name    string                 `json:"name"`
+	Scanner string                 `json:"scanner"`
 	Image   schema.Image           `json:"image"`
 	Labels  []schema.PolicyLabel   `json:"labels"`
 	Trigger map[string]interface{} `json:"trigger,omitempty"`
@@ -53,6 +54,7 @@ func ListPolicies(client *ent.Client) func(ctx context.Context, req ListPolicies
 				ID:      policy.ID,
 				Name:    policy.Name,
 				Image:   policy.Image,
+				Scanner: policy.Scanner,
 				Labels:  labels,
 				Trigger: policy.Trigger,
 				Check:   convertToPointer(policy.Check),
@@ -91,6 +93,7 @@ func GetPolicy(client *ent.Client) func(ctx context.Context, req GetPolicyReques
 		res.ID = policy.ID
 		res.Name = policy.Name
 		res.Image = policy.Image
+		res.Scanner = policy.Scanner
 		res.Labels = labels
 		res.Trigger = policy.Trigger
 		res.Check = convertToPointer(policy.Check)

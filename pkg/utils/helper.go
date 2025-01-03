@@ -2,6 +2,8 @@ package utils
 
 import (
 	"fmt"
+	v02 "github.com/shinobistack/gokakashi/pkg/registry/v0"
+	v03 "github.com/shinobistack/gokakashi/pkg/scanner/v0"
 	"log"
 	"os"
 	"path/filepath"
@@ -10,8 +12,6 @@ import (
 	"github.com/shinobistack/gokakashi/notifier"
 
 	v0 "github.com/shinobistack/gokakashi/internal/config/v0"
-	"github.com/shinobistack/gokakashi/pkg/registry"
-	"github.com/shinobistack/gokakashi/pkg/scanner"
 )
 
 const reportsRootDir = "reports/"
@@ -19,9 +19,9 @@ const reportsRootDir = "reports/"
 // Todo: to re-arrange and restructure
 
 // InitializeRegistry initializes the Docker registry and performs login if necessary.
-func InitializeRegistry(target v0.ScanTarget) (registry.Registry, error) {
+func InitializeRegistry(target v0.ScanTarget) (v02.Registry, error) {
 	log.Printf("Initializing registry: %s", target.Registry)
-	reg, err := registry.NewRegistry(target.Registry)
+	reg, err := v02.NewRegistry(target.Registry)
 	if err != nil {
 		return nil, fmt.Errorf("failed to initialize registry: %v", err)
 	}
@@ -35,7 +35,7 @@ func InitializeRegistry(target v0.ScanTarget) (registry.Registry, error) {
 }
 
 // PullAndScanImage pulls the Docker image and runs the scan using Trivy.
-func PullAndScanImage(reg registry.Registry, image v0.Image, tag string, severityLevels []string) (string, []notifier.Vulnerability, error) {
+func PullAndScanImage(reg v02.Registry, image v0.Image, tag string, severityLevels []string) (string, []notifier.Vulnerability, error) {
 	imageWithTag := fmt.Sprintf("%s:%s", image.Name, tag)
 	log.Printf("Pulling and scanning image: %s", imageWithTag)
 
@@ -46,7 +46,7 @@ func PullAndScanImage(reg registry.Registry, image v0.Image, tag string, severit
 
 	// ToDo: refurb the scanner
 	// Initialize the scanner (Trivy)
-	trivyScanner := scanner.NewTrivyScanner()
+	trivyScanner := v03.NewTrivyScanner()
 
 	// Scan the Docker image using Trivy
 	report, vulnerabilities, err := trivyScanner.ScanImage(imageWithTag, severityLevels)

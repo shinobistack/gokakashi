@@ -128,6 +128,11 @@ func (atu *AgentTasksUpdate) ExecX(ctx context.Context) {
 
 // check runs all checks and user-defined validators on the builder.
 func (atu *AgentTasksUpdate) check() error {
+	if v, ok := atu.mutation.Status(); ok {
+		if err := agenttasks.StatusValidator(v); err != nil {
+			return &ValidationError{Name: "status", err: fmt.Errorf(`ent: validator failed for field "AgentTasks.status": %w`, err)}
+		}
+	}
 	if atu.mutation.AgentCleared() && len(atu.mutation.AgentIDs()) > 0 {
 		return errors.New(`ent: clearing a required unique edge "AgentTasks.agent"`)
 	}
@@ -341,6 +346,11 @@ func (atuo *AgentTasksUpdateOne) ExecX(ctx context.Context) {
 
 // check runs all checks and user-defined validators on the builder.
 func (atuo *AgentTasksUpdateOne) check() error {
+	if v, ok := atuo.mutation.Status(); ok {
+		if err := agenttasks.StatusValidator(v); err != nil {
+			return &ValidationError{Name: "status", err: fmt.Errorf(`ent: validator failed for field "AgentTasks.status": %w`, err)}
+		}
+	}
 	if atuo.mutation.AgentCleared() && len(atuo.mutation.AgentIDs()) > 0 {
 		return errors.New(`ent: clearing a required unique edge "AgentTasks.agent"`)
 	}

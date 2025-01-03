@@ -59,6 +59,20 @@ func (pu *PoliciesUpdate) SetNillableImage(s *schema.Image) *PoliciesUpdate {
 	return pu
 }
 
+// SetScanner sets the "scanner" field.
+func (pu *PoliciesUpdate) SetScanner(s string) *PoliciesUpdate {
+	pu.mutation.SetScanner(s)
+	return pu
+}
+
+// SetNillableScanner sets the "scanner" field if the given value is not nil.
+func (pu *PoliciesUpdate) SetNillableScanner(s *string) *PoliciesUpdate {
+	if s != nil {
+		pu.SetScanner(*s)
+	}
+	return pu
+}
+
 // SetLabels sets the "labels" field.
 func (pu *PoliciesUpdate) SetLabels(sl schema.PolicyLabels) *PoliciesUpdate {
 	pu.mutation.SetLabels(sl)
@@ -243,6 +257,9 @@ func (pu *PoliciesUpdate) sqlSave(ctx context.Context) (n int, err error) {
 	if value, ok := pu.mutation.Image(); ok {
 		_spec.SetField(policies.FieldImage, field.TypeJSON, value)
 	}
+	if value, ok := pu.mutation.Scanner(); ok {
+		_spec.SetField(policies.FieldScanner, field.TypeString, value)
+	}
 	if value, ok := pu.mutation.Labels(); ok {
 		_spec.SetField(policies.FieldLabels, field.TypeJSON, value)
 	}
@@ -395,6 +412,20 @@ func (puo *PoliciesUpdateOne) SetImage(s schema.Image) *PoliciesUpdateOne {
 func (puo *PoliciesUpdateOne) SetNillableImage(s *schema.Image) *PoliciesUpdateOne {
 	if s != nil {
 		puo.SetImage(*s)
+	}
+	return puo
+}
+
+// SetScanner sets the "scanner" field.
+func (puo *PoliciesUpdateOne) SetScanner(s string) *PoliciesUpdateOne {
+	puo.mutation.SetScanner(s)
+	return puo
+}
+
+// SetNillableScanner sets the "scanner" field if the given value is not nil.
+func (puo *PoliciesUpdateOne) SetNillableScanner(s *string) *PoliciesUpdateOne {
+	if s != nil {
+		puo.SetScanner(*s)
 	}
 	return puo
 }
@@ -612,6 +643,9 @@ func (puo *PoliciesUpdateOne) sqlSave(ctx context.Context) (_node *Policies, err
 	}
 	if value, ok := puo.mutation.Image(); ok {
 		_spec.SetField(policies.FieldImage, field.TypeJSON, value)
+	}
+	if value, ok := puo.mutation.Scanner(); ok {
+		_spec.SetField(policies.FieldScanner, field.TypeString, value)
 	}
 	if value, ok := puo.mutation.Labels(); ok {
 		_spec.SetField(policies.FieldLabels, field.TypeJSON, value)

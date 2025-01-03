@@ -2,6 +2,8 @@ package cmd
 
 import (
 	"fmt"
+	"github.com/shinobistack/gokakashi/internal/assigner"
+	"github.com/shinobistack/gokakashi/internal/db"
 	"log"
 	"os"
 	"os/signal"
@@ -81,6 +83,11 @@ func handleConfigV1() {
 		log.Fatalf("Error: %v", err)
 	}
 
+	// ToDo: To set a separate connection for API calls
+	// Initialize a separate connection for API calls
+	//apiDB := restapiv1.InitDB()
+	//defer apiDB.Close()
+
 	log.Println("Starting API server for scan functionality...")
 	s := &restapiv1.Server{
 		AuthToken: cfg.Site.APIToken,
@@ -89,7 +96,17 @@ func handleConfigV1() {
 	}
 	go s.Serve()
 
-	log.Println("Shutting down goKakashi gracefully...")
+	// Initialize a separate connection for configuration tasks
+	configDB := restapiv1.InitDB()
+	defer configDB.Close()
+
+	db.RunMigrations(configDB)
+	// Populate the database
+	db.PopulateDatabase(configDB, cfg)
+
+	// ToDo: To be go routine who independently and routinely checks and assigns scans in agentTasks table
+	go assigner.StartAssigner(cfg.Site.Host, cfg.Site.Port, cfg.Site.APIToken, 1*time.Minute)
+
 }
 
 func handleConfigV0() {

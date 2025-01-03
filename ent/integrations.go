@@ -24,9 +24,30 @@ type Integrations struct {
 	// Foreign key to IntegrationType.id
 	Type string `json:"type,omitempty"`
 	// Integrations Configurations stored as JSONB
-	Config                        map[string]interface{} `json:"config,omitempty"`
+	Config map[string]interface{} `json:"config,omitempty"`
+	// Edges holds the relations/edges for other nodes in the graph.
+	// The values are being populated by the IntegrationsQuery when eager-loading is set.
+	Edges                         IntegrationsEdges `json:"edges"`
 	integration_type_integrations *string
 	selectValues                  sql.SelectValues
+}
+
+// IntegrationsEdges holds the relations/edges for other nodes in the graph.
+type IntegrationsEdges struct {
+	// Scans holds the value of the scans edge.
+	Scans []*Scans `json:"scans,omitempty"`
+	// loadedTypes holds the information for reporting if a
+	// type was loaded (or requested) in eager-loading or not.
+	loadedTypes [1]bool
+}
+
+// ScansOrErr returns the Scans value or an error if the edge
+// was not loaded in eager-loading.
+func (e IntegrationsEdges) ScansOrErr() ([]*Scans, error) {
+	if e.loadedTypes[0] {
+		return e.Scans, nil
+	}
+	return nil, &NotLoadedError{edge: "scans"}
 }
 
 // scanValues returns the types for scanning values from sql.Rows.
@@ -101,6 +122,11 @@ func (i *Integrations) assignValues(columns []string, values []any) error {
 // This includes values selected through modifiers, order, etc.
 func (i *Integrations) Value(name string) (ent.Value, error) {
 	return i.selectValues.Get(name)
+}
+
+// QueryScans queries the "scans" edge of the Integrations entity.
+func (i *Integrations) QueryScans() *ScansQuery {
+	return NewIntegrationsClient(i.config).QueryScans(i)
 }
 
 // Update returns a builder for updating this Integrations.

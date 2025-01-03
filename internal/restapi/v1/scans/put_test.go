@@ -19,6 +19,12 @@ func TestUpdateScan_Valid(t *testing.T) {
 	policy := client.Policies.Create().
 		SetName("test-policy").
 		SetImage(schema.Image{Registry: "test-registry", Name: "test-name", Tags: []string{"v1.0"}}).
+		SetScanner("trivy").
+		SaveX(context.Background())
+	integrations := client.Integrations.Create().
+		SetName("Integration 1").
+		SetType("docker-hub").
+		SetConfig(map[string]interface{}{"key": "value1"}).
 		SaveX(context.Background())
 
 	// Create a test scan
@@ -26,12 +32,14 @@ func TestUpdateScan_Valid(t *testing.T) {
 		SetPolicyID(policy.ID).
 		SetImage("example-image:latest").
 		SetStatus("scan_pending").
+		SetScanner(policy.Scanner).
+		SetIntegrationID(integrations.ID).
 		SaveX(context.Background())
 
 	req := scans.UpdateScanRequest{
 		ID:     scan.ID,
-		Status: strPtr("in_progress"),
-		Report: "https://reports.server.com/scan/123",
+		Status: strPtr("scan_in_progress"),
+		Report: nil,
 	}
 
 	res := &scans.UpdateScanResponse{}
@@ -39,7 +47,7 @@ func TestUpdateScan_Valid(t *testing.T) {
 
 	assert.NoError(t, err)
 	assert.Equal(t, req.ID, res.ID)
-	assert.Equal(t, "in_progress", res.Status)
+	assert.Equal(t, "scan_in_progress", res.Status)
 }
 
 func TestUpdateScan_MissingFields(t *testing.T) {
@@ -49,6 +57,7 @@ func TestUpdateScan_MissingFields(t *testing.T) {
 	policy := client.Policies.Create().
 		SetName("test-policy").
 		SetImage(schema.Image{Registry: "test-registry", Name: "test-name", Tags: []string{"v1.0"}}).
+		SetScanner("trivy").
 		SaveX(context.Background())
 
 	req := scans.UpdateScanRequest{

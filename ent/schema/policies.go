@@ -42,10 +42,13 @@ func (Policies) Fields() []ent.Field {
 			Comment("Policy name."),
 		field.JSON("image", Image{}).
 			Comment("Stores image details like registry, tags."),
+		// ToDo: To predefine the the scanners
+		field.String("scanner").
+			Comment("Scanners like Trivy."),
 		field.JSON("labels", PolicyLabels{}).
 			Optional().
 			Comment("Policies labels key:value"),
-		// Todo: Trigger is optional
+		// Todo: Trigger is optional, convert to struct when we have more struture to trigger type like ci/cron etc
 		field.JSON("trigger", map[string]interface{}{}).
 			Optional().
 			Comment("Stores trigger details (e.g., cron schedule)."),
