@@ -31,11 +31,13 @@ func TestListPolicies(t *testing.T) {
 	_, err := client.Policies.Create().
 		SetName("test-policy1").
 		SetImage(schema.Image{Registry: "example-registry", Name: "example-name", Tags: []string{"v1.0"}}).
+		SetScanner("trivy").
 		Save(context.Background())
 	assert.NoError(t, err)
 	_, err = client.Policies.Create().
 		SetName("test-policy2").
 		SetImage(schema.Image{Registry: "example-registry", Name: "example-name", Tags: []string{"v1.0"}}).
+		SetScanner("trivy").
 		Save(context.Background())
 	assert.NoError(t, err)
 
@@ -55,6 +57,7 @@ func TestGetPolicy_ValidID(t *testing.T) {
 	policy := client.Policies.Create().
 		SetName("test-policy").
 		SetImage(schema.Image{Registry: "example-registry", Name: "example-name", Tags: []string{"v1.0"}}).
+		SetScanner("trivy").
 		SaveX(context.Background())
 
 	req := policies.GetPolicyRequests{ID: policy.ID}

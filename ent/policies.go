@@ -24,6 +24,8 @@ type Policies struct {
 	Name string `json:"name,omitempty"`
 	// Stores image details like registry, tags.
 	Image schema.Image `json:"image,omitempty"`
+	// Scanners like Trivy.
+	Scanner string `json:"scanner,omitempty"`
 	// Policies labels key:value
 	Labels schema.PolicyLabels `json:"labels,omitempty"`
 	// Stores trigger details (e.g., cron schedule).
@@ -72,7 +74,7 @@ func (*Policies) scanValues(columns []string) ([]any, error) {
 		switch columns[i] {
 		case policies.FieldImage, policies.FieldLabels, policies.FieldTrigger, policies.FieldCheck:
 			values[i] = new([]byte)
-		case policies.FieldName:
+		case policies.FieldName, policies.FieldScanner:
 			values[i] = new(sql.NullString)
 		case policies.FieldID:
 			values[i] = new(uuid.UUID)
@@ -110,6 +112,12 @@ func (po *Policies) assignValues(columns []string, values []any) error {
 				if err := json.Unmarshal(*value, &po.Image); err != nil {
 					return fmt.Errorf("unmarshal field image: %w", err)
 				}
+			}
+		case policies.FieldScanner:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field scanner", values[i])
+			} else if value.Valid {
+				po.Scanner = value.String
 			}
 		case policies.FieldLabels:
 			if value, ok := values[i].(*[]byte); !ok {
@@ -186,6 +194,9 @@ func (po *Policies) String() string {
 	builder.WriteString(", ")
 	builder.WriteString("image=")
 	builder.WriteString(fmt.Sprintf("%v", po.Image))
+	builder.WriteString(", ")
+	builder.WriteString("scanner=")
+	builder.WriteString(po.Scanner)
 	builder.WriteString(", ")
 	builder.WriteString("labels=")
 	builder.WriteString(fmt.Sprintf("%v", po.Labels))

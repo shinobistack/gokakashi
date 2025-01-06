@@ -21,6 +21,7 @@ func TestCreatepolicy_InvalidPolicyNameFormat(t *testing.T) {
 			Name:     "example-name",
 			Tags:     []string{"v1.0"},
 		},
+		Scanner: "trivy",
 		Trigger: map[string]interface{}{"type": "cron", "schedule": "0 0 * * *"},
 		Check: &schema.Check{
 			Condition: "sev.high > 0",
@@ -38,6 +39,7 @@ func TestCreatepolicy_InvalidPolicyNameFormat(t *testing.T) {
 			Name:     "example-name",
 			Tags:     []string{"v1.0"},
 		},
+		Scanner: "trivy",
 		Trigger: map[string]interface{}{"type": "cron", "schedule": "0 0 * * *"},
 		Check: &schema.Check{
 			Condition: "sev.high > 0",
@@ -60,6 +62,7 @@ func TestCreatePolicy_ValidInput(t *testing.T) {
 			Name:     "example-name",
 			Tags:     []string{"v1.0"},
 		},
+		Scanner: "trivy",
 		Trigger: map[string]interface{}{"type": "cron", "schedule": "0 0 * * *"},
 		Check: &schema.Check{
 			Condition: "sev.high > 0",
@@ -85,6 +88,7 @@ func TestCreatePolicy_MissingFields(t *testing.T) {
 			Name:     "example-name",
 			Tags:     []string{},
 		},
+		Scanner: "trivy",
 		Trigger: nil,
 		Check:   nil,
 	}
@@ -106,6 +110,7 @@ func TestCreatePolicy_DuplicateName(t *testing.T) {
 			Name:     "example-name",
 			Tags:     []string{"v1.0"},
 		},
+		Scanner: "trivy",
 		Trigger: map[string]interface{}{"type": "cron", "schedule": "0 0 * * *"},
 		Check: &schema.Check{
 			Condition: "sev.high > 0",

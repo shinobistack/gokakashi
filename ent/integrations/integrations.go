@@ -4,6 +4,7 @@ package integrations
 
 import (
 	"entgo.io/ent/dialect/sql"
+	"entgo.io/ent/dialect/sql/sqlgraph"
 	"github.com/google/uuid"
 )
 
@@ -18,8 +19,17 @@ const (
 	FieldType = "type"
 	// FieldConfig holds the string denoting the config field in the database.
 	FieldConfig = "config"
+	// EdgeScans holds the string denoting the scans edge name in mutations.
+	EdgeScans = "scans"
 	// Table holds the table name of the integrations in the database.
 	Table = "integrations"
+	// ScansTable is the table that holds the scans relation/edge.
+	ScansTable = "scans"
+	// ScansInverseTable is the table name for the Scans entity.
+	// It exists in this package in order to avoid circular dependency with the "scans" package.
+	ScansInverseTable = "scans"
+	// ScansColumn is the table column denoting the scans relation/edge.
+	ScansColumn = "integration_id"
 )
 
 // Columns holds all SQL columns for integrations fields.
@@ -76,4 +86,25 @@ func ByName(opts ...sql.OrderTermOption) OrderOption {
 // ByType orders the results by the type field.
 func ByType(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldType, opts...).ToFunc()
+}
+
+// ByScansCount orders the results by scans count.
+func ByScansCount(opts ...sql.OrderTermOption) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborsCount(s, newScansStep(), opts...)
+	}
+}
+
+// ByScans orders the results by scans terms.
+func ByScans(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborTerms(s, newScansStep(), append([]sql.OrderTerm{term}, terms...)...)
+	}
+}
+func newScansStep() *sqlgraph.Step {
+	return sqlgraph.NewStep(
+		sqlgraph.From(Table, FieldID),
+		sqlgraph.To(ScansInverseTable, FieldID),
+		sqlgraph.Edge(sqlgraph.O2M, false, ScansTable, ScansColumn),
+	)
 }

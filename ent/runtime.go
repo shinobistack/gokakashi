@@ -27,6 +27,8 @@ func init() {
 	agenttasksDescStatus := agenttasksFields[3].Descriptor()
 	// agenttasks.DefaultStatus holds the default value on creation for the status field.
 	agenttasks.DefaultStatus = agenttasksDescStatus.Default.(string)
+	// agenttasks.StatusValidator is a validator for the "status" field. It is called by the builders before save.
+	agenttasks.StatusValidator = agenttasksDescStatus.Validators[0].(func(string) error)
 	// agenttasksDescCreatedAt is the schema descriptor for created_at field.
 	agenttasksDescCreatedAt := agenttasksFields[4].Descriptor()
 	// agenttasks.DefaultCreatedAt holds the default value on creation for the created_at field.
@@ -38,9 +40,17 @@ func init() {
 	agentsFields := schema.Agents{}.Fields()
 	_ = agentsFields
 	// agentsDescStatus is the schema descriptor for status field.
-	agentsDescStatus := agentsFields[1].Descriptor()
+	agentsDescStatus := agentsFields[2].Descriptor()
 	// agents.DefaultStatus holds the default value on creation for the status field.
 	agents.DefaultStatus = agentsDescStatus.Default.(string)
+	// agents.StatusValidator is a validator for the "status" field. It is called by the builders before save.
+	agents.StatusValidator = agentsDescStatus.Validators[0].(func(string) error)
+	// agentsDescLastSeen is the schema descriptor for last_seen field.
+	agentsDescLastSeen := agentsFields[5].Descriptor()
+	// agents.DefaultLastSeen holds the default value on creation for the last_seen field.
+	agents.DefaultLastSeen = agentsDescLastSeen.Default.(func() time.Time)
+	// agents.UpdateDefaultLastSeen holds the default value on update for the last_seen field.
+	agents.UpdateDefaultLastSeen = agentsDescLastSeen.UpdateDefault.(func() time.Time)
 	integrationtypeFields := schema.IntegrationType{}.Fields()
 	_ = integrationtypeFields
 	// integrationtypeDescDisplayName is the schema descriptor for display_name field.
@@ -111,6 +121,8 @@ func init() {
 	scansDescStatus := scansFields[2].Descriptor()
 	// scans.DefaultStatus holds the default value on creation for the status field.
 	scans.DefaultStatus = scansDescStatus.Default.(string)
+	// scans.StatusValidator is a validator for the "status" field. It is called by the builders before save.
+	scans.StatusValidator = scansDescStatus.Validators[0].(func(string) error)
 	// scansDescID is the schema descriptor for id field.
 	scansDescID := scansFields[0].Descriptor()
 	// scans.DefaultID holds the default value on creation for the id field.
