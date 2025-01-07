@@ -165,7 +165,21 @@ func isScanAssigned(server string, port int, token string, scanID uuid.UUID) boo
 	}
 	defer resp.Body.Close()
 
-	return resp.StatusCode == http.StatusOK
+	// Check if the status is not OK
+	if resp.StatusCode != http.StatusOK {
+		log.Printf("Unexpected status code %d when checking scan assignment", resp.StatusCode)
+		return false
+	}
+
+	// Parse the response body
+	var tasks []agenttasks.GetAgentTaskResponse
+	if err := json.NewDecoder(resp.Body).Decode(&tasks); err != nil {
+		log.Printf("Failed to parse response body: %v", err)
+		return false
+	}
+
+	// If the tasks list is empty, the scan is not assigned
+	return len(tasks) > 0
 }
 
 func createAgentTask(server string, port int, token string, agentID int, scanID uuid.UUID) error {
@@ -194,7 +208,7 @@ func createAgentTask(server string, port int, token string, agentID int, scanID 
 	}
 	defer resp.Body.Close()
 
-	if resp.StatusCode != http.StatusCreated {
+	if resp.StatusCode != http.StatusOK && resp.StatusCode != http.StatusCreated {
 		return fmt.Errorf("server responded with status: %d", resp.StatusCode)
 	}
 
