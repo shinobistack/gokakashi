@@ -93,11 +93,13 @@ func handleConfigV1() {
 		AuthToken: cfg.Site.APIToken,
 		Websites:  cfg.Site.Host,
 		Port:      cfg.Site.Port,
+		DBConfig:  cfg.Database,
 	}
 	go s.Serve()
 
+	dbConfig := cfg.Database
 	// Initialize a separate connection for configuration tasks
-	configDB := restapiv1.InitDB()
+	configDB := restapiv1.InitDB(dbConfig)
 	defer configDB.Close()
 
 	db.RunMigrations(configDB)

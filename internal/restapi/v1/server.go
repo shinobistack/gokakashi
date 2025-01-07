@@ -3,8 +3,10 @@ package v1
 import (
 	"encoding/json"
 	"entgo.io/ent/dialect"
+	"fmt"
 	_ "github.com/lib/pq"
 	"github.com/shinobistack/gokakashi/ent"
+	configv1 "github.com/shinobistack/gokakashi/internal/config/v1"
 	"github.com/shinobistack/gokakashi/internal/restapi/server/middleware"
 	agents1 "github.com/shinobistack/gokakashi/internal/restapi/v1/agents"
 	agenttasks1 "github.com/shinobistack/gokakashi/internal/restapi/v1/agenttasks"
@@ -31,6 +33,7 @@ type Server struct {
 	Websites  string
 	Port      int
 	DB        *ent.Client
+	DBConfig  configv1.DbConnection
 }
 
 func (srv *Server) Service() *web.Service {
@@ -114,9 +117,18 @@ func (srv *Server) Service() *web.Service {
 }
 
 // InitDB defaults to postgres
-func InitDB() *ent.Client {
-	// ToDo: To take DB connection as input
-	client, err := ent.Open(dialect.Postgres, "host=localhost port=5432 user=postgres password=secret dbname=postgres sslmode=disable")
+func InitDB(dbConfig configv1.DbConnection) *ent.Client {
+	// Build the database connection string
+	dsn := fmt.Sprintf(
+		"host=%s port=%d user=%s password=%s dbname=%s sslmode=disable",
+		dbConfig.Host,
+		dbConfig.Port,
+		dbConfig.User,
+		dbConfig.Password,
+		dbConfig.Name,
+	)
+
+	client, err := ent.Open(dialect.Postgres, dsn)
 	if err != nil {
 		log.Fatalf("Failed to connect to database: %v", err)
 	}
@@ -140,7 +152,7 @@ func specHandler(s *openapi31.Spec) http.Handler {
 
 func (s *Server) Serve() {
 	// Initialize the database client
-	s.DB = InitDB()
+	s.DB = InitDB(s.DBConfig)
 	defer s.DB.Close()
 
 	// Start the server

@@ -53,5 +53,7 @@ COPY --from=builder /app/gokakashi /app/gokakashi
 # Make sure the binary is executable
 RUN chmod +x /app/gokakashi
 
+CMD ["/app/gokakashi"]
+
 # Set the entrypoint to the application binary
 ENTRYPOINT ["/app/gokakashi"]

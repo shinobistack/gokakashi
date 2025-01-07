@@ -64,11 +64,20 @@ type Policy struct {
 	Scanner string `yaml:"scanner"`
 }
 
+type DbConnection struct {
+	Host     string `yaml:"host"`
+	Port     int    `yaml:"port"`
+	User     string `yaml:"user"`
+	Password string `yaml:"password"`
+	Name     string `yaml:"name"`
+}
+
 // Config represents the complete configuration for GoKakashi
 type Config struct {
 	Integrations []Integration `yaml:"integrations"`
 	Site         SiteConfig    `yaml:"site"`
 	Policies     []Policy      `yaml:"policies"`
+	Database     DbConnection  `yaml:"database"`
 }
 
 //type Website struct {
