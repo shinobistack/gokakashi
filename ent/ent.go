@@ -19,6 +19,7 @@ import (
 	"github.com/shinobistack/gokakashi/ent/policies"
 	"github.com/shinobistack/gokakashi/ent/policylabels"
 	"github.com/shinobistack/gokakashi/ent/scanlabels"
+	"github.com/shinobistack/gokakashi/ent/scannotify"
 	"github.com/shinobistack/gokakashi/ent/scans"
 )
 
@@ -87,6 +88,7 @@ func checkColumn(table, column string) error {
 			policies.Table:        policies.ValidColumn,
 			policylabels.Table:    policylabels.ValidColumn,
 			scanlabels.Table:      scanlabels.ValidColumn,
+			scannotify.Table:      scannotify.ValidColumn,
 			scans.Table:           scans.ValidColumn,
 		})
 	})

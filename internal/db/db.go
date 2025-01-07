@@ -72,7 +72,7 @@ func PopulateDatabase(client *ent.Client, cfg *v1.Config) {
 				}).
 				// ToDo: to update the scanner field to takein tools and tool's argument
 				SetScanner(policy.Scanner).
-				SetCheck(schema.Check(policy.Check)).
+				SetNotify(policy.Notify).
 				Save(context.Background())
 			if err != nil {
 				log.Printf("Failed to update policy %s: %v", policy.Name, err)
@@ -95,7 +95,7 @@ func PopulateDatabase(client *ent.Client, cfg *v1.Config) {
 				"schedule": policy.Trigger.Schedule,
 			}).
 			SetScanner(policy.Scanner).
-			SetCheck(schema.Check(policy.Check)).
+			SetNotify(policy.Notify).
 			Save(context.Background())
 		if err != nil {
 			log.Printf("Failed to add policy %s: %v", policy.Name, err)
@@ -156,15 +156,28 @@ func PopulateDatabase(client *ent.Client, cfg *v1.Config) {
 				log.Printf("Error querying integrationID for policy %s and integrationName %s : %v", policy.Name, policy.Image.Registry, err)
 				continue
 			}
-			// Todo: update existing scan if existing policy is updated
-			// Create new scan
-			_, err = client.Scans.
-				Create().
+
+			scanCreate := client.Scans.Create().
 				SetPolicyID(policyRecord.ID).
 				SetImage(policy.Image.Name + ":" + tag).
 				SetScanner(policy.Scanner).
-				SetIntegrationID(existingIntegration).
-				Save(context.Background())
+				SetIntegrationID(existingIntegration)
+
+			// Map notify.to to IntegrationID
+			for _, notify := range policy.Notify {
+				notifyIntegration, err := client.Integrations.Query().
+					Where(integrations.Name(notify.To)).
+					OnlyID(context.Background())
+				if err != nil {
+					log.Printf("Error finding integration for notify.to: %s, policy: %s: %v", notify.To, policy.Name, err)
+					continue
+				}
+				scanCreate.SetNotify([]schema.Notify{
+					{To: notifyIntegration.String(), When: notify.When, Format: notify.Format},
+				})
+			}
+
+			_, err = scanCreate.Save(context.Background())
 			if err != nil {
 				log.Printf("Failed to add scan for policy %s, tag %s: %v", policy.Name, tag, err)
 			} else {

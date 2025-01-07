@@ -23,9 +23,8 @@ func TestCreatepolicy_InvalidPolicyNameFormat(t *testing.T) {
 		},
 		Scanner: "trivy",
 		Trigger: map[string]interface{}{"type": "cron", "schedule": "0 0 * * *"},
-		Check: &schema.Check{
-			Condition: "sev.high > 0",
-			Notify:    []string{"team-slack"},
+		Notify: []schema.Notify{
+			{To: "team-linear", When: "sev.high > 0"},
 		},
 	}
 	res := &policies.CreatePolicyResponse{}
@@ -41,9 +40,8 @@ func TestCreatepolicy_InvalidPolicyNameFormat(t *testing.T) {
 		},
 		Scanner: "trivy",
 		Trigger: map[string]interface{}{"type": "cron", "schedule": "0 0 * * *"},
-		Check: &schema.Check{
-			Condition: "sev.high > 0",
-			Notify:    []string{"team-slack"},
+		Notify: []schema.Notify{
+			{To: "team-linear", When: "sev.high > 0"},
 		},
 	}
 	err = policies.CreatePolicy(client)(context.Background(), req, res)
@@ -64,9 +62,8 @@ func TestCreatePolicy_ValidInput(t *testing.T) {
 		},
 		Scanner: "trivy",
 		Trigger: map[string]interface{}{"type": "cron", "schedule": "0 0 * * *"},
-		Check: &schema.Check{
-			Condition: "sev.high > 0",
-			Notify:    []string{"team-slack"},
+		Notify: []schema.Notify{
+			{To: "team-linear", When: "sev.high > 0"},
 		},
 	}
 	res := &policies.CreatePolicyResponse{}
@@ -90,7 +87,7 @@ func TestCreatePolicy_MissingFields(t *testing.T) {
 		},
 		Scanner: "trivy",
 		Trigger: nil,
-		Check:   nil,
+		Notify:  nil,
 	}
 	res := &policies.CreatePolicyResponse{}
 	err := policies.CreatePolicy(client)(context.Background(), req, res)
@@ -112,9 +109,8 @@ func TestCreatePolicy_DuplicateName(t *testing.T) {
 		},
 		Scanner: "trivy",
 		Trigger: map[string]interface{}{"type": "cron", "schedule": "0 0 * * *"},
-		Check: &schema.Check{
-			Condition: "sev.high > 0",
-			Notify:    []string{"team-slack"},
+		Notify: []schema.Notify{
+			{To: "team-linear", When: "sev.high > 0"},
 		},
 	}
 	res := &policies.CreatePolicyResponse{}

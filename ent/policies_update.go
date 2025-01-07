@@ -9,6 +9,7 @@ import (
 
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
+	"entgo.io/ent/dialect/sql/sqljson"
 	"entgo.io/ent/schema/field"
 	"github.com/google/uuid"
 	"github.com/shinobistack/gokakashi/ent/policies"
@@ -105,23 +106,21 @@ func (pu *PoliciesUpdate) ClearTrigger() *PoliciesUpdate {
 	return pu
 }
 
-// SetCheck sets the "check" field.
-func (pu *PoliciesUpdate) SetCheck(s schema.Check) *PoliciesUpdate {
-	pu.mutation.SetCheck(s)
+// SetNotify sets the "notify" field.
+func (pu *PoliciesUpdate) SetNotify(s []schema.Notify) *PoliciesUpdate {
+	pu.mutation.SetNotify(s)
 	return pu
 }
 
-// SetNillableCheck sets the "check" field if the given value is not nil.
-func (pu *PoliciesUpdate) SetNillableCheck(s *schema.Check) *PoliciesUpdate {
-	if s != nil {
-		pu.SetCheck(*s)
-	}
+// AppendNotify appends s to the "notify" field.
+func (pu *PoliciesUpdate) AppendNotify(s []schema.Notify) *PoliciesUpdate {
+	pu.mutation.AppendNotify(s)
 	return pu
 }
 
-// ClearCheck clears the value of the "check" field.
-func (pu *PoliciesUpdate) ClearCheck() *PoliciesUpdate {
-	pu.mutation.ClearCheck()
+// ClearNotify clears the value of the "notify" field.
+func (pu *PoliciesUpdate) ClearNotify() *PoliciesUpdate {
+	pu.mutation.ClearNotify()
 	return pu
 }
 
@@ -272,11 +271,16 @@ func (pu *PoliciesUpdate) sqlSave(ctx context.Context) (n int, err error) {
 	if pu.mutation.TriggerCleared() {
 		_spec.ClearField(policies.FieldTrigger, field.TypeJSON)
 	}
-	if value, ok := pu.mutation.Check(); ok {
-		_spec.SetField(policies.FieldCheck, field.TypeJSON, value)
+	if value, ok := pu.mutation.Notify(); ok {
+		_spec.SetField(policies.FieldNotify, field.TypeJSON, value)
 	}
-	if pu.mutation.CheckCleared() {
-		_spec.ClearField(policies.FieldCheck, field.TypeJSON)
+	if value, ok := pu.mutation.AppendedNotify(); ok {
+		_spec.AddModifier(func(u *sql.UpdateBuilder) {
+			sqljson.Append(u, policies.FieldNotify, value)
+		})
+	}
+	if pu.mutation.NotifyCleared() {
+		_spec.ClearField(policies.FieldNotify, field.TypeJSON)
 	}
 	if pu.mutation.PolicyLabelsCleared() {
 		edge := &sqlgraph.EdgeSpec{
@@ -462,23 +466,21 @@ func (puo *PoliciesUpdateOne) ClearTrigger() *PoliciesUpdateOne {
 	return puo
 }
 
-// SetCheck sets the "check" field.
-func (puo *PoliciesUpdateOne) SetCheck(s schema.Check) *PoliciesUpdateOne {
-	puo.mutation.SetCheck(s)
+// SetNotify sets the "notify" field.
+func (puo *PoliciesUpdateOne) SetNotify(s []schema.Notify) *PoliciesUpdateOne {
+	puo.mutation.SetNotify(s)
 	return puo
 }
 
-// SetNillableCheck sets the "check" field if the given value is not nil.
-func (puo *PoliciesUpdateOne) SetNillableCheck(s *schema.Check) *PoliciesUpdateOne {
-	if s != nil {
-		puo.SetCheck(*s)
-	}
+// AppendNotify appends s to the "notify" field.
+func (puo *PoliciesUpdateOne) AppendNotify(s []schema.Notify) *PoliciesUpdateOne {
+	puo.mutation.AppendNotify(s)
 	return puo
 }
 
-// ClearCheck clears the value of the "check" field.
-func (puo *PoliciesUpdateOne) ClearCheck() *PoliciesUpdateOne {
-	puo.mutation.ClearCheck()
+// ClearNotify clears the value of the "notify" field.
+func (puo *PoliciesUpdateOne) ClearNotify() *PoliciesUpdateOne {
+	puo.mutation.ClearNotify()
 	return puo
 }
 
@@ -659,11 +661,16 @@ func (puo *PoliciesUpdateOne) sqlSave(ctx context.Context) (_node *Policies, err
 	if puo.mutation.TriggerCleared() {
 		_spec.ClearField(policies.FieldTrigger, field.TypeJSON)
 	}
-	if value, ok := puo.mutation.Check(); ok {
-		_spec.SetField(policies.FieldCheck, field.TypeJSON, value)
+	if value, ok := puo.mutation.Notify(); ok {
+		_spec.SetField(policies.FieldNotify, field.TypeJSON, value)
 	}
-	if puo.mutation.CheckCleared() {
-		_spec.ClearField(policies.FieldCheck, field.TypeJSON)
+	if value, ok := puo.mutation.AppendedNotify(); ok {
+		_spec.AddModifier(func(u *sql.UpdateBuilder) {
+			sqljson.Append(u, policies.FieldNotify, value)
+		})
+	}
+	if puo.mutation.NotifyCleared() {
+		_spec.ClearField(policies.FieldNotify, field.TypeJSON)
 	}
 	if puo.mutation.PolicyLabelsCleared() {
 		edge := &sqlgraph.EdgeSpec{

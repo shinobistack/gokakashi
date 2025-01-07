@@ -2,16 +2,12 @@ package v1
 
 import (
 	"fmt"
+	"github.com/shinobistack/gokakashi/ent/schema"
 	"log"
 	"os"
 
 	"gopkg.in/yaml.v2"
 )
-
-const ReportsRootDir = "reports/"
-
-// Path to store hash JSON
-const HashFilePath = "./hashes.json"
 
 // Integration defines the configuration for external services
 type Integration struct {
@@ -41,17 +37,7 @@ type ImagePolicy struct {
 	Tags     []string `yaml:"tags"`
 }
 
-// CheckCondition specifies conditions and notification settings
-type CheckCondition struct {
-	Condition string   `yaml:"condition"`
-	Notify    []string `yaml:"notify"`
-}
-
-//type Notify struct {
-//	OnSuccess []string          `yaml:"on_success,omitempty"`
-//	Severity  []string          `yaml:"severity,omitempty"` // To test
-//	Labels    map[string]string `yaml:"labels,omitempty"`   // To test - to restrict image level labels at policies
-//}
+type Notify = schema.Notify
 
 // Policy defines the scanning policies for specific images
 type Policy struct {
@@ -59,9 +45,8 @@ type Policy struct {
 	Image   ImagePolicy       `yaml:"image"`
 	Trigger Trigger           `yaml:"trigger"`
 	Labels  map[string]string `yaml:"labels,omitempty"`
-	Check   CheckCondition    `yaml:"check"`
-	// ToDo: to update the scanner field to takein tools and tool's argument
-	Scanner string `yaml:"scanner"`
+	Notify  []Notify          `yaml:"notify"`
+	Scanner string            `yaml:"scanner"`
 }
 
 type DbConnection struct {
@@ -79,27 +64,6 @@ type Config struct {
 	Policies     []Policy      `yaml:"policies"`
 	Database     DbConnection  `yaml:"database"`
 }
-
-//type Website struct {
-//	Hostname         string `yaml:"hostname"`
-//	Port             int    `yaml:"port"`
-//	APIToken         string `yaml:"api_token"`
-//	Publish          string `yaml:"visibility"`
-//	ReportSubDir     string `yaml:"report_sub_dir"`
-//	ConfiguredDomain string `yaml:"configured_domain"`
-//}
-
-//type Notify struct {
-//	APIKey          string `yaml:"api_key"`
-//	ProjectID       string `yaml:"project_id"`
-//	IssueTitle      string `yaml:"issue_title"`
-//	IssuePriority   int    `yaml:"issue_priority"`
-//	IssueAssigneeID string `yaml:"issue_assignee_id"`
-//	IssueLabel      string `yaml:"issue_label"`
-//	IssueDueDate    string `yaml:"issue_due_date"`
-//	TeamID          string `yaml:"team_id"`
-//	IssueStateID    string `yaml:"issue_state_id"`
-//}
 
 type Scanner struct {
 	Tool string `yaml:"tool"` // Example: Trivy, Synk, etc.
@@ -145,6 +109,14 @@ func ValidateConfig(config *Config) error {
 		}
 		if policy.Trigger.Type == "cron" && policy.Trigger.Schedule == "" {
 			return fmt.Errorf("Policy with cron trigger must define a schedule")
+		}
+		for _, notify := range policy.Notify {
+			if notify.To == "" {
+				return fmt.Errorf("Notify 'to' field is required")
+			}
+			if notify.When == "" {
+				return fmt.Errorf("Notify 'when' field is required")
+			}
 		}
 	}
 	return nil

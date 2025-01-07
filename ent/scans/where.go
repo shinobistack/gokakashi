@@ -314,14 +314,14 @@ func ScannerContainsFold(v string) predicate.Scans {
 	return predicate.Scans(sql.FieldContainsFold(FieldScanner, v))
 }
 
-// CheckIsNil applies the IsNil predicate on the "check" field.
-func CheckIsNil() predicate.Scans {
-	return predicate.Scans(sql.FieldIsNull(FieldCheck))
+// NotifyIsNil applies the IsNil predicate on the "notify" field.
+func NotifyIsNil() predicate.Scans {
+	return predicate.Scans(sql.FieldIsNull(FieldNotify))
 }
 
-// CheckNotNil applies the NotNil predicate on the "check" field.
-func CheckNotNil() predicate.Scans {
-	return predicate.Scans(sql.FieldNotNull(FieldCheck))
+// NotifyNotNil applies the NotNil predicate on the "notify" field.
+func NotifyNotNil() predicate.Scans {
+	return predicate.Scans(sql.FieldNotNull(FieldNotify))
 }
 
 // ReportIsNil applies the IsNil predicate on the "report" field.
@@ -418,6 +418,29 @@ func HasAgentTasks() predicate.Scans {
 func HasAgentTasksWith(preds ...predicate.AgentTasks) predicate.Scans {
 	return predicate.Scans(func(s *sql.Selector) {
 		step := newAgentTasksStep()
+		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
+			for _, p := range preds {
+				p(s)
+			}
+		})
+	})
+}
+
+// HasScanNotifications applies the HasEdge predicate on the "scan_notifications" edge.
+func HasScanNotifications() predicate.Scans {
+	return predicate.Scans(func(s *sql.Selector) {
+		step := sqlgraph.NewStep(
+			sqlgraph.From(Table, FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, ScanNotificationsTable, ScanNotificationsColumn),
+		)
+		sqlgraph.HasNeighbors(s, step)
+	})
+}
+
+// HasScanNotificationsWith applies the HasEdge predicate on the "scan_notifications" edge with a given conditions (other predicates).
+func HasScanNotificationsWith(preds ...predicate.ScanNotify) predicate.Scans {
+	return predicate.Scans(func(s *sql.Selector) {
+		step := newScanNotificationsStep()
 		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
 			for _, p := range preds {
 				p(s)

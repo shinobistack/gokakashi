@@ -13,6 +13,7 @@ import (
 	"github.com/shinobistack/gokakashi/ent/policies"
 	"github.com/shinobistack/gokakashi/ent/policylabels"
 	"github.com/shinobistack/gokakashi/ent/scanlabels"
+	"github.com/shinobistack/gokakashi/ent/scannotify"
 	"github.com/shinobistack/gokakashi/ent/scans"
 	"github.com/shinobistack/gokakashi/ent/schema"
 )
@@ -115,6 +116,26 @@ func init() {
 	scanlabelsDescValue := scanlabelsFields[2].Descriptor()
 	// scanlabels.ValueValidator is a validator for the "value" field. It is called by the builders before save.
 	scanlabels.ValueValidator = scanlabelsDescValue.Validators[0].(func(string) error)
+	scannotifyFields := schema.ScanNotify{}.Fields()
+	_ = scannotifyFields
+	// scannotifyDescHash is the schema descriptor for hash field.
+	scannotifyDescHash := scannotifyFields[2].Descriptor()
+	// scannotify.HashValidator is a validator for the "hash" field. It is called by the builders before save.
+	scannotify.HashValidator = scannotifyDescHash.Validators[0].(func(string) error)
+	// scannotifyDescStatus is the schema descriptor for status field.
+	scannotifyDescStatus := scannotifyFields[3].Descriptor()
+	// scannotify.DefaultStatus holds the default value on creation for the status field.
+	scannotify.DefaultStatus = scannotifyDescStatus.Default.(string)
+	// scannotifyDescUpdatedAt is the schema descriptor for updated_at field.
+	scannotifyDescUpdatedAt := scannotifyFields[4].Descriptor()
+	// scannotify.DefaultUpdatedAt holds the default value on creation for the updated_at field.
+	scannotify.DefaultUpdatedAt = scannotifyDescUpdatedAt.Default.(func() time.Time)
+	// scannotify.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.
+	scannotify.UpdateDefaultUpdatedAt = scannotifyDescUpdatedAt.UpdateDefault.(func() time.Time)
+	// scannotifyDescID is the schema descriptor for id field.
+	scannotifyDescID := scannotifyFields[0].Descriptor()
+	// scannotify.DefaultID holds the default value on creation for the id field.
+	scannotify.DefaultID = scannotifyDescID.Default.(func() uuid.UUID)
 	scansFields := schema.Scans{}.Fields()
 	_ = scansFields
 	// scansDescStatus is the schema descriptor for status field.

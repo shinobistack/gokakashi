@@ -30,8 +30,8 @@ type Policies struct {
 	Labels schema.PolicyLabels `json:"labels,omitempty"`
 	// Stores trigger details (e.g., cron schedule).
 	Trigger map[string]interface{} `json:"trigger,omitempty"`
-	// Stores conditions for evaluation.
-	Check schema.Check `json:"check,omitempty"`
+	// Stores notification configuration.
+	Notify []schema.Notify `json:"notify,omitempty"`
 	// Edges holds the relations/edges for other nodes in the graph.
 	// The values are being populated by the PoliciesQuery when eager-loading is set.
 	Edges        PoliciesEdges `json:"edges"`
@@ -72,7 +72,7 @@ func (*Policies) scanValues(columns []string) ([]any, error) {
 	values := make([]any, len(columns))
 	for i := range columns {
 		switch columns[i] {
-		case policies.FieldImage, policies.FieldLabels, policies.FieldTrigger, policies.FieldCheck:
+		case policies.FieldImage, policies.FieldLabels, policies.FieldTrigger, policies.FieldNotify:
 			values[i] = new([]byte)
 		case policies.FieldName, policies.FieldScanner:
 			values[i] = new(sql.NullString)
@@ -135,12 +135,12 @@ func (po *Policies) assignValues(columns []string, values []any) error {
 					return fmt.Errorf("unmarshal field trigger: %w", err)
 				}
 			}
-		case policies.FieldCheck:
+		case policies.FieldNotify:
 			if value, ok := values[i].(*[]byte); !ok {
-				return fmt.Errorf("unexpected type %T for field check", values[i])
+				return fmt.Errorf("unexpected type %T for field notify", values[i])
 			} else if value != nil && len(*value) > 0 {
-				if err := json.Unmarshal(*value, &po.Check); err != nil {
-					return fmt.Errorf("unmarshal field check: %w", err)
+				if err := json.Unmarshal(*value, &po.Notify); err != nil {
+					return fmt.Errorf("unmarshal field notify: %w", err)
 				}
 			}
 		default:
@@ -204,8 +204,8 @@ func (po *Policies) String() string {
 	builder.WriteString("trigger=")
 	builder.WriteString(fmt.Sprintf("%v", po.Trigger))
 	builder.WriteString(", ")
-	builder.WriteString("check=")
-	builder.WriteString(fmt.Sprintf("%v", po.Check))
+	builder.WriteString("notify=")
+	builder.WriteString(fmt.Sprintf("%v", po.Notify))
 	builder.WriteByte(')')
 	return builder.String()
 }

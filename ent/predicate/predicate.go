@@ -27,5 +27,8 @@ type PolicyLabels func(*sql.Selector)
 // ScanLabels is the predicate function for scanlabels builders.
 type ScanLabels func(*sql.Selector)
 
+// ScanNotify is the predicate function for scannotify builders.
+type ScanNotify func(*sql.Selector)
+
 // Scans is the predicate function for scans builders.
 type Scans func(*sql.Selector)

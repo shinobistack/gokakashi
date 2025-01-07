@@ -23,8 +23,8 @@ const (
 	FieldIntegrationID = "integration_id"
 	// FieldScanner holds the string denoting the scanner field in the database.
 	FieldScanner = "scanner"
-	// FieldCheck holds the string denoting the check field in the database.
-	FieldCheck = "check"
+	// FieldNotify holds the string denoting the notify field in the database.
+	FieldNotify = "notify"
 	// FieldReport holds the string denoting the report field in the database.
 	FieldReport = "report"
 	// EdgePolicy holds the string denoting the policy edge name in mutations.
@@ -35,6 +35,8 @@ const (
 	EdgeScanLabels = "scan_labels"
 	// EdgeAgentTasks holds the string denoting the agent_tasks edge name in mutations.
 	EdgeAgentTasks = "agent_tasks"
+	// EdgeScanNotifications holds the string denoting the scan_notifications edge name in mutations.
+	EdgeScanNotifications = "scan_notifications"
 	// Table holds the table name of the scans in the database.
 	Table = "scans"
 	// PolicyTable is the table that holds the policy relation/edge.
@@ -65,6 +67,13 @@ const (
 	AgentTasksInverseTable = "agent_tasks"
 	// AgentTasksColumn is the table column denoting the agent_tasks relation/edge.
 	AgentTasksColumn = "scan_id"
+	// ScanNotificationsTable is the table that holds the scan_notifications relation/edge.
+	ScanNotificationsTable = "scan_notifies"
+	// ScanNotificationsInverseTable is the table name for the ScanNotify entity.
+	// It exists in this package in order to avoid circular dependency with the "scannotify" package.
+	ScanNotificationsInverseTable = "scan_notifies"
+	// ScanNotificationsColumn is the table column denoting the scan_notifications relation/edge.
+	ScanNotificationsColumn = "scan_id"
 )
 
 // Columns holds all SQL columns for scans fields.
@@ -75,7 +84,7 @@ var Columns = []string{
 	FieldImage,
 	FieldIntegrationID,
 	FieldScanner,
-	FieldCheck,
+	FieldNotify,
 	FieldReport,
 }
 
@@ -172,6 +181,20 @@ func ByAgentTasks(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
 		sqlgraph.OrderByNeighborTerms(s, newAgentTasksStep(), append([]sql.OrderTerm{term}, terms...)...)
 	}
 }
+
+// ByScanNotificationsCount orders the results by scan_notifications count.
+func ByScanNotificationsCount(opts ...sql.OrderTermOption) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborsCount(s, newScanNotificationsStep(), opts...)
+	}
+}
+
+// ByScanNotifications orders the results by scan_notifications terms.
+func ByScanNotifications(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborTerms(s, newScanNotificationsStep(), append([]sql.OrderTerm{term}, terms...)...)
+	}
+}
 func newPolicyStep() *sqlgraph.Step {
 	return sqlgraph.NewStep(
 		sqlgraph.From(Table, FieldID),
@@ -198,5 +221,12 @@ func newAgentTasksStep() *sqlgraph.Step {
 		sqlgraph.From(Table, FieldID),
 		sqlgraph.To(AgentTasksInverseTable, FieldID),
 		sqlgraph.Edge(sqlgraph.O2M, false, AgentTasksTable, AgentTasksColumn),
+	)
+}
+func newScanNotificationsStep() *sqlgraph.Step {
+	return sqlgraph.NewStep(
+		sqlgraph.From(Table, FieldID),
+		sqlgraph.To(ScanNotificationsInverseTable, FieldID),
+		sqlgraph.Edge(sqlgraph.O2M, false, ScanNotificationsTable, ScanNotificationsColumn),
 	)
 }

@@ -23,6 +23,7 @@ import (
 	"github.com/shinobistack/gokakashi/ent/policies"
 	"github.com/shinobistack/gokakashi/ent/policylabels"
 	"github.com/shinobistack/gokakashi/ent/scanlabels"
+	"github.com/shinobistack/gokakashi/ent/scannotify"
 	"github.com/shinobistack/gokakashi/ent/scans"
 )
 
@@ -45,6 +46,8 @@ type Client struct {
 	PolicyLabels *PolicyLabelsClient
 	// ScanLabels is the client for interacting with the ScanLabels builders.
 	ScanLabels *ScanLabelsClient
+	// ScanNotify is the client for interacting with the ScanNotify builders.
+	ScanNotify *ScanNotifyClient
 	// Scans is the client for interacting with the Scans builders.
 	Scans *ScansClient
 }
@@ -65,6 +68,7 @@ func (c *Client) init() {
 	c.Policies = NewPoliciesClient(c.config)
 	c.PolicyLabels = NewPolicyLabelsClient(c.config)
 	c.ScanLabels = NewScanLabelsClient(c.config)
+	c.ScanNotify = NewScanNotifyClient(c.config)
 	c.Scans = NewScansClient(c.config)
 }
 
@@ -165,6 +169,7 @@ func (c *Client) Tx(ctx context.Context) (*Tx, error) {
 		Policies:        NewPoliciesClient(cfg),
 		PolicyLabels:    NewPolicyLabelsClient(cfg),
 		ScanLabels:      NewScanLabelsClient(cfg),
+		ScanNotify:      NewScanNotifyClient(cfg),
 		Scans:           NewScansClient(cfg),
 	}, nil
 }
@@ -192,6 +197,7 @@ func (c *Client) BeginTx(ctx context.Context, opts *sql.TxOptions) (*Tx, error) 
 		Policies:        NewPoliciesClient(cfg),
 		PolicyLabels:    NewPolicyLabelsClient(cfg),
 		ScanLabels:      NewScanLabelsClient(cfg),
+		ScanNotify:      NewScanNotifyClient(cfg),
 		Scans:           NewScansClient(cfg),
 	}, nil
 }
@@ -223,7 +229,7 @@ func (c *Client) Close() error {
 func (c *Client) Use(hooks ...Hook) {
 	for _, n := range []interface{ Use(...Hook) }{
 		c.AgentTasks, c.Agents, c.IntegrationType, c.Integrations, c.Policies,
-		c.PolicyLabels, c.ScanLabels, c.Scans,
+		c.PolicyLabels, c.ScanLabels, c.ScanNotify, c.Scans,
 	} {
 		n.Use(hooks...)
 	}
@@ -234,7 +240,7 @@ func (c *Client) Use(hooks ...Hook) {
 func (c *Client) Intercept(interceptors ...Interceptor) {
 	for _, n := range []interface{ Intercept(...Interceptor) }{
 		c.AgentTasks, c.Agents, c.IntegrationType, c.Integrations, c.Policies,
-		c.PolicyLabels, c.ScanLabels, c.Scans,
+		c.PolicyLabels, c.ScanLabels, c.ScanNotify, c.Scans,
 	} {
 		n.Intercept(interceptors...)
 	}
@@ -257,6 +263,8 @@ func (c *Client) Mutate(ctx context.Context, m Mutation) (Value, error) {
 		return c.PolicyLabels.mutate(ctx, m)
 	case *ScanLabelsMutation:
 		return c.ScanLabels.mutate(ctx, m)
+	case *ScanNotifyMutation:
+		return c.ScanNotify.mutate(ctx, m)
 	case *ScansMutation:
 		return c.Scans.mutate(ctx, m)
 	default:
@@ -1339,6 +1347,155 @@ func (c *ScanLabelsClient) mutate(ctx context.Context, m *ScanLabelsMutation) (V
 	}
 }
 
+// ScanNotifyClient is a client for the ScanNotify schema.
+type ScanNotifyClient struct {
+	config
+}
+
+// NewScanNotifyClient returns a client for the ScanNotify from the given config.
+func NewScanNotifyClient(c config) *ScanNotifyClient {
+	return &ScanNotifyClient{config: c}
+}
+
+// Use adds a list of mutation hooks to the hooks stack.
+// A call to `Use(f, g, h)` equals to `scannotify.Hooks(f(g(h())))`.
+func (c *ScanNotifyClient) Use(hooks ...Hook) {
+	c.hooks.ScanNotify = append(c.hooks.ScanNotify, hooks...)
+}
+
+// Intercept adds a list of query interceptors to the interceptors stack.
+// A call to `Intercept(f, g, h)` equals to `scannotify.Intercept(f(g(h())))`.
+func (c *ScanNotifyClient) Intercept(interceptors ...Interceptor) {
+	c.inters.ScanNotify = append(c.inters.ScanNotify, interceptors...)
+}
+
+// Create returns a builder for creating a ScanNotify entity.
+func (c *ScanNotifyClient) Create() *ScanNotifyCreate {
+	mutation := newScanNotifyMutation(c.config, OpCreate)
+	return &ScanNotifyCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// CreateBulk returns a builder for creating a bulk of ScanNotify entities.
+func (c *ScanNotifyClient) CreateBulk(builders ...*ScanNotifyCreate) *ScanNotifyCreateBulk {
+	return &ScanNotifyCreateBulk{config: c.config, builders: builders}
+}
+
+// MapCreateBulk creates a bulk creation builder from the given slice. For each item in the slice, the function creates
+// a builder and applies setFunc on it.
+func (c *ScanNotifyClient) MapCreateBulk(slice any, setFunc func(*ScanNotifyCreate, int)) *ScanNotifyCreateBulk {
+	rv := reflect.ValueOf(slice)
+	if rv.Kind() != reflect.Slice {
+		return &ScanNotifyCreateBulk{err: fmt.Errorf("calling to ScanNotifyClient.MapCreateBulk with wrong type %T, need slice", slice)}
+	}
+	builders := make([]*ScanNotifyCreate, rv.Len())
+	for i := 0; i < rv.Len(); i++ {
+		builders[i] = c.Create()
+		setFunc(builders[i], i)
+	}
+	return &ScanNotifyCreateBulk{config: c.config, builders: builders}
+}
+
+// Update returns an update builder for ScanNotify.
+func (c *ScanNotifyClient) Update() *ScanNotifyUpdate {
+	mutation := newScanNotifyMutation(c.config, OpUpdate)
+	return &ScanNotifyUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOne returns an update builder for the given entity.
+func (c *ScanNotifyClient) UpdateOne(sn *ScanNotify) *ScanNotifyUpdateOne {
+	mutation := newScanNotifyMutation(c.config, OpUpdateOne, withScanNotify(sn))
+	return &ScanNotifyUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOneID returns an update builder for the given id.
+func (c *ScanNotifyClient) UpdateOneID(id uuid.UUID) *ScanNotifyUpdateOne {
+	mutation := newScanNotifyMutation(c.config, OpUpdateOne, withScanNotifyID(id))
+	return &ScanNotifyUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// Delete returns a delete builder for ScanNotify.
+func (c *ScanNotifyClient) Delete() *ScanNotifyDelete {
+	mutation := newScanNotifyMutation(c.config, OpDelete)
+	return &ScanNotifyDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// DeleteOne returns a builder for deleting the given entity.
+func (c *ScanNotifyClient) DeleteOne(sn *ScanNotify) *ScanNotifyDeleteOne {
+	return c.DeleteOneID(sn.ID)
+}
+
+// DeleteOneID returns a builder for deleting the given entity by its id.
+func (c *ScanNotifyClient) DeleteOneID(id uuid.UUID) *ScanNotifyDeleteOne {
+	builder := c.Delete().Where(scannotify.ID(id))
+	builder.mutation.id = &id
+	builder.mutation.op = OpDeleteOne
+	return &ScanNotifyDeleteOne{builder}
+}
+
+// Query returns a query builder for ScanNotify.
+func (c *ScanNotifyClient) Query() *ScanNotifyQuery {
+	return &ScanNotifyQuery{
+		config: c.config,
+		ctx:    &QueryContext{Type: TypeScanNotify},
+		inters: c.Interceptors(),
+	}
+}
+
+// Get returns a ScanNotify entity by its id.
+func (c *ScanNotifyClient) Get(ctx context.Context, id uuid.UUID) (*ScanNotify, error) {
+	return c.Query().Where(scannotify.ID(id)).Only(ctx)
+}
+
+// GetX is like Get, but panics if an error occurs.
+func (c *ScanNotifyClient) GetX(ctx context.Context, id uuid.UUID) *ScanNotify {
+	obj, err := c.Get(ctx, id)
+	if err != nil {
+		panic(err)
+	}
+	return obj
+}
+
+// QueryScan queries the scan edge of a ScanNotify.
+func (c *ScanNotifyClient) QueryScan(sn *ScanNotify) *ScansQuery {
+	query := (&ScansClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := sn.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(scannotify.Table, scannotify.FieldID, id),
+			sqlgraph.To(scans.Table, scans.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, true, scannotify.ScanTable, scannotify.ScanColumn),
+		)
+		fromV = sqlgraph.Neighbors(sn.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// Hooks returns the client hooks.
+func (c *ScanNotifyClient) Hooks() []Hook {
+	return c.hooks.ScanNotify
+}
+
+// Interceptors returns the client interceptors.
+func (c *ScanNotifyClient) Interceptors() []Interceptor {
+	return c.inters.ScanNotify
+}
+
+func (c *ScanNotifyClient) mutate(ctx context.Context, m *ScanNotifyMutation) (Value, error) {
+	switch m.Op() {
+	case OpCreate:
+		return (&ScanNotifyCreate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdate:
+		return (&ScanNotifyUpdate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdateOne:
+		return (&ScanNotifyUpdateOne{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpDelete, OpDeleteOne:
+		return (&ScanNotifyDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
+	default:
+		return nil, fmt.Errorf("ent: unknown ScanNotify mutation op: %q", m.Op())
+	}
+}
+
 // ScansClient is a client for the Scans schema.
 type ScansClient struct {
 	config
@@ -1511,6 +1668,22 @@ func (c *ScansClient) QueryAgentTasks(s *Scans) *AgentTasksQuery {
 	return query
 }
 
+// QueryScanNotifications queries the scan_notifications edge of a Scans.
+func (c *ScansClient) QueryScanNotifications(s *Scans) *ScanNotifyQuery {
+	query := (&ScanNotifyClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := s.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(scans.Table, scans.FieldID, id),
+			sqlgraph.To(scannotify.Table, scannotify.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, scans.ScanNotificationsTable, scans.ScanNotificationsColumn),
+		)
+		fromV = sqlgraph.Neighbors(s.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
 // Hooks returns the client hooks.
 func (c *ScansClient) Hooks() []Hook {
 	return c.hooks.Scans
@@ -1540,10 +1713,10 @@ func (c *ScansClient) mutate(ctx context.Context, m *ScansMutation) (Value, erro
 type (
 	hooks struct {
 		AgentTasks, Agents, IntegrationType, Integrations, Policies, PolicyLabels,
-		ScanLabels, Scans []ent.Hook
+		ScanLabels, ScanNotify, Scans []ent.Hook
 	}
 	inters struct {
 		AgentTasks, Agents, IntegrationType, Integrations, Policies, PolicyLabels,
-		ScanLabels, Scans []ent.Interceptor
+		ScanLabels, ScanNotify, Scans []ent.Interceptor
 	}
 )

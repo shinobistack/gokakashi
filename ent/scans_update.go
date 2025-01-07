@@ -18,6 +18,7 @@ import (
 	"github.com/shinobistack/gokakashi/ent/policies"
 	"github.com/shinobistack/gokakashi/ent/predicate"
 	"github.com/shinobistack/gokakashi/ent/scanlabels"
+	"github.com/shinobistack/gokakashi/ent/scannotify"
 	"github.com/shinobistack/gokakashi/ent/scans"
 	"github.com/shinobistack/gokakashi/ent/schema"
 )
@@ -105,23 +106,21 @@ func (su *ScansUpdate) SetNillableScanner(s *string) *ScansUpdate {
 	return su
 }
 
-// SetCheck sets the "check" field.
-func (su *ScansUpdate) SetCheck(s schema.Check) *ScansUpdate {
-	su.mutation.SetCheck(s)
+// SetNotify sets the "notify" field.
+func (su *ScansUpdate) SetNotify(s []schema.Notify) *ScansUpdate {
+	su.mutation.SetNotify(s)
 	return su
 }
 
-// SetNillableCheck sets the "check" field if the given value is not nil.
-func (su *ScansUpdate) SetNillableCheck(s *schema.Check) *ScansUpdate {
-	if s != nil {
-		su.SetCheck(*s)
-	}
+// AppendNotify appends s to the "notify" field.
+func (su *ScansUpdate) AppendNotify(s []schema.Notify) *ScansUpdate {
+	su.mutation.AppendNotify(s)
 	return su
 }
 
-// ClearCheck clears the value of the "check" field.
-func (su *ScansUpdate) ClearCheck() *ScansUpdate {
-	su.mutation.ClearCheck()
+// ClearNotify clears the value of the "notify" field.
+func (su *ScansUpdate) ClearNotify() *ScansUpdate {
+	su.mutation.ClearNotify()
 	return su
 }
 
@@ -189,6 +188,21 @@ func (su *ScansUpdate) AddAgentTasks(a ...*AgentTasks) *ScansUpdate {
 	return su.AddAgentTaskIDs(ids...)
 }
 
+// AddScanNotificationIDs adds the "scan_notifications" edge to the ScanNotify entity by IDs.
+func (su *ScansUpdate) AddScanNotificationIDs(ids ...uuid.UUID) *ScansUpdate {
+	su.mutation.AddScanNotificationIDs(ids...)
+	return su
+}
+
+// AddScanNotifications adds the "scan_notifications" edges to the ScanNotify entity.
+func (su *ScansUpdate) AddScanNotifications(s ...*ScanNotify) *ScansUpdate {
+	ids := make([]uuid.UUID, len(s))
+	for i := range s {
+		ids[i] = s[i].ID
+	}
+	return su.AddScanNotificationIDs(ids...)
+}
+
 // Mutation returns the ScansMutation object of the builder.
 func (su *ScansUpdate) Mutation() *ScansMutation {
 	return su.mutation
@@ -246,6 +260,27 @@ func (su *ScansUpdate) RemoveAgentTasks(a ...*AgentTasks) *ScansUpdate {
 		ids[i] = a[i].ID
 	}
 	return su.RemoveAgentTaskIDs(ids...)
+}
+
+// ClearScanNotifications clears all "scan_notifications" edges to the ScanNotify entity.
+func (su *ScansUpdate) ClearScanNotifications() *ScansUpdate {
+	su.mutation.ClearScanNotifications()
+	return su
+}
+
+// RemoveScanNotificationIDs removes the "scan_notifications" edge to ScanNotify entities by IDs.
+func (su *ScansUpdate) RemoveScanNotificationIDs(ids ...uuid.UUID) *ScansUpdate {
+	su.mutation.RemoveScanNotificationIDs(ids...)
+	return su
+}
+
+// RemoveScanNotifications removes "scan_notifications" edges to ScanNotify entities.
+func (su *ScansUpdate) RemoveScanNotifications(s ...*ScanNotify) *ScansUpdate {
+	ids := make([]uuid.UUID, len(s))
+	for i := range s {
+		ids[i] = s[i].ID
+	}
+	return su.RemoveScanNotificationIDs(ids...)
 }
 
 // Save executes the query and returns the number of nodes affected by the update operation.
@@ -312,11 +347,16 @@ func (su *ScansUpdate) sqlSave(ctx context.Context) (n int, err error) {
 	if value, ok := su.mutation.Scanner(); ok {
 		_spec.SetField(scans.FieldScanner, field.TypeString, value)
 	}
-	if value, ok := su.mutation.Check(); ok {
-		_spec.SetField(scans.FieldCheck, field.TypeJSON, value)
+	if value, ok := su.mutation.Notify(); ok {
+		_spec.SetField(scans.FieldNotify, field.TypeJSON, value)
 	}
-	if su.mutation.CheckCleared() {
-		_spec.ClearField(scans.FieldCheck, field.TypeJSON)
+	if value, ok := su.mutation.AppendedNotify(); ok {
+		_spec.AddModifier(func(u *sql.UpdateBuilder) {
+			sqljson.Append(u, scans.FieldNotify, value)
+		})
+	}
+	if su.mutation.NotifyCleared() {
+		_spec.ClearField(scans.FieldNotify, field.TypeJSON)
 	}
 	if value, ok := su.mutation.Report(); ok {
 		_spec.SetField(scans.FieldReport, field.TypeJSON, value)
@@ -477,6 +517,51 @@ func (su *ScansUpdate) sqlSave(ctx context.Context) (n int, err error) {
 		}
 		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
+	if su.mutation.ScanNotificationsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   scans.ScanNotificationsTable,
+			Columns: []string{scans.ScanNotificationsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(scannotify.FieldID, field.TypeUUID),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := su.mutation.RemovedScanNotificationsIDs(); len(nodes) > 0 && !su.mutation.ScanNotificationsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   scans.ScanNotificationsTable,
+			Columns: []string{scans.ScanNotificationsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(scannotify.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := su.mutation.ScanNotificationsIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   scans.ScanNotificationsTable,
+			Columns: []string{scans.ScanNotificationsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(scannotify.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
 	if n, err = sqlgraph.UpdateNodes(ctx, su.driver, _spec); err != nil {
 		if _, ok := err.(*sqlgraph.NotFoundError); ok {
 			err = &NotFoundError{scans.Label}
@@ -567,23 +652,21 @@ func (suo *ScansUpdateOne) SetNillableScanner(s *string) *ScansUpdateOne {
 	return suo
 }
 
-// SetCheck sets the "check" field.
-func (suo *ScansUpdateOne) SetCheck(s schema.Check) *ScansUpdateOne {
-	suo.mutation.SetCheck(s)
+// SetNotify sets the "notify" field.
+func (suo *ScansUpdateOne) SetNotify(s []schema.Notify) *ScansUpdateOne {
+	suo.mutation.SetNotify(s)
 	return suo
 }
 
-// SetNillableCheck sets the "check" field if the given value is not nil.
-func (suo *ScansUpdateOne) SetNillableCheck(s *schema.Check) *ScansUpdateOne {
-	if s != nil {
-		suo.SetCheck(*s)
-	}
+// AppendNotify appends s to the "notify" field.
+func (suo *ScansUpdateOne) AppendNotify(s []schema.Notify) *ScansUpdateOne {
+	suo.mutation.AppendNotify(s)
 	return suo
 }
 
-// ClearCheck clears the value of the "check" field.
-func (suo *ScansUpdateOne) ClearCheck() *ScansUpdateOne {
-	suo.mutation.ClearCheck()
+// ClearNotify clears the value of the "notify" field.
+func (suo *ScansUpdateOne) ClearNotify() *ScansUpdateOne {
+	suo.mutation.ClearNotify()
 	return suo
 }
 
@@ -651,6 +734,21 @@ func (suo *ScansUpdateOne) AddAgentTasks(a ...*AgentTasks) *ScansUpdateOne {
 	return suo.AddAgentTaskIDs(ids...)
 }
 
+// AddScanNotificationIDs adds the "scan_notifications" edge to the ScanNotify entity by IDs.
+func (suo *ScansUpdateOne) AddScanNotificationIDs(ids ...uuid.UUID) *ScansUpdateOne {
+	suo.mutation.AddScanNotificationIDs(ids...)
+	return suo
+}
+
+// AddScanNotifications adds the "scan_notifications" edges to the ScanNotify entity.
+func (suo *ScansUpdateOne) AddScanNotifications(s ...*ScanNotify) *ScansUpdateOne {
+	ids := make([]uuid.UUID, len(s))
+	for i := range s {
+		ids[i] = s[i].ID
+	}
+	return suo.AddScanNotificationIDs(ids...)
+}
+
 // Mutation returns the ScansMutation object of the builder.
 func (suo *ScansUpdateOne) Mutation() *ScansMutation {
 	return suo.mutation
@@ -708,6 +806,27 @@ func (suo *ScansUpdateOne) RemoveAgentTasks(a ...*AgentTasks) *ScansUpdateOne {
 		ids[i] = a[i].ID
 	}
 	return suo.RemoveAgentTaskIDs(ids...)
+}
+
+// ClearScanNotifications clears all "scan_notifications" edges to the ScanNotify entity.
+func (suo *ScansUpdateOne) ClearScanNotifications() *ScansUpdateOne {
+	suo.mutation.ClearScanNotifications()
+	return suo
+}
+
+// RemoveScanNotificationIDs removes the "scan_notifications" edge to ScanNotify entities by IDs.
+func (suo *ScansUpdateOne) RemoveScanNotificationIDs(ids ...uuid.UUID) *ScansUpdateOne {
+	suo.mutation.RemoveScanNotificationIDs(ids...)
+	return suo
+}
+
+// RemoveScanNotifications removes "scan_notifications" edges to ScanNotify entities.
+func (suo *ScansUpdateOne) RemoveScanNotifications(s ...*ScanNotify) *ScansUpdateOne {
+	ids := make([]uuid.UUID, len(s))
+	for i := range s {
+		ids[i] = s[i].ID
+	}
+	return suo.RemoveScanNotificationIDs(ids...)
 }
 
 // Where appends a list predicates to the ScansUpdate builder.
@@ -804,11 +923,16 @@ func (suo *ScansUpdateOne) sqlSave(ctx context.Context) (_node *Scans, err error
 	if value, ok := suo.mutation.Scanner(); ok {
 		_spec.SetField(scans.FieldScanner, field.TypeString, value)
 	}
-	if value, ok := suo.mutation.Check(); ok {
-		_spec.SetField(scans.FieldCheck, field.TypeJSON, value)
+	if value, ok := suo.mutation.Notify(); ok {
+		_spec.SetField(scans.FieldNotify, field.TypeJSON, value)
 	}
-	if suo.mutation.CheckCleared() {
-		_spec.ClearField(scans.FieldCheck, field.TypeJSON)
+	if value, ok := suo.mutation.AppendedNotify(); ok {
+		_spec.AddModifier(func(u *sql.UpdateBuilder) {
+			sqljson.Append(u, scans.FieldNotify, value)
+		})
+	}
+	if suo.mutation.NotifyCleared() {
+		_spec.ClearField(scans.FieldNotify, field.TypeJSON)
 	}
 	if value, ok := suo.mutation.Report(); ok {
 		_spec.SetField(scans.FieldReport, field.TypeJSON, value)
@@ -962,6 +1086,51 @@ func (suo *ScansUpdateOne) sqlSave(ctx context.Context) (_node *Scans, err error
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(agenttasks.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if suo.mutation.ScanNotificationsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   scans.ScanNotificationsTable,
+			Columns: []string{scans.ScanNotificationsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(scannotify.FieldID, field.TypeUUID),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := suo.mutation.RemovedScanNotificationsIDs(); len(nodes) > 0 && !suo.mutation.ScanNotificationsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   scans.ScanNotificationsTable,
+			Columns: []string{scans.ScanNotificationsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(scannotify.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := suo.mutation.ScanNotificationsIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   scans.ScanNotificationsTable,
+			Columns: []string{scans.ScanNotificationsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(scannotify.FieldID, field.TypeUUID),
 			},
 		}
 		for _, k := range nodes {

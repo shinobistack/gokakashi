@@ -15,6 +15,7 @@ import (
 	"github.com/shinobistack/gokakashi/ent/integrations"
 	"github.com/shinobistack/gokakashi/ent/policies"
 	"github.com/shinobistack/gokakashi/ent/scanlabels"
+	"github.com/shinobistack/gokakashi/ent/scannotify"
 	"github.com/shinobistack/gokakashi/ent/scans"
 	"github.com/shinobistack/gokakashi/ent/schema"
 )
@@ -64,17 +65,9 @@ func (sc *ScansCreate) SetScanner(s string) *ScansCreate {
 	return sc
 }
 
-// SetCheck sets the "check" field.
-func (sc *ScansCreate) SetCheck(s schema.Check) *ScansCreate {
-	sc.mutation.SetCheck(s)
-	return sc
-}
-
-// SetNillableCheck sets the "check" field if the given value is not nil.
-func (sc *ScansCreate) SetNillableCheck(s *schema.Check) *ScansCreate {
-	if s != nil {
-		sc.SetCheck(*s)
-	}
+// SetNotify sets the "notify" field.
+func (sc *ScansCreate) SetNotify(s []schema.Notify) *ScansCreate {
+	sc.mutation.SetNotify(s)
 	return sc
 }
 
@@ -142,6 +135,21 @@ func (sc *ScansCreate) AddAgentTasks(a ...*AgentTasks) *ScansCreate {
 		ids[i] = a[i].ID
 	}
 	return sc.AddAgentTaskIDs(ids...)
+}
+
+// AddScanNotificationIDs adds the "scan_notifications" edge to the ScanNotify entity by IDs.
+func (sc *ScansCreate) AddScanNotificationIDs(ids ...uuid.UUID) *ScansCreate {
+	sc.mutation.AddScanNotificationIDs(ids...)
+	return sc
+}
+
+// AddScanNotifications adds the "scan_notifications" edges to the ScanNotify entity.
+func (sc *ScansCreate) AddScanNotifications(s ...*ScanNotify) *ScansCreate {
+	ids := make([]uuid.UUID, len(s))
+	for i := range s {
+		ids[i] = s[i].ID
+	}
+	return sc.AddScanNotificationIDs(ids...)
 }
 
 // Mutation returns the ScansMutation object of the builder.
@@ -264,9 +272,9 @@ func (sc *ScansCreate) createSpec() (*Scans, *sqlgraph.CreateSpec) {
 		_spec.SetField(scans.FieldScanner, field.TypeString, value)
 		_node.Scanner = value
 	}
-	if value, ok := sc.mutation.Check(); ok {
-		_spec.SetField(scans.FieldCheck, field.TypeJSON, value)
-		_node.Check = value
+	if value, ok := sc.mutation.Notify(); ok {
+		_spec.SetField(scans.FieldNotify, field.TypeJSON, value)
+		_node.Notify = value
 	}
 	if value, ok := sc.mutation.Report(); ok {
 		_spec.SetField(scans.FieldReport, field.TypeJSON, value)
@@ -331,6 +339,22 @@ func (sc *ScansCreate) createSpec() (*Scans, *sqlgraph.CreateSpec) {
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(agenttasks.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges = append(_spec.Edges, edge)
+	}
+	if nodes := sc.mutation.ScanNotificationsIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   scans.ScanNotificationsTable,
+			Columns: []string{scans.ScanNotificationsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(scannotify.FieldID, field.TypeUUID),
 			},
 		}
 		for _, k := range nodes {

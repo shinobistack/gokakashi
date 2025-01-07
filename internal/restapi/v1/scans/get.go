@@ -13,14 +13,14 @@ import (
 )
 
 type GetScanResponse struct {
-	ID            uuid.UUID       `json:"id"`
-	PolicyID      uuid.UUID       `json:"policy_id"`
-	Image         string          `json:"image"`
-	Scanner       string          `json:"scanner"`
-	IntegrationID uuid.UUID       `json:"integration_id"`
-	Status        string          `json:"status"`
-	Check         schema.Check    `json:"check"`
-	Report        json.RawMessage `json:"report,omitempty"`
+	ID            uuid.UUID        `json:"id"`
+	PolicyID      uuid.UUID        `json:"policy_id"`
+	Image         string           `json:"image"`
+	Scanner       string           `json:"scanner"`
+	IntegrationID uuid.UUID        `json:"integration_id"`
+	Status        string           `json:"status"`
+	Notify        *[]schema.Notify `json:"notify"`
+	Report        json.RawMessage  `json:"report,omitempty"`
 }
 
 type ListScanRequest struct {
@@ -53,7 +53,7 @@ func ListScans(client *ent.Client) func(ctx context.Context, req ListScanRequest
 				Scanner:       scan.Scanner,
 				IntegrationID: scan.IntegrationID,
 				Status:        scan.Status,
-				Check:         scan.Check,
+				Notify:        convertToPointer(scan.Notify),
 				Report:        scan.Report,
 			}
 		}
@@ -81,8 +81,12 @@ func GetScan(client *ent.Client) func(ctx context.Context, req GetScanRequest, r
 		res.Image = scan.Image
 		res.Scanner = scan.Scanner
 		res.Status = scan.Status
-		res.Check = scan.Check
+		res.Notify = convertToPointer(scan.Notify)
 		res.Report = scan.Report
 		return nil
 	}
+}
+
+func convertToPointer(data []schema.Notify) *[]schema.Notify {
+	return &data
 }

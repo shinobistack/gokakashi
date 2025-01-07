@@ -41,9 +41,9 @@ func (Scans) Fields() []ent.Field {
 			Comment("Foreign key to Integrations.ID"),
 		field.String("scanner").
 			Comment("Scanners like Trivy."),
-		field.JSON("check", Check{}).
+		field.JSON("notify", []Notify{}).
 			Optional().
-			Comment("Conditions checked during the scan."),
+			Comment("Conditions to check and stores notification configuration."),
 		field.JSON("report", json.RawMessage{}).
 			Optional().
 			Comment("Stores the scan results."),
@@ -66,5 +66,6 @@ func (Scans) Edges() []ent.Edge {
 		// A single scan can have multiple labels.
 		edge.To("scan_labels", ScanLabels.Type),
 		edge.To("agent_tasks", AgentTasks.Type),
+		edge.To("scan_notifications", ScanNotify.Type),
 	}
 }
