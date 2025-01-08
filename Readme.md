@@ -37,33 +37,81 @@ Find, analyze, and remediate vulnerabilities present in your container images.
 
 | Regisry | Status |
 |--------------|:-----------------:|
-| Docker Hub | [In progress ⏳](https://github.com/shinobistack/gokakashi/issues/81) |
-| Google Artifact Registry | [In progress ⏳](https://github.com/shinobistack/gokakashi/issues/82) |
+| Docker Hub | ✅ [Enhancement in progress ⏳](https://github.com/shinobistack/gokakashi/issues/81) |
+| Google Artifact Registry | ✅ [Enhancement in progress ⏳](https://github.com/shinobistack/gokakashi/issues/82) |
 | GitHub Container Registry | [In progress ⏳](https://github.com/shinobistack/gokakashi/issues/83) |
 | Amazon Elastic Container Registry | [Open for contribution](https://github.com/shinobistack/gokakashi/issues/84)  |
 | Azure Container Registry | [Open for contribution](https://github.com/shinobistack/gokakashi/issues/85) |
 
 #### Image Scanners
 
-| Scanner | Status |
-|---------|:------:|
-| Trivy | [In progress ⏳](https://github.com/shinobistack/gokakashi/issues/86) |
-| Snyk  | [Open for contribution](https://github.com/shinobistack/gokakashi/issues/87) |
-| Clair | [Open for contribution](https://github.com/shinobistack/gokakashi/issues/88) |
+| Scanner |                                       Status                                       |
+|---------|:----------------------------------------------------------------------------------:|
+| Trivy | ✅ [Enhancement in progress ⏳](https://github.com/shinobistack/gokakashi/issues/86) |
+| Snyk  |    [Open for contribution](https://github.com/shinobistack/gokakashi/issues/87)    |
+| Clair |    [Open for contribution](https://github.com/shinobistack/gokakashi/issues/88)    |
 
+
+#### Notification Systems
+
+| Platform |                                    Status                                     |
+|----------|:-----------------------------------------------------------------------------:|
+| Linear   |                                  ✅ Complete                                   |
+| Jira     | [Open for contribution](https://github.com/shinobistack/gokakashi/issues/105) |
+| Slack    | [Open for contribution](https://github.com/shinobistack/gokakashi/issues/106) |
+
+#### Database Integration
+Integrated with PostgreSQL using the modern, type-safe [ent ORM](https://entgo.io/).
+
+| Database     |                                    Status                                     |
+|--------------|:-----------------------------------------------------------------------------:|
+| PostgresSQL  |                                  ✅ Complete                                   |
+| Other DBs | [Open for contribution](https://github.com/shinobistack/gokakashi/issues/107) |
+Currently integrated with PostgreSQL using the modern, type-safe [ent ORM](https://entgo.io/).
+Future support for databases like MySQL, MariaDB, CockroachDB, SQLite, and more is planned.
+With ent ORM, goKakashi is designed to be database-agnostic, allowing seamless integration with existing infrastructure, 
+regardless of the database technology is used.
 
 ## Install 🛠️
+Using Docker Compose
 
+Here’s how you can set up gokakashi using Docker Compose for both the server and PostgreSQL database.
+Add your configuration file, e.g., [`./config/latest_config.yaml`](config/latest_config.yaml)
+
+
+```sh
+docker-compose up --build -d
+./gokakashi agent start --server=http://localhost:8000 --token=letsdoit --workspace=/tmp
+
+```
+Or
+### DB
+```sh 
+docker network create gokakashi-network
+
+docker run -d --rm --name postgresdb --network gokakashi-network -p 5432:5432 \
+  -e POSTGRES_PASSWORD=secret \
+  -e POSTGRES_USER=postgres \
+  -e POSTGRES_DB=postgres \
+  postgres:latest
+
+```
 ### Server
 
 ```sh
-docker run -d ghcr.io/shinobistack/gokakashi server 
+docker run -d --rm --name gokakashi-server --network gokakashi-network -p 8000:8000 \
+  -v $(pwd)/lts.yaml:/app/lts.yaml \
+  gokakashi server --config=lts.yaml
+
 ```
 
 ### Agent
 
 ```sh
-docker run --rm -it ghcr.io/shinobistack/gokakashi agent
+docker run -it --rm --name gokakashi-agent --network gokakashi-network \
+  -v /tmp:/tmp \
+  gokakashi agent start --server=http://gokakashi-server:8000 --token=letsdoit --workspace=/tmp
+  
 ```
 
 ## Transparency & Feedback ✨
