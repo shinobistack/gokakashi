@@ -14,11 +14,11 @@ type Scans struct {
 	ent.Schema
 }
 
-type scansNotifyParsed struct {
-	To     uuid.UUID `json:"to"`               // e.g., acme-linear, acme-jira
-	When   string    `json:"when"`             // CEL condition
-	Format string    `json:"format,omitempty"` // Todo: Custom template for notification descriptions
-}
+//type scansNotifyParsed struct {
+//	To     uuid.UUID `json:"to"`               // e.g., acme-linear, acme-jira
+//	When   string    `json:"when"`             // CEL condition
+//	Format string    `json:"format,omitempty"` // Todo: Custom template for notification descriptions
+//}
 
 // Fields of the Scans.
 func (Scans) Fields() []ent.Field {
