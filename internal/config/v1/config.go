@@ -45,7 +45,7 @@ type Policy struct {
 	Image   ImagePolicy       `yaml:"image"`
 	Trigger Trigger           `yaml:"trigger"`
 	Labels  map[string]string `yaml:"labels,omitempty"`
-	Notify  []Notify          `yaml:"notify"`
+	Notify  []Notify          `yaml:"notify,omitempty"`
 	Scanner string            `yaml:"scanner"`
 }
 

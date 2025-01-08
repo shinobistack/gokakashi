@@ -225,6 +225,13 @@ func processTask(server, token string, task agenttasks.GetAgentTaskResponse, wor
 		return
 	}
 
+	// step 6: Verify scans.Notify field exist
+	// Todo: if exists update the status to notify_pending else complete
+	err = updateScanStatus(server, token, scan.ID, "notify_pending")
+	if err != nil {
+		log.Printf("Failed to update scan status to 'scan_in_progress': %v", err)
+	}
+
 	if err := updateAgentTaskStatus(server, token, task.ID, agentID, "complete"); err != nil {
 		log.Printf("Failed to update agent_task status to 'complete': %v", err)
 	}
@@ -356,7 +363,6 @@ func uploadReport(server, token string, scanID uuid.UUID, reportPath string) err
 	reqBody := scans.UpdateScanRequest{
 		ID:     scanID,
 		Report: json.RawMessage(report),
-		Status: strPtr("success"),
 	}
 	reqBodyJSON, err := json.Marshal(reqBody)
 	if err != nil {

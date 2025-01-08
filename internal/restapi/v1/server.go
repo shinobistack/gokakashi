@@ -16,6 +16,7 @@ import (
 	policies1 "github.com/shinobistack/gokakashi/internal/restapi/v1/policies"
 	policylabels1 "github.com/shinobistack/gokakashi/internal/restapi/v1/policylabels"
 	scanlabels1 "github.com/shinobistack/gokakashi/internal/restapi/v1/scanlabels"
+	scannotify1 "github.com/shinobistack/gokakashi/internal/restapi/v1/scannotify"
 	scans1 "github.com/shinobistack/gokakashi/internal/restapi/v1/scans"
 
 	"github.com/swaggest/openapi-go/openapi31"
@@ -100,6 +101,11 @@ func (srv *Server) Service() *web.Service {
 	apiV1.Get("/agents/{agent_id}/tasks/{id}", usecase.NewInteractor(agenttasks1.GetAgentTask(srv.DB)))
 	apiV1.Put("/agents/{agent_id}/tasks/{id}", usecase.NewInteractor(agenttasks1.UpdateAgentTask(srv.DB)))
 	apiV1.Delete("/agents/{agent_id}/tasks/{id}", usecase.NewInteractor(agenttasks1.DeleteAgentTask(srv.DB)))
+
+	apiV1.Post("/scannotify", usecase.NewInteractor(scannotify1.CreateScanNotify(srv.DB)))
+	apiV1.Get("/scannotify", usecase.NewInteractor(scannotify1.GetScanNotify(srv.DB)))
+	apiV1.Put("/scannotify/{scan_id}", usecase.NewInteractor(scannotify1.UpdateScanNotify(srv.DB)))
+	apiV1.Delete("/scannotify/{scan_id}", usecase.NewInteractor(scannotify1.DeleteScanNotify(srv.DB)))
 
 	s.Mount("/api/v1/openapi.json", specHandler(apiV1.OpenAPICollector.SpecSchema().(*openapi31.Spec)))
 	s.Mount("/api/v1", apiV1)
