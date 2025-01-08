@@ -16,15 +16,12 @@ import (
 type CreateScanRequest struct {
 	PolicyID uuid.UUID `json:"policy_id"`
 	// ToDo: To think if the image stored would be single registery/image:tag.
-	Image         string    `json:"image"`
-	Scanner       string    `json:"scanner"`
-	IntegrationID uuid.UUID `json:"integration_id"`
-	//ToDo: Similarly to think if the check should have the evaluate conditions. How would the notify work.
-	Check schema.Check `json:"check"`
-	// ToDo: can we pre-define the values for scan status that can be used?
-	Status string `json:"status"`
-	// ToDo: Just the report URL or status of public or private
-	Report json.RawMessage `json:"report,omitempty"`
+	Image         string          `json:"image"`
+	Scanner       string          `json:"scanner"`
+	IntegrationID uuid.UUID       `json:"integration_id"`
+	Notify        []schema.Notify `json:"notify"`
+	Status        string          `json:"status"`
+	Report        json.RawMessage `json:"report,omitempty"`
 }
 
 type CreateScanResponse struct {
@@ -40,6 +37,16 @@ func CreateScan(client *ent.Client) func(ctx context.Context, req CreateScanRequ
 		if req.PolicyID == uuid.Nil || req.Image == "" || req.Status == "" {
 			return status.Wrap(errors.New("missing required fields"), status.InvalidArgument)
 		}
+		// Validate notify structure
+		for _, notify := range req.Notify {
+			if notify.To == "" {
+				return status.Wrap(errors.New("notify 'to' field is required"), status.InvalidArgument)
+			}
+			if notify.When == "" {
+				return status.Wrap(errors.New("notify 'when' field is required"), status.InvalidArgument)
+			}
+		}
+
 		// ToDo: To think if we need to check image duplicate for scans? IF image already scheduled for scans?
 		// Check if PolicyID exists before creating the scan.
 		exists, err := client.Policies.Query().
@@ -51,7 +58,7 @@ func CreateScan(client *ent.Client) func(ctx context.Context, req CreateScanRequ
 		if !exists {
 			return status.Wrap(errors.New("policy not found"), status.NotFound)
 		}
-		// Check if IntegrationID existence
+		// Check if IntegrationID exist
 		integrationExists, err := client.Integrations.Query().
 			Where(integrations.ID(req.IntegrationID)).
 			Exist(ctx)
@@ -77,7 +84,7 @@ func CreateScan(client *ent.Client) func(ctx context.Context, req CreateScanRequ
 			SetPolicyID(req.PolicyID).
 			SetImage(req.Image).
 			SetScanner(req.Scanner).
-			SetCheck(req.Check).
+			SetNotify(req.Notify).
 			SetStatus(req.Status).
 			SetIntegrationID(req.IntegrationID).
 			SetReport(req.Report).

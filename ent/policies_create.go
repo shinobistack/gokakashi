@@ -61,17 +61,9 @@ func (pc *PoliciesCreate) SetTrigger(m map[string]interface{}) *PoliciesCreate {
 	return pc
 }
 
-// SetCheck sets the "check" field.
-func (pc *PoliciesCreate) SetCheck(s schema.Check) *PoliciesCreate {
-	pc.mutation.SetCheck(s)
-	return pc
-}
-
-// SetNillableCheck sets the "check" field if the given value is not nil.
-func (pc *PoliciesCreate) SetNillableCheck(s *schema.Check) *PoliciesCreate {
-	if s != nil {
-		pc.SetCheck(*s)
-	}
+// SetNotify sets the "notify" field.
+func (pc *PoliciesCreate) SetNotify(s []schema.Notify) *PoliciesCreate {
+	pc.mutation.SetNotify(s)
 	return pc
 }
 
@@ -231,9 +223,9 @@ func (pc *PoliciesCreate) createSpec() (*Policies, *sqlgraph.CreateSpec) {
 		_spec.SetField(policies.FieldTrigger, field.TypeJSON, value)
 		_node.Trigger = value
 	}
-	if value, ok := pc.mutation.Check(); ok {
-		_spec.SetField(policies.FieldCheck, field.TypeJSON, value)
-		_node.Check = value
+	if value, ok := pc.mutation.Notify(); ok {
+		_spec.SetField(policies.FieldNotify, field.TypeJSON, value)
+		_node.Notify = value
 	}
 	if nodes := pc.mutation.PolicyLabelsIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{

@@ -214,14 +214,14 @@ func TriggerNotNil() predicate.Policies {
 	return predicate.Policies(sql.FieldNotNull(FieldTrigger))
 }
 
-// CheckIsNil applies the IsNil predicate on the "check" field.
-func CheckIsNil() predicate.Policies {
-	return predicate.Policies(sql.FieldIsNull(FieldCheck))
+// NotifyIsNil applies the IsNil predicate on the "notify" field.
+func NotifyIsNil() predicate.Policies {
+	return predicate.Policies(sql.FieldIsNull(FieldNotify))
 }
 
-// CheckNotNil applies the NotNil predicate on the "check" field.
-func CheckNotNil() predicate.Policies {
-	return predicate.Policies(sql.FieldNotNull(FieldCheck))
+// NotifyNotNil applies the NotNil predicate on the "notify" field.
+func NotifyNotNil() predicate.Policies {
+	return predicate.Policies(sql.FieldNotNull(FieldNotify))
 }
 
 // HasPolicyLabels applies the HasEdge predicate on the "policy_labels" edge.

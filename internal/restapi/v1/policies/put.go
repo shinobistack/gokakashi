@@ -16,7 +16,7 @@ type UpdatePolicyRequest struct {
 	Scanner *string                 `json:"scanner"`
 	Image   *schema.Image           `json:"image"`
 	Trigger *map[string]interface{} `json:"trigger"`
-	Check   *schema.Check           `json:"check"`
+	Notify  *[]schema.Notify        `json:"notify"`
 }
 
 type UpdatePolicyResponse struct {
@@ -60,8 +60,16 @@ func UpdatePolicy(client *ent.Client) func(ctx context.Context, req UpdatePolicy
 			update.SetScanner(*req.Scanner)
 		}
 
-		if req.Check != nil {
-			update.SetCheck(*req.Check)
+		if req.Notify != nil {
+			for _, notify := range *req.Notify {
+				if notify.To == "" {
+					return status.Wrap(errors.New("notify 'to' field is required"), status.InvalidArgument)
+				}
+				if notify.When == "" {
+					return status.Wrap(errors.New("notify 'when' field is required"), status.InvalidArgument)
+				}
+			}
+			update.SetNotify(*req.Notify)
 		}
 
 		// Save updates
@@ -75,7 +83,7 @@ func UpdatePolicy(client *ent.Client) func(ctx context.Context, req UpdatePolicy
 		res.Image = policy.Image
 		res.Scanner = policy.Scanner
 		res.Trigger = policy.Trigger
-		res.Check = convertToPointer(policy.Check)
+		res.Notify = convertToPointer(updatedPolicy.Notify)
 		return nil
 	}
 }

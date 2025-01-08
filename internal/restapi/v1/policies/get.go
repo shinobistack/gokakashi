@@ -23,7 +23,7 @@ type GetPolicyResponse struct {
 	Image   schema.Image           `json:"image"`
 	Labels  []schema.PolicyLabel   `json:"labels"`
 	Trigger map[string]interface{} `json:"trigger,omitempty"`
-	Check   *schema.Check          `json:"check,omitempty"`
+	Notify  *[]schema.Notify       `json:"notify"`
 }
 
 type ListPoliciesRequest struct{}
@@ -57,7 +57,7 @@ func ListPolicies(client *ent.Client) func(ctx context.Context, req ListPolicies
 				Scanner: policy.Scanner,
 				Labels:  labels,
 				Trigger: policy.Trigger,
-				Check:   convertToPointer(policy.Check),
+				Notify:  convertToPointer(policy.Notify),
 			}
 		}
 		return nil
@@ -96,13 +96,13 @@ func GetPolicy(client *ent.Client) func(ctx context.Context, req GetPolicyReques
 		res.Scanner = policy.Scanner
 		res.Labels = labels
 		res.Trigger = policy.Trigger
-		res.Check = convertToPointer(policy.Check)
+		res.Notify = convertToPointer(policy.Notify)
 
 		return nil
 	}
 }
 
 // Utility function to convert nullable fields to pointers
-func convertToPointer(data schema.Check) *schema.Check {
+func convertToPointer(data []schema.Notify) *[]schema.Notify {
 	return &data
 }

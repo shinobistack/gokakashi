@@ -24,7 +24,7 @@ type Scans struct {
 	ID uuid.UUID `json:"id,omitempty"`
 	// Foreign key to Policies.ID
 	PolicyID uuid.UUID `json:"policy_id,omitempty"`
-	// Enum: { scan_pending, scan_in_progress, check_pending, check_in_progress,  success, error }.
+	// Enum: { scan_pending, scan_in_progress, notify_pending, notify_in_progress,  success, error }.
 	Status string `json:"status,omitempty"`
 	// Details of the image being scanned.
 	Image string `json:"image,omitempty"`
@@ -32,8 +32,8 @@ type Scans struct {
 	IntegrationID uuid.UUID `json:"integration_id,omitempty"`
 	// Scanners like Trivy.
 	Scanner string `json:"scanner,omitempty"`
-	// Conditions checked during the scan.
-	Check schema.Check `json:"check,omitempty"`
+	// Conditions to check and stores notification configuration.
+	Notify []schema.Notify `json:"notify,omitempty"`
 	// Stores the scan results.
 	Report json.RawMessage `json:"report,omitempty"`
 	// Edges holds the relations/edges for other nodes in the graph.
@@ -52,9 +52,11 @@ type ScansEdges struct {
 	ScanLabels []*ScanLabels `json:"scan_labels,omitempty"`
 	// AgentTasks holds the value of the agent_tasks edge.
 	AgentTasks []*AgentTasks `json:"agent_tasks,omitempty"`
+	// ScanNotifications holds the value of the scan_notifications edge.
+	ScanNotifications []*ScanNotify `json:"scan_notifications,omitempty"`
 	// loadedTypes holds the information for reporting if a
 	// type was loaded (or requested) in eager-loading or not.
-	loadedTypes [4]bool
+	loadedTypes [5]bool
 }
 
 // PolicyOrErr returns the Policy value or an error if the edge
@@ -97,12 +99,21 @@ func (e ScansEdges) AgentTasksOrErr() ([]*AgentTasks, error) {
 	return nil, &NotLoadedError{edge: "agent_tasks"}
 }
 
+// ScanNotificationsOrErr returns the ScanNotifications value or an error if the edge
+// was not loaded in eager-loading.
+func (e ScansEdges) ScanNotificationsOrErr() ([]*ScanNotify, error) {
+	if e.loadedTypes[4] {
+		return e.ScanNotifications, nil
+	}
+	return nil, &NotLoadedError{edge: "scan_notifications"}
+}
+
 // scanValues returns the types for scanning values from sql.Rows.
 func (*Scans) scanValues(columns []string) ([]any, error) {
 	values := make([]any, len(columns))
 	for i := range columns {
 		switch columns[i] {
-		case scans.FieldCheck, scans.FieldReport:
+		case scans.FieldNotify, scans.FieldReport:
 			values[i] = new([]byte)
 		case scans.FieldStatus, scans.FieldImage, scans.FieldScanner:
 			values[i] = new(sql.NullString)
@@ -159,12 +170,12 @@ func (s *Scans) assignValues(columns []string, values []any) error {
 			} else if value.Valid {
 				s.Scanner = value.String
 			}
-		case scans.FieldCheck:
+		case scans.FieldNotify:
 			if value, ok := values[i].(*[]byte); !ok {
-				return fmt.Errorf("unexpected type %T for field check", values[i])
+				return fmt.Errorf("unexpected type %T for field notify", values[i])
 			} else if value != nil && len(*value) > 0 {
-				if err := json.Unmarshal(*value, &s.Check); err != nil {
-					return fmt.Errorf("unmarshal field check: %w", err)
+				if err := json.Unmarshal(*value, &s.Notify); err != nil {
+					return fmt.Errorf("unmarshal field notify: %w", err)
 				}
 			}
 		case scans.FieldReport:
@@ -208,6 +219,11 @@ func (s *Scans) QueryAgentTasks() *AgentTasksQuery {
 	return NewScansClient(s.config).QueryAgentTasks(s)
 }
 
+// QueryScanNotifications queries the "scan_notifications" edge of the Scans entity.
+func (s *Scans) QueryScanNotifications() *ScanNotifyQuery {
+	return NewScansClient(s.config).QueryScanNotifications(s)
+}
+
 // Update returns a builder for updating this Scans.
 // Note that you need to call Scans.Unwrap() before calling this method if this Scans
 // was returned from a transaction, and the transaction was committed or rolled back.
@@ -246,8 +262,8 @@ func (s *Scans) String() string {
 	builder.WriteString("scanner=")
 	builder.WriteString(s.Scanner)
 	builder.WriteString(", ")
-	builder.WriteString("check=")
-	builder.WriteString(fmt.Sprintf("%v", s.Check))
+	builder.WriteString("notify=")
+	builder.WriteString(fmt.Sprintf("%v", s.Notify))
 	builder.WriteString(", ")
 	builder.WriteString("report=")
 	builder.WriteString(fmt.Sprintf("%v", s.Report))

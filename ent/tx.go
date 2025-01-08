@@ -26,6 +26,8 @@ type Tx struct {
 	PolicyLabels *PolicyLabelsClient
 	// ScanLabels is the client for interacting with the ScanLabels builders.
 	ScanLabels *ScanLabelsClient
+	// ScanNotify is the client for interacting with the ScanNotify builders.
+	ScanNotify *ScanNotifyClient
 	// Scans is the client for interacting with the Scans builders.
 	Scans *ScansClient
 
@@ -166,6 +168,7 @@ func (tx *Tx) init() {
 	tx.Policies = NewPoliciesClient(tx.config)
 	tx.PolicyLabels = NewPolicyLabelsClient(tx.config)
 	tx.ScanLabels = NewScanLabelsClient(tx.config)
+	tx.ScanNotify = NewScanNotifyClient(tx.config)
 	tx.Scans = NewScansClient(tx.config)
 }
 

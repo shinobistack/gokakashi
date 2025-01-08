@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/shinobistack/gokakashi/internal/assigner"
 	"github.com/shinobistack/gokakashi/internal/db"
+	"github.com/shinobistack/gokakashi/internal/notifier"
 	"log"
 	"os"
 	"os/signal"
@@ -82,11 +83,9 @@ func handleConfigV1() {
 	if err != nil {
 		log.Fatalf("Error: %v", err)
 	}
-
-	// ToDo: To set a separate connection for API calls
-	// Initialize a separate connection for API calls
-	//apiDB := restapiv1.InitDB()
-	//defer apiDB.Close()
+	// Todo: To implement connection pooling. Explore and implement.
+	//dbClient := restapiv1.InitDB(cfg.Database)
+	//defer dbClient.Close()
 
 	log.Println("Starting API server for scan functionality...")
 	s := &restapiv1.Server{
@@ -98,16 +97,18 @@ func handleConfigV1() {
 	go s.Serve()
 
 	dbConfig := cfg.Database
+
 	// Initialize a separate connection for configuration tasks
 	configDB := restapiv1.InitDB(dbConfig)
 	defer configDB.Close()
-
 	db.RunMigrations(configDB)
 	// Populate the database
 	db.PopulateDatabase(configDB, cfg)
 
 	// ToDo: To be go routine who independently and routinely checks and assigns scans in agentTasks table
 	go assigner.StartAssigner(cfg.Site.Host, cfg.Site.Port, cfg.Site.APIToken, 1*time.Minute)
+	// Todo: To introduce API calls for scanNotify and remove client passing
+	go notifier.StartScanNotifier(cfg.Site.Host, cfg.Site.Port, cfg.Site.APIToken, 1*time.Minute)
 
 }
 

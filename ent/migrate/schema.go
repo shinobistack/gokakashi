@@ -92,7 +92,7 @@ var (
 		{Name: "scanner", Type: field.TypeString},
 		{Name: "labels", Type: field.TypeJSON, Nullable: true},
 		{Name: "trigger", Type: field.TypeJSON, Nullable: true},
-		{Name: "check", Type: field.TypeJSON, Nullable: true},
+		{Name: "notify", Type: field.TypeJSON, Nullable: true},
 	}
 	// PoliciesTable holds the schema information for the "policies" table.
 	PoliciesTable = &schema.Table{
@@ -142,13 +142,33 @@ var (
 			},
 		},
 	}
+	// ScanNotifiesColumns holds the columns for the "scan_notifies" table.
+	ScanNotifiesColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeUUID, Unique: true},
+		{Name: "hash", Type: field.TypeString},
+		{Name: "scan_id", Type: field.TypeUUID},
+	}
+	// ScanNotifiesTable holds the schema information for the "scan_notifies" table.
+	ScanNotifiesTable = &schema.Table{
+		Name:       "scan_notifies",
+		Columns:    ScanNotifiesColumns,
+		PrimaryKey: []*schema.Column{ScanNotifiesColumns[0]},
+		ForeignKeys: []*schema.ForeignKey{
+			{
+				Symbol:     "scan_notifies_scans_scan_notifications",
+				Columns:    []*schema.Column{ScanNotifiesColumns[2]},
+				RefColumns: []*schema.Column{ScansColumns[0]},
+				OnDelete:   schema.NoAction,
+			},
+		},
+	}
 	// ScansColumns holds the columns for the "scans" table.
 	ScansColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeUUID, Unique: true},
 		{Name: "status", Type: field.TypeString, Default: "scan_pending"},
 		{Name: "image", Type: field.TypeString},
 		{Name: "scanner", Type: field.TypeString},
-		{Name: "check", Type: field.TypeJSON, Nullable: true},
+		{Name: "notify", Type: field.TypeJSON, Nullable: true},
 		{Name: "report", Type: field.TypeJSON, Nullable: true},
 		{Name: "integration_id", Type: field.TypeUUID},
 		{Name: "policy_id", Type: field.TypeUUID},
@@ -182,6 +202,7 @@ var (
 		PoliciesTable,
 		PolicyLabelsTable,
 		ScanLabelsTable,
+		ScanNotifiesTable,
 		ScansTable,
 	}
 )
@@ -192,6 +213,7 @@ func init() {
 	IntegrationsTable.ForeignKeys[0].RefTable = IntegrationTypesTable
 	PolicyLabelsTable.ForeignKeys[0].RefTable = PoliciesTable
 	ScanLabelsTable.ForeignKeys[0].RefTable = ScansTable
+	ScanNotifiesTable.ForeignKeys[0].RefTable = ScansTable
 	ScansTable.ForeignKeys[0].RefTable = IntegrationsTable
 	ScansTable.ForeignKeys[1].RefTable = PoliciesTable
 }

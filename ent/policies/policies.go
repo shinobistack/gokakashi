@@ -23,8 +23,8 @@ const (
 	FieldLabels = "labels"
 	// FieldTrigger holds the string denoting the trigger field in the database.
 	FieldTrigger = "trigger"
-	// FieldCheck holds the string denoting the check field in the database.
-	FieldCheck = "check"
+	// FieldNotify holds the string denoting the notify field in the database.
+	FieldNotify = "notify"
 	// EdgePolicyLabels holds the string denoting the policy_labels edge name in mutations.
 	EdgePolicyLabels = "policy_labels"
 	// EdgeScans holds the string denoting the scans edge name in mutations.
@@ -55,7 +55,7 @@ var Columns = []string{
 	FieldScanner,
 	FieldLabels,
 	FieldTrigger,
-	FieldCheck,
+	FieldNotify,
 }
 
 // ValidColumn reports if the column name is valid (part of the table columns).

@@ -21,6 +21,7 @@ import (
 	"github.com/shinobistack/gokakashi/ent/policylabels"
 	"github.com/shinobistack/gokakashi/ent/predicate"
 	"github.com/shinobistack/gokakashi/ent/scanlabels"
+	"github.com/shinobistack/gokakashi/ent/scannotify"
 	"github.com/shinobistack/gokakashi/ent/scans"
 	"github.com/shinobistack/gokakashi/ent/schema"
 )
@@ -41,6 +42,7 @@ const (
 	TypePolicies        = "Policies"
 	TypePolicyLabels    = "PolicyLabels"
 	TypeScanLabels      = "ScanLabels"
+	TypeScanNotify      = "ScanNotify"
 	TypeScans           = "Scans"
 )
 
@@ -2311,7 +2313,8 @@ type PoliciesMutation struct {
 	scanner              *string
 	labels               *schema.PolicyLabels
 	trigger              *map[string]interface{}
-	check                *schema.Check
+	notify               *[]schema.Notify
+	appendnotify         []schema.Notify
 	clearedFields        map[string]struct{}
 	policy_labels        map[int]struct{}
 	removedpolicy_labels map[int]struct{}
@@ -2634,53 +2637,69 @@ func (m *PoliciesMutation) ResetTrigger() {
 	delete(m.clearedFields, policies.FieldTrigger)
 }
 
-// SetCheck sets the "check" field.
-func (m *PoliciesMutation) SetCheck(s schema.Check) {
-	m.check = &s
+// SetNotify sets the "notify" field.
+func (m *PoliciesMutation) SetNotify(s []schema.Notify) {
+	m.notify = &s
+	m.appendnotify = nil
 }
 
-// Check returns the value of the "check" field in the mutation.
-func (m *PoliciesMutation) Check() (r schema.Check, exists bool) {
-	v := m.check
+// Notify returns the value of the "notify" field in the mutation.
+func (m *PoliciesMutation) Notify() (r []schema.Notify, exists bool) {
+	v := m.notify
 	if v == nil {
 		return
 	}
 	return *v, true
 }
 
-// OldCheck returns the old "check" field's value of the Policies entity.
+// OldNotify returns the old "notify" field's value of the Policies entity.
 // If the Policies object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *PoliciesMutation) OldCheck(ctx context.Context) (v schema.Check, err error) {
+func (m *PoliciesMutation) OldNotify(ctx context.Context) (v []schema.Notify, err error) {
 	if !m.op.Is(OpUpdateOne) {
-		return v, errors.New("OldCheck is only allowed on UpdateOne operations")
+		return v, errors.New("OldNotify is only allowed on UpdateOne operations")
 	}
 	if m.id == nil || m.oldValue == nil {
-		return v, errors.New("OldCheck requires an ID field in the mutation")
+		return v, errors.New("OldNotify requires an ID field in the mutation")
 	}
 	oldValue, err := m.oldValue(ctx)
 	if err != nil {
-		return v, fmt.Errorf("querying old value for OldCheck: %w", err)
+		return v, fmt.Errorf("querying old value for OldNotify: %w", err)
 	}
-	return oldValue.Check, nil
+	return oldValue.Notify, nil
 }
 
-// ClearCheck clears the value of the "check" field.
-func (m *PoliciesMutation) ClearCheck() {
-	m.check = nil
-	m.clearedFields[policies.FieldCheck] = struct{}{}
+// AppendNotify adds s to the "notify" field.
+func (m *PoliciesMutation) AppendNotify(s []schema.Notify) {
+	m.appendnotify = append(m.appendnotify, s...)
 }
 
-// CheckCleared returns if the "check" field was cleared in this mutation.
-func (m *PoliciesMutation) CheckCleared() bool {
-	_, ok := m.clearedFields[policies.FieldCheck]
+// AppendedNotify returns the list of values that were appended to the "notify" field in this mutation.
+func (m *PoliciesMutation) AppendedNotify() ([]schema.Notify, bool) {
+	if len(m.appendnotify) == 0 {
+		return nil, false
+	}
+	return m.appendnotify, true
+}
+
+// ClearNotify clears the value of the "notify" field.
+func (m *PoliciesMutation) ClearNotify() {
+	m.notify = nil
+	m.appendnotify = nil
+	m.clearedFields[policies.FieldNotify] = struct{}{}
+}
+
+// NotifyCleared returns if the "notify" field was cleared in this mutation.
+func (m *PoliciesMutation) NotifyCleared() bool {
+	_, ok := m.clearedFields[policies.FieldNotify]
 	return ok
 }
 
-// ResetCheck resets all changes to the "check" field.
-func (m *PoliciesMutation) ResetCheck() {
-	m.check = nil
-	delete(m.clearedFields, policies.FieldCheck)
+// ResetNotify resets all changes to the "notify" field.
+func (m *PoliciesMutation) ResetNotify() {
+	m.notify = nil
+	m.appendnotify = nil
+	delete(m.clearedFields, policies.FieldNotify)
 }
 
 // AddPolicyLabelIDs adds the "policy_labels" edge to the PolicyLabels entity by ids.
@@ -2841,8 +2860,8 @@ func (m *PoliciesMutation) Fields() []string {
 	if m.trigger != nil {
 		fields = append(fields, policies.FieldTrigger)
 	}
-	if m.check != nil {
-		fields = append(fields, policies.FieldCheck)
+	if m.notify != nil {
+		fields = append(fields, policies.FieldNotify)
 	}
 	return fields
 }
@@ -2862,8 +2881,8 @@ func (m *PoliciesMutation) Field(name string) (ent.Value, bool) {
 		return m.Labels()
 	case policies.FieldTrigger:
 		return m.Trigger()
-	case policies.FieldCheck:
-		return m.Check()
+	case policies.FieldNotify:
+		return m.Notify()
 	}
 	return nil, false
 }
@@ -2883,8 +2902,8 @@ func (m *PoliciesMutation) OldField(ctx context.Context, name string) (ent.Value
 		return m.OldLabels(ctx)
 	case policies.FieldTrigger:
 		return m.OldTrigger(ctx)
-	case policies.FieldCheck:
-		return m.OldCheck(ctx)
+	case policies.FieldNotify:
+		return m.OldNotify(ctx)
 	}
 	return nil, fmt.Errorf("unknown Policies field %s", name)
 }
@@ -2929,12 +2948,12 @@ func (m *PoliciesMutation) SetField(name string, value ent.Value) error {
 		}
 		m.SetTrigger(v)
 		return nil
-	case policies.FieldCheck:
-		v, ok := value.(schema.Check)
+	case policies.FieldNotify:
+		v, ok := value.([]schema.Notify)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
-		m.SetCheck(v)
+		m.SetNotify(v)
 		return nil
 	}
 	return fmt.Errorf("unknown Policies field %s", name)
@@ -2972,8 +2991,8 @@ func (m *PoliciesMutation) ClearedFields() []string {
 	if m.FieldCleared(policies.FieldTrigger) {
 		fields = append(fields, policies.FieldTrigger)
 	}
-	if m.FieldCleared(policies.FieldCheck) {
-		fields = append(fields, policies.FieldCheck)
+	if m.FieldCleared(policies.FieldNotify) {
+		fields = append(fields, policies.FieldNotify)
 	}
 	return fields
 }
@@ -2995,8 +3014,8 @@ func (m *PoliciesMutation) ClearField(name string) error {
 	case policies.FieldTrigger:
 		m.ClearTrigger()
 		return nil
-	case policies.FieldCheck:
-		m.ClearCheck()
+	case policies.FieldNotify:
+		m.ClearNotify()
 		return nil
 	}
 	return fmt.Errorf("unknown Policies nullable field %s", name)
@@ -3021,8 +3040,8 @@ func (m *PoliciesMutation) ResetField(name string) error {
 	case policies.FieldTrigger:
 		m.ResetTrigger()
 		return nil
-	case policies.FieldCheck:
-		m.ResetCheck()
+	case policies.FieldNotify:
+		m.ResetNotify()
 		return nil
 	}
 	return fmt.Errorf("unknown Policies field %s", name)
@@ -4114,32 +4133,476 @@ func (m *ScanLabelsMutation) ResetEdge(name string) error {
 	return fmt.Errorf("unknown ScanLabels edge %s", name)
 }
 
+// ScanNotifyMutation represents an operation that mutates the ScanNotify nodes in the graph.
+type ScanNotifyMutation struct {
+	config
+	op            Op
+	typ           string
+	id            *uuid.UUID
+	hash          *string
+	clearedFields map[string]struct{}
+	scan          *uuid.UUID
+	clearedscan   bool
+	done          bool
+	oldValue      func(context.Context) (*ScanNotify, error)
+	predicates    []predicate.ScanNotify
+}
+
+var _ ent.Mutation = (*ScanNotifyMutation)(nil)
+
+// scannotifyOption allows management of the mutation configuration using functional options.
+type scannotifyOption func(*ScanNotifyMutation)
+
+// newScanNotifyMutation creates new mutation for the ScanNotify entity.
+func newScanNotifyMutation(c config, op Op, opts ...scannotifyOption) *ScanNotifyMutation {
+	m := &ScanNotifyMutation{
+		config:        c,
+		op:            op,
+		typ:           TypeScanNotify,
+		clearedFields: make(map[string]struct{}),
+	}
+	for _, opt := range opts {
+		opt(m)
+	}
+	return m
+}
+
+// withScanNotifyID sets the ID field of the mutation.
+func withScanNotifyID(id uuid.UUID) scannotifyOption {
+	return func(m *ScanNotifyMutation) {
+		var (
+			err   error
+			once  sync.Once
+			value *ScanNotify
+		)
+		m.oldValue = func(ctx context.Context) (*ScanNotify, error) {
+			once.Do(func() {
+				if m.done {
+					err = errors.New("querying old values post mutation is not allowed")
+				} else {
+					value, err = m.Client().ScanNotify.Get(ctx, id)
+				}
+			})
+			return value, err
+		}
+		m.id = &id
+	}
+}
+
+// withScanNotify sets the old ScanNotify of the mutation.
+func withScanNotify(node *ScanNotify) scannotifyOption {
+	return func(m *ScanNotifyMutation) {
+		m.oldValue = func(context.Context) (*ScanNotify, error) {
+			return node, nil
+		}
+		m.id = &node.ID
+	}
+}
+
+// Client returns a new `ent.Client` from the mutation. If the mutation was
+// executed in a transaction (ent.Tx), a transactional client is returned.
+func (m ScanNotifyMutation) Client() *Client {
+	client := &Client{config: m.config}
+	client.init()
+	return client
+}
+
+// Tx returns an `ent.Tx` for mutations that were executed in transactions;
+// it returns an error otherwise.
+func (m ScanNotifyMutation) Tx() (*Tx, error) {
+	if _, ok := m.driver.(*txDriver); !ok {
+		return nil, errors.New("ent: mutation is not running in a transaction")
+	}
+	tx := &Tx{config: m.config}
+	tx.init()
+	return tx, nil
+}
+
+// SetID sets the value of the id field. Note that this
+// operation is only accepted on creation of ScanNotify entities.
+func (m *ScanNotifyMutation) SetID(id uuid.UUID) {
+	m.id = &id
+}
+
+// ID returns the ID value in the mutation. Note that the ID is only available
+// if it was provided to the builder or after it was returned from the database.
+func (m *ScanNotifyMutation) ID() (id uuid.UUID, exists bool) {
+	if m.id == nil {
+		return
+	}
+	return *m.id, true
+}
+
+// IDs queries the database and returns the entity ids that match the mutation's predicate.
+// That means, if the mutation is applied within a transaction with an isolation level such
+// as sql.LevelSerializable, the returned ids match the ids of the rows that will be updated
+// or updated by the mutation.
+func (m *ScanNotifyMutation) IDs(ctx context.Context) ([]uuid.UUID, error) {
+	switch {
+	case m.op.Is(OpUpdateOne | OpDeleteOne):
+		id, exists := m.ID()
+		if exists {
+			return []uuid.UUID{id}, nil
+		}
+		fallthrough
+	case m.op.Is(OpUpdate | OpDelete):
+		return m.Client().ScanNotify.Query().Where(m.predicates...).IDs(ctx)
+	default:
+		return nil, fmt.Errorf("IDs is not allowed on %s operations", m.op)
+	}
+}
+
+// SetScanID sets the "scan_id" field.
+func (m *ScanNotifyMutation) SetScanID(u uuid.UUID) {
+	m.scan = &u
+}
+
+// ScanID returns the value of the "scan_id" field in the mutation.
+func (m *ScanNotifyMutation) ScanID() (r uuid.UUID, exists bool) {
+	v := m.scan
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldScanID returns the old "scan_id" field's value of the ScanNotify entity.
+// If the ScanNotify object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *ScanNotifyMutation) OldScanID(ctx context.Context) (v uuid.UUID, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldScanID is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldScanID requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldScanID: %w", err)
+	}
+	return oldValue.ScanID, nil
+}
+
+// ResetScanID resets all changes to the "scan_id" field.
+func (m *ScanNotifyMutation) ResetScanID() {
+	m.scan = nil
+}
+
+// SetHash sets the "hash" field.
+func (m *ScanNotifyMutation) SetHash(s string) {
+	m.hash = &s
+}
+
+// Hash returns the value of the "hash" field in the mutation.
+func (m *ScanNotifyMutation) Hash() (r string, exists bool) {
+	v := m.hash
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldHash returns the old "hash" field's value of the ScanNotify entity.
+// If the ScanNotify object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *ScanNotifyMutation) OldHash(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldHash is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldHash requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldHash: %w", err)
+	}
+	return oldValue.Hash, nil
+}
+
+// ResetHash resets all changes to the "hash" field.
+func (m *ScanNotifyMutation) ResetHash() {
+	m.hash = nil
+}
+
+// ClearScan clears the "scan" edge to the Scans entity.
+func (m *ScanNotifyMutation) ClearScan() {
+	m.clearedscan = true
+	m.clearedFields[scannotify.FieldScanID] = struct{}{}
+}
+
+// ScanCleared reports if the "scan" edge to the Scans entity was cleared.
+func (m *ScanNotifyMutation) ScanCleared() bool {
+	return m.clearedscan
+}
+
+// ScanIDs returns the "scan" edge IDs in the mutation.
+// Note that IDs always returns len(IDs) <= 1 for unique edges, and you should use
+// ScanID instead. It exists only for internal usage by the builders.
+func (m *ScanNotifyMutation) ScanIDs() (ids []uuid.UUID) {
+	if id := m.scan; id != nil {
+		ids = append(ids, *id)
+	}
+	return
+}
+
+// ResetScan resets all changes to the "scan" edge.
+func (m *ScanNotifyMutation) ResetScan() {
+	m.scan = nil
+	m.clearedscan = false
+}
+
+// Where appends a list predicates to the ScanNotifyMutation builder.
+func (m *ScanNotifyMutation) Where(ps ...predicate.ScanNotify) {
+	m.predicates = append(m.predicates, ps...)
+}
+
+// WhereP appends storage-level predicates to the ScanNotifyMutation builder. Using this method,
+// users can use type-assertion to append predicates that do not depend on any generated package.
+func (m *ScanNotifyMutation) WhereP(ps ...func(*sql.Selector)) {
+	p := make([]predicate.ScanNotify, len(ps))
+	for i := range ps {
+		p[i] = ps[i]
+	}
+	m.Where(p...)
+}
+
+// Op returns the operation name.
+func (m *ScanNotifyMutation) Op() Op {
+	return m.op
+}
+
+// SetOp allows setting the mutation operation.
+func (m *ScanNotifyMutation) SetOp(op Op) {
+	m.op = op
+}
+
+// Type returns the node type of this mutation (ScanNotify).
+func (m *ScanNotifyMutation) Type() string {
+	return m.typ
+}
+
+// Fields returns all fields that were changed during this mutation. Note that in
+// order to get all numeric fields that were incremented/decremented, call
+// AddedFields().
+func (m *ScanNotifyMutation) Fields() []string {
+	fields := make([]string, 0, 2)
+	if m.scan != nil {
+		fields = append(fields, scannotify.FieldScanID)
+	}
+	if m.hash != nil {
+		fields = append(fields, scannotify.FieldHash)
+	}
+	return fields
+}
+
+// Field returns the value of a field with the given name. The second boolean
+// return value indicates that this field was not set, or was not defined in the
+// schema.
+func (m *ScanNotifyMutation) Field(name string) (ent.Value, bool) {
+	switch name {
+	case scannotify.FieldScanID:
+		return m.ScanID()
+	case scannotify.FieldHash:
+		return m.Hash()
+	}
+	return nil, false
+}
+
+// OldField returns the old value of the field from the database. An error is
+// returned if the mutation operation is not UpdateOne, or the query to the
+// database failed.
+func (m *ScanNotifyMutation) OldField(ctx context.Context, name string) (ent.Value, error) {
+	switch name {
+	case scannotify.FieldScanID:
+		return m.OldScanID(ctx)
+	case scannotify.FieldHash:
+		return m.OldHash(ctx)
+	}
+	return nil, fmt.Errorf("unknown ScanNotify field %s", name)
+}
+
+// SetField sets the value of a field with the given name. It returns an error if
+// the field is not defined in the schema, or if the type mismatched the field
+// type.
+func (m *ScanNotifyMutation) SetField(name string, value ent.Value) error {
+	switch name {
+	case scannotify.FieldScanID:
+		v, ok := value.(uuid.UUID)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetScanID(v)
+		return nil
+	case scannotify.FieldHash:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetHash(v)
+		return nil
+	}
+	return fmt.Errorf("unknown ScanNotify field %s", name)
+}
+
+// AddedFields returns all numeric fields that were incremented/decremented during
+// this mutation.
+func (m *ScanNotifyMutation) AddedFields() []string {
+	return nil
+}
+
+// AddedField returns the numeric value that was incremented/decremented on a field
+// with the given name. The second boolean return value indicates that this field
+// was not set, or was not defined in the schema.
+func (m *ScanNotifyMutation) AddedField(name string) (ent.Value, bool) {
+	return nil, false
+}
+
+// AddField adds the value to the field with the given name. It returns an error if
+// the field is not defined in the schema, or if the type mismatched the field
+// type.
+func (m *ScanNotifyMutation) AddField(name string, value ent.Value) error {
+	switch name {
+	}
+	return fmt.Errorf("unknown ScanNotify numeric field %s", name)
+}
+
+// ClearedFields returns all nullable fields that were cleared during this
+// mutation.
+func (m *ScanNotifyMutation) ClearedFields() []string {
+	return nil
+}
+
+// FieldCleared returns a boolean indicating if a field with the given name was
+// cleared in this mutation.
+func (m *ScanNotifyMutation) FieldCleared(name string) bool {
+	_, ok := m.clearedFields[name]
+	return ok
+}
+
+// ClearField clears the value of the field with the given name. It returns an
+// error if the field is not defined in the schema.
+func (m *ScanNotifyMutation) ClearField(name string) error {
+	return fmt.Errorf("unknown ScanNotify nullable field %s", name)
+}
+
+// ResetField resets all changes in the mutation for the field with the given name.
+// It returns an error if the field is not defined in the schema.
+func (m *ScanNotifyMutation) ResetField(name string) error {
+	switch name {
+	case scannotify.FieldScanID:
+		m.ResetScanID()
+		return nil
+	case scannotify.FieldHash:
+		m.ResetHash()
+		return nil
+	}
+	return fmt.Errorf("unknown ScanNotify field %s", name)
+}
+
+// AddedEdges returns all edge names that were set/added in this mutation.
+func (m *ScanNotifyMutation) AddedEdges() []string {
+	edges := make([]string, 0, 1)
+	if m.scan != nil {
+		edges = append(edges, scannotify.EdgeScan)
+	}
+	return edges
+}
+
+// AddedIDs returns all IDs (to other nodes) that were added for the given edge
+// name in this mutation.
+func (m *ScanNotifyMutation) AddedIDs(name string) []ent.Value {
+	switch name {
+	case scannotify.EdgeScan:
+		if id := m.scan; id != nil {
+			return []ent.Value{*id}
+		}
+	}
+	return nil
+}
+
+// RemovedEdges returns all edge names that were removed in this mutation.
+func (m *ScanNotifyMutation) RemovedEdges() []string {
+	edges := make([]string, 0, 1)
+	return edges
+}
+
+// RemovedIDs returns all IDs (to other nodes) that were removed for the edge with
+// the given name in this mutation.
+func (m *ScanNotifyMutation) RemovedIDs(name string) []ent.Value {
+	return nil
+}
+
+// ClearedEdges returns all edge names that were cleared in this mutation.
+func (m *ScanNotifyMutation) ClearedEdges() []string {
+	edges := make([]string, 0, 1)
+	if m.clearedscan {
+		edges = append(edges, scannotify.EdgeScan)
+	}
+	return edges
+}
+
+// EdgeCleared returns a boolean which indicates if the edge with the given name
+// was cleared in this mutation.
+func (m *ScanNotifyMutation) EdgeCleared(name string) bool {
+	switch name {
+	case scannotify.EdgeScan:
+		return m.clearedscan
+	}
+	return false
+}
+
+// ClearEdge clears the value of the edge with the given name. It returns an error
+// if that edge is not defined in the schema.
+func (m *ScanNotifyMutation) ClearEdge(name string) error {
+	switch name {
+	case scannotify.EdgeScan:
+		m.ClearScan()
+		return nil
+	}
+	return fmt.Errorf("unknown ScanNotify unique edge %s", name)
+}
+
+// ResetEdge resets all changes to the edge with the given name in this mutation.
+// It returns an error if the edge is not defined in the schema.
+func (m *ScanNotifyMutation) ResetEdge(name string) error {
+	switch name {
+	case scannotify.EdgeScan:
+		m.ResetScan()
+		return nil
+	}
+	return fmt.Errorf("unknown ScanNotify edge %s", name)
+}
+
 // ScansMutation represents an operation that mutates the Scans nodes in the graph.
 type ScansMutation struct {
 	config
-	op                  Op
-	typ                 string
-	id                  *uuid.UUID
-	status              *string
-	image               *string
-	scanner             *string
-	check               *schema.Check
-	report              *json.RawMessage
-	appendreport        json.RawMessage
-	clearedFields       map[string]struct{}
-	policy              *uuid.UUID
-	clearedpolicy       bool
-	integrations        *uuid.UUID
-	clearedintegrations bool
-	scan_labels         map[int]struct{}
-	removedscan_labels  map[int]struct{}
-	clearedscan_labels  bool
-	agent_tasks         map[uuid.UUID]struct{}
-	removedagent_tasks  map[uuid.UUID]struct{}
-	clearedagent_tasks  bool
-	done                bool
-	oldValue            func(context.Context) (*Scans, error)
-	predicates          []predicate.Scans
+	op                        Op
+	typ                       string
+	id                        *uuid.UUID
+	status                    *string
+	image                     *string
+	scanner                   *string
+	notify                    *[]schema.Notify
+	appendnotify              []schema.Notify
+	report                    *json.RawMessage
+	appendreport              json.RawMessage
+	clearedFields             map[string]struct{}
+	policy                    *uuid.UUID
+	clearedpolicy             bool
+	integrations              *uuid.UUID
+	clearedintegrations       bool
+	scan_labels               map[int]struct{}
+	removedscan_labels        map[int]struct{}
+	clearedscan_labels        bool
+	agent_tasks               map[uuid.UUID]struct{}
+	removedagent_tasks        map[uuid.UUID]struct{}
+	clearedagent_tasks        bool
+	scan_notifications        map[uuid.UUID]struct{}
+	removedscan_notifications map[uuid.UUID]struct{}
+	clearedscan_notifications bool
+	done                      bool
+	oldValue                  func(context.Context) (*Scans, error)
+	predicates                []predicate.Scans
 }
 
 var _ ent.Mutation = (*ScansMutation)(nil)
@@ -4426,53 +4889,69 @@ func (m *ScansMutation) ResetScanner() {
 	m.scanner = nil
 }
 
-// SetCheck sets the "check" field.
-func (m *ScansMutation) SetCheck(s schema.Check) {
-	m.check = &s
+// SetNotify sets the "notify" field.
+func (m *ScansMutation) SetNotify(s []schema.Notify) {
+	m.notify = &s
+	m.appendnotify = nil
 }
 
-// Check returns the value of the "check" field in the mutation.
-func (m *ScansMutation) Check() (r schema.Check, exists bool) {
-	v := m.check
+// Notify returns the value of the "notify" field in the mutation.
+func (m *ScansMutation) Notify() (r []schema.Notify, exists bool) {
+	v := m.notify
 	if v == nil {
 		return
 	}
 	return *v, true
 }
 
-// OldCheck returns the old "check" field's value of the Scans entity.
+// OldNotify returns the old "notify" field's value of the Scans entity.
 // If the Scans object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *ScansMutation) OldCheck(ctx context.Context) (v schema.Check, err error) {
+func (m *ScansMutation) OldNotify(ctx context.Context) (v []schema.Notify, err error) {
 	if !m.op.Is(OpUpdateOne) {
-		return v, errors.New("OldCheck is only allowed on UpdateOne operations")
+		return v, errors.New("OldNotify is only allowed on UpdateOne operations")
 	}
 	if m.id == nil || m.oldValue == nil {
-		return v, errors.New("OldCheck requires an ID field in the mutation")
+		return v, errors.New("OldNotify requires an ID field in the mutation")
 	}
 	oldValue, err := m.oldValue(ctx)
 	if err != nil {
-		return v, fmt.Errorf("querying old value for OldCheck: %w", err)
+		return v, fmt.Errorf("querying old value for OldNotify: %w", err)
 	}
-	return oldValue.Check, nil
+	return oldValue.Notify, nil
 }
 
-// ClearCheck clears the value of the "check" field.
-func (m *ScansMutation) ClearCheck() {
-	m.check = nil
-	m.clearedFields[scans.FieldCheck] = struct{}{}
+// AppendNotify adds s to the "notify" field.
+func (m *ScansMutation) AppendNotify(s []schema.Notify) {
+	m.appendnotify = append(m.appendnotify, s...)
 }
 
-// CheckCleared returns if the "check" field was cleared in this mutation.
-func (m *ScansMutation) CheckCleared() bool {
-	_, ok := m.clearedFields[scans.FieldCheck]
+// AppendedNotify returns the list of values that were appended to the "notify" field in this mutation.
+func (m *ScansMutation) AppendedNotify() ([]schema.Notify, bool) {
+	if len(m.appendnotify) == 0 {
+		return nil, false
+	}
+	return m.appendnotify, true
+}
+
+// ClearNotify clears the value of the "notify" field.
+func (m *ScansMutation) ClearNotify() {
+	m.notify = nil
+	m.appendnotify = nil
+	m.clearedFields[scans.FieldNotify] = struct{}{}
+}
+
+// NotifyCleared returns if the "notify" field was cleared in this mutation.
+func (m *ScansMutation) NotifyCleared() bool {
+	_, ok := m.clearedFields[scans.FieldNotify]
 	return ok
 }
 
-// ResetCheck resets all changes to the "check" field.
-func (m *ScansMutation) ResetCheck() {
-	m.check = nil
-	delete(m.clearedFields, scans.FieldCheck)
+// ResetNotify resets all changes to the "notify" field.
+func (m *ScansMutation) ResetNotify() {
+	m.notify = nil
+	m.appendnotify = nil
+	delete(m.clearedFields, scans.FieldNotify)
 }
 
 // SetReport sets the "report" field.
@@ -4715,6 +5194,60 @@ func (m *ScansMutation) ResetAgentTasks() {
 	m.removedagent_tasks = nil
 }
 
+// AddScanNotificationIDs adds the "scan_notifications" edge to the ScanNotify entity by ids.
+func (m *ScansMutation) AddScanNotificationIDs(ids ...uuid.UUID) {
+	if m.scan_notifications == nil {
+		m.scan_notifications = make(map[uuid.UUID]struct{})
+	}
+	for i := range ids {
+		m.scan_notifications[ids[i]] = struct{}{}
+	}
+}
+
+// ClearScanNotifications clears the "scan_notifications" edge to the ScanNotify entity.
+func (m *ScansMutation) ClearScanNotifications() {
+	m.clearedscan_notifications = true
+}
+
+// ScanNotificationsCleared reports if the "scan_notifications" edge to the ScanNotify entity was cleared.
+func (m *ScansMutation) ScanNotificationsCleared() bool {
+	return m.clearedscan_notifications
+}
+
+// RemoveScanNotificationIDs removes the "scan_notifications" edge to the ScanNotify entity by IDs.
+func (m *ScansMutation) RemoveScanNotificationIDs(ids ...uuid.UUID) {
+	if m.removedscan_notifications == nil {
+		m.removedscan_notifications = make(map[uuid.UUID]struct{})
+	}
+	for i := range ids {
+		delete(m.scan_notifications, ids[i])
+		m.removedscan_notifications[ids[i]] = struct{}{}
+	}
+}
+
+// RemovedScanNotifications returns the removed IDs of the "scan_notifications" edge to the ScanNotify entity.
+func (m *ScansMutation) RemovedScanNotificationsIDs() (ids []uuid.UUID) {
+	for id := range m.removedscan_notifications {
+		ids = append(ids, id)
+	}
+	return
+}
+
+// ScanNotificationsIDs returns the "scan_notifications" edge IDs in the mutation.
+func (m *ScansMutation) ScanNotificationsIDs() (ids []uuid.UUID) {
+	for id := range m.scan_notifications {
+		ids = append(ids, id)
+	}
+	return
+}
+
+// ResetScanNotifications resets all changes to the "scan_notifications" edge.
+func (m *ScansMutation) ResetScanNotifications() {
+	m.scan_notifications = nil
+	m.clearedscan_notifications = false
+	m.removedscan_notifications = nil
+}
+
 // Where appends a list predicates to the ScansMutation builder.
 func (m *ScansMutation) Where(ps ...predicate.Scans) {
 	m.predicates = append(m.predicates, ps...)
@@ -4765,8 +5298,8 @@ func (m *ScansMutation) Fields() []string {
 	if m.scanner != nil {
 		fields = append(fields, scans.FieldScanner)
 	}
-	if m.check != nil {
-		fields = append(fields, scans.FieldCheck)
+	if m.notify != nil {
+		fields = append(fields, scans.FieldNotify)
 	}
 	if m.report != nil {
 		fields = append(fields, scans.FieldReport)
@@ -4789,8 +5322,8 @@ func (m *ScansMutation) Field(name string) (ent.Value, bool) {
 		return m.IntegrationID()
 	case scans.FieldScanner:
 		return m.Scanner()
-	case scans.FieldCheck:
-		return m.Check()
+	case scans.FieldNotify:
+		return m.Notify()
 	case scans.FieldReport:
 		return m.Report()
 	}
@@ -4812,8 +5345,8 @@ func (m *ScansMutation) OldField(ctx context.Context, name string) (ent.Value, e
 		return m.OldIntegrationID(ctx)
 	case scans.FieldScanner:
 		return m.OldScanner(ctx)
-	case scans.FieldCheck:
-		return m.OldCheck(ctx)
+	case scans.FieldNotify:
+		return m.OldNotify(ctx)
 	case scans.FieldReport:
 		return m.OldReport(ctx)
 	}
@@ -4860,12 +5393,12 @@ func (m *ScansMutation) SetField(name string, value ent.Value) error {
 		}
 		m.SetScanner(v)
 		return nil
-	case scans.FieldCheck:
-		v, ok := value.(schema.Check)
+	case scans.FieldNotify:
+		v, ok := value.([]schema.Notify)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
-		m.SetCheck(v)
+		m.SetNotify(v)
 		return nil
 	case scans.FieldReport:
 		v, ok := value.(json.RawMessage)
@@ -4904,8 +5437,8 @@ func (m *ScansMutation) AddField(name string, value ent.Value) error {
 // mutation.
 func (m *ScansMutation) ClearedFields() []string {
 	var fields []string
-	if m.FieldCleared(scans.FieldCheck) {
-		fields = append(fields, scans.FieldCheck)
+	if m.FieldCleared(scans.FieldNotify) {
+		fields = append(fields, scans.FieldNotify)
 	}
 	if m.FieldCleared(scans.FieldReport) {
 		fields = append(fields, scans.FieldReport)
@@ -4924,8 +5457,8 @@ func (m *ScansMutation) FieldCleared(name string) bool {
 // error if the field is not defined in the schema.
 func (m *ScansMutation) ClearField(name string) error {
 	switch name {
-	case scans.FieldCheck:
-		m.ClearCheck()
+	case scans.FieldNotify:
+		m.ClearNotify()
 		return nil
 	case scans.FieldReport:
 		m.ClearReport()
@@ -4953,8 +5486,8 @@ func (m *ScansMutation) ResetField(name string) error {
 	case scans.FieldScanner:
 		m.ResetScanner()
 		return nil
-	case scans.FieldCheck:
-		m.ResetCheck()
+	case scans.FieldNotify:
+		m.ResetNotify()
 		return nil
 	case scans.FieldReport:
 		m.ResetReport()
@@ -4965,7 +5498,7 @@ func (m *ScansMutation) ResetField(name string) error {
 
 // AddedEdges returns all edge names that were set/added in this mutation.
 func (m *ScansMutation) AddedEdges() []string {
-	edges := make([]string, 0, 4)
+	edges := make([]string, 0, 5)
 	if m.policy != nil {
 		edges = append(edges, scans.EdgePolicy)
 	}
@@ -4977,6 +5510,9 @@ func (m *ScansMutation) AddedEdges() []string {
 	}
 	if m.agent_tasks != nil {
 		edges = append(edges, scans.EdgeAgentTasks)
+	}
+	if m.scan_notifications != nil {
+		edges = append(edges, scans.EdgeScanNotifications)
 	}
 	return edges
 }
@@ -5005,18 +5541,27 @@ func (m *ScansMutation) AddedIDs(name string) []ent.Value {
 			ids = append(ids, id)
 		}
 		return ids
+	case scans.EdgeScanNotifications:
+		ids := make([]ent.Value, 0, len(m.scan_notifications))
+		for id := range m.scan_notifications {
+			ids = append(ids, id)
+		}
+		return ids
 	}
 	return nil
 }
 
 // RemovedEdges returns all edge names that were removed in this mutation.
 func (m *ScansMutation) RemovedEdges() []string {
-	edges := make([]string, 0, 4)
+	edges := make([]string, 0, 5)
 	if m.removedscan_labels != nil {
 		edges = append(edges, scans.EdgeScanLabels)
 	}
 	if m.removedagent_tasks != nil {
 		edges = append(edges, scans.EdgeAgentTasks)
+	}
+	if m.removedscan_notifications != nil {
+		edges = append(edges, scans.EdgeScanNotifications)
 	}
 	return edges
 }
@@ -5037,13 +5582,19 @@ func (m *ScansMutation) RemovedIDs(name string) []ent.Value {
 			ids = append(ids, id)
 		}
 		return ids
+	case scans.EdgeScanNotifications:
+		ids := make([]ent.Value, 0, len(m.removedscan_notifications))
+		for id := range m.removedscan_notifications {
+			ids = append(ids, id)
+		}
+		return ids
 	}
 	return nil
 }
 
 // ClearedEdges returns all edge names that were cleared in this mutation.
 func (m *ScansMutation) ClearedEdges() []string {
-	edges := make([]string, 0, 4)
+	edges := make([]string, 0, 5)
 	if m.clearedpolicy {
 		edges = append(edges, scans.EdgePolicy)
 	}
@@ -5055,6 +5606,9 @@ func (m *ScansMutation) ClearedEdges() []string {
 	}
 	if m.clearedagent_tasks {
 		edges = append(edges, scans.EdgeAgentTasks)
+	}
+	if m.clearedscan_notifications {
+		edges = append(edges, scans.EdgeScanNotifications)
 	}
 	return edges
 }
@@ -5071,6 +5625,8 @@ func (m *ScansMutation) EdgeCleared(name string) bool {
 		return m.clearedscan_labels
 	case scans.EdgeAgentTasks:
 		return m.clearedagent_tasks
+	case scans.EdgeScanNotifications:
+		return m.clearedscan_notifications
 	}
 	return false
 }
@@ -5104,6 +5660,9 @@ func (m *ScansMutation) ResetEdge(name string) error {
 		return nil
 	case scans.EdgeAgentTasks:
 		m.ResetAgentTasks()
+		return nil
+	case scans.EdgeScanNotifications:
+		m.ResetScanNotifications()
 		return nil
 	}
 	return fmt.Errorf("unknown Scans edge %s", name)

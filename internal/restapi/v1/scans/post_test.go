@@ -30,9 +30,11 @@ func TestCreateScan_ValidInput(t *testing.T) {
 		SaveX(context.Background())
 
 	req := scans.CreateScanRequest{
-		PolicyID:      policy.ID,
-		Image:         "dockerhub/nginx:latest",
-		Check:         schema.Check{Condition: "severity > high", Notify: []string{"email"}},
+		PolicyID: policy.ID,
+		Image:    "dockerhub/nginx:latest",
+		Notify: []schema.Notify{
+			{To: "team-linear", When: "sev.high > 0"},
+		},
 		Status:        "scan_pending",
 		Scanner:       policy.Scanner,
 		IntegrationID: integrations.ID,
@@ -62,9 +64,11 @@ func TestCreateScan_MissingFields(t *testing.T) {
 		SaveX(context.Background())
 
 	req := scans.CreateScanRequest{
-		PolicyID:      policy.ID,
-		Image:         "",
-		Check:         schema.Check{Condition: "severity > high", Notify: []string{"email"}},
+		PolicyID: policy.ID,
+		Image:    "",
+		Notify: []schema.Notify{
+			{To: "team-linear", When: "sev.high > 0"},
+		},
 		Status:        "scan_pending",
 		Scanner:       policy.Scanner,
 		IntegrationID: integrations.ID,
@@ -89,9 +93,11 @@ func TestCreateScan_InvalidPolicyID(t *testing.T) {
 		SaveX(context.Background())
 
 	req := scans.CreateScanRequest{
-		PolicyID:      uuid.Nil,
-		Image:         "dockerhub/nginx:latest",
-		Check:         schema.Check{Condition: "severity > high", Notify: []string{"email"}},
+		PolicyID: uuid.Nil,
+		Image:    "dockerhub/nginx:latest",
+		Notify: []schema.Notify{
+			{To: "team-linear", When: "sev.high > 0"},
+		},
 		Status:        "scan_pending",
 		Scanner:       "trivy",
 		IntegrationID: integrations.ID,

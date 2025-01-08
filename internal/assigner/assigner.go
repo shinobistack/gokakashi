@@ -39,7 +39,7 @@ func StartAssigner(server string, port int, token string, interval time.Duration
 	log.Println("Starting the periodic task assigner...")
 	ticker := time.NewTicker(interval)
 	defer ticker.Stop()
-
+	// Todo: Maybe we can do batch processing
 	for range ticker.C {
 		AssignTasks(server, port, token)
 	}

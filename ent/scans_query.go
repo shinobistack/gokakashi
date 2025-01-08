@@ -18,20 +18,22 @@ import (
 	"github.com/shinobistack/gokakashi/ent/policies"
 	"github.com/shinobistack/gokakashi/ent/predicate"
 	"github.com/shinobistack/gokakashi/ent/scanlabels"
+	"github.com/shinobistack/gokakashi/ent/scannotify"
 	"github.com/shinobistack/gokakashi/ent/scans"
 )
 
 // ScansQuery is the builder for querying Scans entities.
 type ScansQuery struct {
 	config
-	ctx              *QueryContext
-	order            []scans.OrderOption
-	inters           []Interceptor
-	predicates       []predicate.Scans
-	withPolicy       *PoliciesQuery
-	withIntegrations *IntegrationsQuery
-	withScanLabels   *ScanLabelsQuery
-	withAgentTasks   *AgentTasksQuery
+	ctx                   *QueryContext
+	order                 []scans.OrderOption
+	inters                []Interceptor
+	predicates            []predicate.Scans
+	withPolicy            *PoliciesQuery
+	withIntegrations      *IntegrationsQuery
+	withScanLabels        *ScanLabelsQuery
+	withAgentTasks        *AgentTasksQuery
+	withScanNotifications *ScanNotifyQuery
 	// intermediate query (i.e. traversal path).
 	sql  *sql.Selector
 	path func(context.Context) (*sql.Selector, error)
@@ -149,6 +151,28 @@ func (sq *ScansQuery) QueryAgentTasks() *AgentTasksQuery {
 			sqlgraph.From(scans.Table, scans.FieldID, selector),
 			sqlgraph.To(agenttasks.Table, agenttasks.FieldID),
 			sqlgraph.Edge(sqlgraph.O2M, false, scans.AgentTasksTable, scans.AgentTasksColumn),
+		)
+		fromU = sqlgraph.SetNeighbors(sq.driver.Dialect(), step)
+		return fromU, nil
+	}
+	return query
+}
+
+// QueryScanNotifications chains the current query on the "scan_notifications" edge.
+func (sq *ScansQuery) QueryScanNotifications() *ScanNotifyQuery {
+	query := (&ScanNotifyClient{config: sq.config}).Query()
+	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
+		if err := sq.prepareQuery(ctx); err != nil {
+			return nil, err
+		}
+		selector := sq.sqlQuery(ctx)
+		if err := selector.Err(); err != nil {
+			return nil, err
+		}
+		step := sqlgraph.NewStep(
+			sqlgraph.From(scans.Table, scans.FieldID, selector),
+			sqlgraph.To(scannotify.Table, scannotify.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, scans.ScanNotificationsTable, scans.ScanNotificationsColumn),
 		)
 		fromU = sqlgraph.SetNeighbors(sq.driver.Dialect(), step)
 		return fromU, nil
@@ -343,15 +367,16 @@ func (sq *ScansQuery) Clone() *ScansQuery {
 		return nil
 	}
 	return &ScansQuery{
-		config:           sq.config,
-		ctx:              sq.ctx.Clone(),
-		order:            append([]scans.OrderOption{}, sq.order...),
-		inters:           append([]Interceptor{}, sq.inters...),
-		predicates:       append([]predicate.Scans{}, sq.predicates...),
-		withPolicy:       sq.withPolicy.Clone(),
-		withIntegrations: sq.withIntegrations.Clone(),
-		withScanLabels:   sq.withScanLabels.Clone(),
-		withAgentTasks:   sq.withAgentTasks.Clone(),
+		config:                sq.config,
+		ctx:                   sq.ctx.Clone(),
+		order:                 append([]scans.OrderOption{}, sq.order...),
+		inters:                append([]Interceptor{}, sq.inters...),
+		predicates:            append([]predicate.Scans{}, sq.predicates...),
+		withPolicy:            sq.withPolicy.Clone(),
+		withIntegrations:      sq.withIntegrations.Clone(),
+		withScanLabels:        sq.withScanLabels.Clone(),
+		withAgentTasks:        sq.withAgentTasks.Clone(),
+		withScanNotifications: sq.withScanNotifications.Clone(),
 		// clone intermediate query.
 		sql:  sq.sql.Clone(),
 		path: sq.path,
@@ -399,6 +424,17 @@ func (sq *ScansQuery) WithAgentTasks(opts ...func(*AgentTasksQuery)) *ScansQuery
 		opt(query)
 	}
 	sq.withAgentTasks = query
+	return sq
+}
+
+// WithScanNotifications tells the query-builder to eager-load the nodes that are connected to
+// the "scan_notifications" edge. The optional arguments are used to configure the query builder of the edge.
+func (sq *ScansQuery) WithScanNotifications(opts ...func(*ScanNotifyQuery)) *ScansQuery {
+	query := (&ScanNotifyClient{config: sq.config}).Query()
+	for _, opt := range opts {
+		opt(query)
+	}
+	sq.withScanNotifications = query
 	return sq
 }
 
@@ -480,11 +516,12 @@ func (sq *ScansQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Scans,
 	var (
 		nodes       = []*Scans{}
 		_spec       = sq.querySpec()
-		loadedTypes = [4]bool{
+		loadedTypes = [5]bool{
 			sq.withPolicy != nil,
 			sq.withIntegrations != nil,
 			sq.withScanLabels != nil,
 			sq.withAgentTasks != nil,
+			sq.withScanNotifications != nil,
 		}
 	)
 	_spec.ScanValues = func(columns []string) ([]any, error) {
@@ -528,6 +565,13 @@ func (sq *ScansQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Scans,
 		if err := sq.loadAgentTasks(ctx, query, nodes,
 			func(n *Scans) { n.Edges.AgentTasks = []*AgentTasks{} },
 			func(n *Scans, e *AgentTasks) { n.Edges.AgentTasks = append(n.Edges.AgentTasks, e) }); err != nil {
+			return nil, err
+		}
+	}
+	if query := sq.withScanNotifications; query != nil {
+		if err := sq.loadScanNotifications(ctx, query, nodes,
+			func(n *Scans) { n.Edges.ScanNotifications = []*ScanNotify{} },
+			func(n *Scans, e *ScanNotify) { n.Edges.ScanNotifications = append(n.Edges.ScanNotifications, e) }); err != nil {
 			return nil, err
 		}
 	}
@@ -637,6 +681,36 @@ func (sq *ScansQuery) loadAgentTasks(ctx context.Context, query *AgentTasksQuery
 	}
 	query.Where(predicate.AgentTasks(func(s *sql.Selector) {
 		s.Where(sql.InValues(s.C(scans.AgentTasksColumn), fks...))
+	}))
+	neighbors, err := query.All(ctx)
+	if err != nil {
+		return err
+	}
+	for _, n := range neighbors {
+		fk := n.ScanID
+		node, ok := nodeids[fk]
+		if !ok {
+			return fmt.Errorf(`unexpected referenced foreign-key "scan_id" returned %v for node %v`, fk, n.ID)
+		}
+		assign(node, n)
+	}
+	return nil
+}
+func (sq *ScansQuery) loadScanNotifications(ctx context.Context, query *ScanNotifyQuery, nodes []*Scans, init func(*Scans), assign func(*Scans, *ScanNotify)) error {
+	fks := make([]driver.Value, 0, len(nodes))
+	nodeids := make(map[uuid.UUID]*Scans)
+	for i := range nodes {
+		fks = append(fks, nodes[i].ID)
+		nodeids[nodes[i].ID] = nodes[i]
+		if init != nil {
+			init(nodes[i])
+		}
+	}
+	if len(query.ctx.Fields) > 0 {
+		query.ctx.AppendFieldOnce(scannotify.FieldScanID)
+	}
+	query.Where(predicate.ScanNotify(func(s *sql.Selector) {
+		s.Where(sql.InValues(s.C(scans.ScanNotificationsColumn), fks...))
 	}))
 	neighbors, err := query.All(ctx)
 	if err != nil {

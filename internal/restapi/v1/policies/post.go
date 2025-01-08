@@ -20,7 +20,7 @@ type CreatePolicyRequest struct {
 	Labels  []schema.PolicyLabel `json:"labels"`
 	// Todo: Implement the logic of Type:cron etc
 	Trigger map[string]interface{} `json:"trigger"`
-	Check   *schema.Check          `json:"check"`
+	Notify  []schema.Notify        `json:"notify"`
 }
 
 type CreatePolicyResponse struct {
@@ -53,13 +53,14 @@ func CreatePolicy(client *ent.Client) func(ctx context.Context, req CreatePolicy
 		// Validate trigger
 		// ToDo: Valid cron for type: cron
 
-		// Validate check fields
-		// ToDo: Discuss, if check is mentioned then validate the check and accordingly publish the report by default or publish complete report.
-		// ToDo: Discuss, if check is present then post satisfying the condition execute Notify accordingly
-		// ToDO: Discuss the report server
-		// ToDo: check.condition format for evaluation
-		if req.Check.Condition == "" || len(req.Check.Notify) == 0 {
-			return status.Wrap(errors.New("invalid check: missing required fields"), status.InvalidArgument)
+		// Validate notify
+		for _, notify := range req.Notify {
+			if notify.To == "" {
+				return status.Wrap(errors.New("notify 'to' field is required"), status.InvalidArgument)
+			}
+			if notify.When == "" {
+				return status.Wrap(errors.New("notify 'when' field is required"), status.InvalidArgument)
+			}
 		}
 
 		tx, err := client.Tx(ctx)
@@ -73,7 +74,7 @@ func CreatePolicy(client *ent.Client) func(ctx context.Context, req CreatePolicy
 			SetImage(req.Image).
 			SetScanner(req.Scanner).
 			SetTrigger(req.Trigger).
-			SetNillableCheck(req.Check).
+			SetNotify(req.Notify).
 			Save(ctx)
 		if err != nil {
 			if rollbackErr := tx.Rollback(); rollbackErr != nil {

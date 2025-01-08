@@ -23,9 +23,10 @@ type Image struct {
 	Tags     []string `json:"tags"`
 }
 
-type Check struct {
-	Condition string   `json:"condition"`
-	Notify    []string `json:"notify"`
+type Notify struct {
+	To     string `json:"to"`               // e.g., acme-linear, acme-jira
+	When   string `json:"when"`             // CEL condition
+	Format string `json:"format,omitempty"` // Todo: Custom template for notification descriptions
 }
 
 // Fields of the Policies.
@@ -52,8 +53,9 @@ func (Policies) Fields() []ent.Field {
 		field.JSON("trigger", map[string]interface{}{}).
 			Optional().
 			Comment("Stores trigger details (e.g., cron schedule)."),
-		field.JSON("check", Check{}).Optional().
-			Comment("Stores conditions for evaluation."),
+		field.JSON("notify", []Notify{}).
+			Optional().
+			Comment("Stores notification configuration."),
 	}
 }
 
