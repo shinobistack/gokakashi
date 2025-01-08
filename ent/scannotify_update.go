@@ -6,7 +6,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"time"
 
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
@@ -58,26 +57,6 @@ func (snu *ScanNotifyUpdate) SetNillableHash(s *string) *ScanNotifyUpdate {
 	return snu
 }
 
-// SetStatus sets the "status" field.
-func (snu *ScanNotifyUpdate) SetStatus(s string) *ScanNotifyUpdate {
-	snu.mutation.SetStatus(s)
-	return snu
-}
-
-// SetNillableStatus sets the "status" field if the given value is not nil.
-func (snu *ScanNotifyUpdate) SetNillableStatus(s *string) *ScanNotifyUpdate {
-	if s != nil {
-		snu.SetStatus(*s)
-	}
-	return snu
-}
-
-// SetUpdatedAt sets the "updated_at" field.
-func (snu *ScanNotifyUpdate) SetUpdatedAt(t time.Time) *ScanNotifyUpdate {
-	snu.mutation.SetUpdatedAt(t)
-	return snu
-}
-
 // SetScan sets the "scan" edge to the Scans entity.
 func (snu *ScanNotifyUpdate) SetScan(s *Scans) *ScanNotifyUpdate {
 	return snu.SetScanID(s.ID)
@@ -96,7 +75,6 @@ func (snu *ScanNotifyUpdate) ClearScan() *ScanNotifyUpdate {
 
 // Save executes the query and returns the number of nodes affected by the update operation.
 func (snu *ScanNotifyUpdate) Save(ctx context.Context) (int, error) {
-	snu.defaults()
 	return withHooks(ctx, snu.sqlSave, snu.mutation, snu.hooks)
 }
 
@@ -119,14 +97,6 @@ func (snu *ScanNotifyUpdate) Exec(ctx context.Context) error {
 func (snu *ScanNotifyUpdate) ExecX(ctx context.Context) {
 	if err := snu.Exec(ctx); err != nil {
 		panic(err)
-	}
-}
-
-// defaults sets the default values of the builder before save.
-func (snu *ScanNotifyUpdate) defaults() {
-	if _, ok := snu.mutation.UpdatedAt(); !ok {
-		v := scannotify.UpdateDefaultUpdatedAt()
-		snu.mutation.SetUpdatedAt(v)
 	}
 }
 
@@ -157,12 +127,6 @@ func (snu *ScanNotifyUpdate) sqlSave(ctx context.Context) (n int, err error) {
 	}
 	if value, ok := snu.mutation.Hash(); ok {
 		_spec.SetField(scannotify.FieldHash, field.TypeString, value)
-	}
-	if value, ok := snu.mutation.Status(); ok {
-		_spec.SetField(scannotify.FieldStatus, field.TypeString, value)
-	}
-	if value, ok := snu.mutation.UpdatedAt(); ok {
-		_spec.SetField(scannotify.FieldUpdatedAt, field.TypeTime, value)
 	}
 	if snu.mutation.ScanCleared() {
 		edge := &sqlgraph.EdgeSpec{
@@ -241,26 +205,6 @@ func (snuo *ScanNotifyUpdateOne) SetNillableHash(s *string) *ScanNotifyUpdateOne
 	return snuo
 }
 
-// SetStatus sets the "status" field.
-func (snuo *ScanNotifyUpdateOne) SetStatus(s string) *ScanNotifyUpdateOne {
-	snuo.mutation.SetStatus(s)
-	return snuo
-}
-
-// SetNillableStatus sets the "status" field if the given value is not nil.
-func (snuo *ScanNotifyUpdateOne) SetNillableStatus(s *string) *ScanNotifyUpdateOne {
-	if s != nil {
-		snuo.SetStatus(*s)
-	}
-	return snuo
-}
-
-// SetUpdatedAt sets the "updated_at" field.
-func (snuo *ScanNotifyUpdateOne) SetUpdatedAt(t time.Time) *ScanNotifyUpdateOne {
-	snuo.mutation.SetUpdatedAt(t)
-	return snuo
-}
-
 // SetScan sets the "scan" edge to the Scans entity.
 func (snuo *ScanNotifyUpdateOne) SetScan(s *Scans) *ScanNotifyUpdateOne {
 	return snuo.SetScanID(s.ID)
@@ -292,7 +236,6 @@ func (snuo *ScanNotifyUpdateOne) Select(field string, fields ...string) *ScanNot
 
 // Save executes the query and returns the updated ScanNotify entity.
 func (snuo *ScanNotifyUpdateOne) Save(ctx context.Context) (*ScanNotify, error) {
-	snuo.defaults()
 	return withHooks(ctx, snuo.sqlSave, snuo.mutation, snuo.hooks)
 }
 
@@ -315,14 +258,6 @@ func (snuo *ScanNotifyUpdateOne) Exec(ctx context.Context) error {
 func (snuo *ScanNotifyUpdateOne) ExecX(ctx context.Context) {
 	if err := snuo.Exec(ctx); err != nil {
 		panic(err)
-	}
-}
-
-// defaults sets the default values of the builder before save.
-func (snuo *ScanNotifyUpdateOne) defaults() {
-	if _, ok := snuo.mutation.UpdatedAt(); !ok {
-		v := scannotify.UpdateDefaultUpdatedAt()
-		snuo.mutation.SetUpdatedAt(v)
 	}
 }
 
@@ -370,12 +305,6 @@ func (snuo *ScanNotifyUpdateOne) sqlSave(ctx context.Context) (_node *ScanNotify
 	}
 	if value, ok := snuo.mutation.Hash(); ok {
 		_spec.SetField(scannotify.FieldHash, field.TypeString, value)
-	}
-	if value, ok := snuo.mutation.Status(); ok {
-		_spec.SetField(scannotify.FieldStatus, field.TypeString, value)
-	}
-	if value, ok := snuo.mutation.UpdatedAt(); ok {
-		_spec.SetField(scannotify.FieldUpdatedAt, field.TypeTime, value)
 	}
 	if snuo.mutation.ScanCleared() {
 		edge := &sqlgraph.EdgeSpec{

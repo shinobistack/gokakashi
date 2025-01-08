@@ -5,7 +5,6 @@ import (
 	"entgo.io/ent/schema/edge"
 	"entgo.io/ent/schema/field"
 	"github.com/google/uuid"
-	"time"
 )
 
 // ScanNotify holds the schema definition for the ScanNotify entity.
@@ -22,13 +21,13 @@ func (ScanNotify) Fields() []ent.Field {
 		field.String("hash").
 			NotEmpty().
 			Comment("Unique hash for condition evaluation and vulnerabilities"),
-		field.String("status").
-			Default("pending").
-			Comment("Status of the notification (e.g., pending, completed)"),
-		field.Time("updated_at").
-			Default(time.Now).
-			UpdateDefault(time.Now).
-			Comment("Timestamp of the last update"),
+		//field.String("status").
+		//	Default("pending").
+		//	Comment("Status of the notification (e.g., pending, completed)"),
+		//field.Time("updated_at").
+		//	Default(time.Now).
+		//	UpdateDefault(time.Now).
+		//	Comment("Timestamp of the last update"),
 	}
 }
 

@@ -3,8 +3,6 @@
 package scannotify
 
 import (
-	"time"
-
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"github.com/google/uuid"
@@ -19,10 +17,6 @@ const (
 	FieldScanID = "scan_id"
 	// FieldHash holds the string denoting the hash field in the database.
 	FieldHash = "hash"
-	// FieldStatus holds the string denoting the status field in the database.
-	FieldStatus = "status"
-	// FieldUpdatedAt holds the string denoting the updated_at field in the database.
-	FieldUpdatedAt = "updated_at"
 	// EdgeScan holds the string denoting the scan edge name in mutations.
 	EdgeScan = "scan"
 	// Table holds the table name of the scannotify in the database.
@@ -41,8 +35,6 @@ var Columns = []string{
 	FieldID,
 	FieldScanID,
 	FieldHash,
-	FieldStatus,
-	FieldUpdatedAt,
 }
 
 // ValidColumn reports if the column name is valid (part of the table columns).
@@ -58,12 +50,6 @@ func ValidColumn(column string) bool {
 var (
 	// HashValidator is a validator for the "hash" field. It is called by the builders before save.
 	HashValidator func(string) error
-	// DefaultStatus holds the default value on creation for the "status" field.
-	DefaultStatus string
-	// DefaultUpdatedAt holds the default value on creation for the "updated_at" field.
-	DefaultUpdatedAt func() time.Time
-	// UpdateDefaultUpdatedAt holds the default value on update for the "updated_at" field.
-	UpdateDefaultUpdatedAt func() time.Time
 	// DefaultID holds the default value on creation for the "id" field.
 	DefaultID func() uuid.UUID
 )
@@ -84,16 +70,6 @@ func ByScanID(opts ...sql.OrderTermOption) OrderOption {
 // ByHash orders the results by the hash field.
 func ByHash(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldHash, opts...).ToFunc()
-}
-
-// ByStatus orders the results by the status field.
-func ByStatus(opts ...sql.OrderTermOption) OrderOption {
-	return sql.OrderByField(FieldStatus, opts...).ToFunc()
-}
-
-// ByUpdatedAt orders the results by the updated_at field.
-func ByUpdatedAt(opts ...sql.OrderTermOption) OrderOption {
-	return sql.OrderByField(FieldUpdatedAt, opts...).ToFunc()
 }
 
 // ByScanField orders the results by scan field.

@@ -6,7 +6,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"time"
 
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
@@ -31,34 +30,6 @@ func (snc *ScanNotifyCreate) SetScanID(u uuid.UUID) *ScanNotifyCreate {
 // SetHash sets the "hash" field.
 func (snc *ScanNotifyCreate) SetHash(s string) *ScanNotifyCreate {
 	snc.mutation.SetHash(s)
-	return snc
-}
-
-// SetStatus sets the "status" field.
-func (snc *ScanNotifyCreate) SetStatus(s string) *ScanNotifyCreate {
-	snc.mutation.SetStatus(s)
-	return snc
-}
-
-// SetNillableStatus sets the "status" field if the given value is not nil.
-func (snc *ScanNotifyCreate) SetNillableStatus(s *string) *ScanNotifyCreate {
-	if s != nil {
-		snc.SetStatus(*s)
-	}
-	return snc
-}
-
-// SetUpdatedAt sets the "updated_at" field.
-func (snc *ScanNotifyCreate) SetUpdatedAt(t time.Time) *ScanNotifyCreate {
-	snc.mutation.SetUpdatedAt(t)
-	return snc
-}
-
-// SetNillableUpdatedAt sets the "updated_at" field if the given value is not nil.
-func (snc *ScanNotifyCreate) SetNillableUpdatedAt(t *time.Time) *ScanNotifyCreate {
-	if t != nil {
-		snc.SetUpdatedAt(*t)
-	}
 	return snc
 }
 
@@ -116,14 +87,6 @@ func (snc *ScanNotifyCreate) ExecX(ctx context.Context) {
 
 // defaults sets the default values of the builder before save.
 func (snc *ScanNotifyCreate) defaults() {
-	if _, ok := snc.mutation.Status(); !ok {
-		v := scannotify.DefaultStatus
-		snc.mutation.SetStatus(v)
-	}
-	if _, ok := snc.mutation.UpdatedAt(); !ok {
-		v := scannotify.DefaultUpdatedAt()
-		snc.mutation.SetUpdatedAt(v)
-	}
 	if _, ok := snc.mutation.ID(); !ok {
 		v := scannotify.DefaultID()
 		snc.mutation.SetID(v)
@@ -142,12 +105,6 @@ func (snc *ScanNotifyCreate) check() error {
 		if err := scannotify.HashValidator(v); err != nil {
 			return &ValidationError{Name: "hash", err: fmt.Errorf(`ent: validator failed for field "ScanNotify.hash": %w`, err)}
 		}
-	}
-	if _, ok := snc.mutation.Status(); !ok {
-		return &ValidationError{Name: "status", err: errors.New(`ent: missing required field "ScanNotify.status"`)}
-	}
-	if _, ok := snc.mutation.UpdatedAt(); !ok {
-		return &ValidationError{Name: "updated_at", err: errors.New(`ent: missing required field "ScanNotify.updated_at"`)}
 	}
 	if len(snc.mutation.ScanIDs()) == 0 {
 		return &ValidationError{Name: "scan", err: errors.New(`ent: missing required edge "ScanNotify.scan"`)}
@@ -190,14 +147,6 @@ func (snc *ScanNotifyCreate) createSpec() (*ScanNotify, *sqlgraph.CreateSpec) {
 	if value, ok := snc.mutation.Hash(); ok {
 		_spec.SetField(scannotify.FieldHash, field.TypeString, value)
 		_node.Hash = value
-	}
-	if value, ok := snc.mutation.Status(); ok {
-		_spec.SetField(scannotify.FieldStatus, field.TypeString, value)
-		_node.Status = value
-	}
-	if value, ok := snc.mutation.UpdatedAt(); ok {
-		_spec.SetField(scannotify.FieldUpdatedAt, field.TypeTime, value)
-		_node.UpdatedAt = value
 	}
 	if nodes := snc.mutation.ScanIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{

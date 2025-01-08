@@ -29,11 +29,6 @@ type Notify struct {
 	Format string `json:"format,omitempty"` // Todo: Custom template for notification descriptions
 }
 
-type Check struct {
-	Condition string   `json:"condition"`
-	Notify    []string `json:"notify"`
-}
-
 // Fields of the Policies.
 func (Policies) Fields() []ent.Field {
 	return []ent.Field{

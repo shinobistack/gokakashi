@@ -5,7 +5,6 @@ package ent
 import (
 	"fmt"
 	"strings"
-	"time"
 
 	"entgo.io/ent"
 	"entgo.io/ent/dialect/sql"
@@ -23,10 +22,6 @@ type ScanNotify struct {
 	ScanID uuid.UUID `json:"scan_id,omitempty"`
 	// Unique hash for condition evaluation and vulnerabilities
 	Hash string `json:"hash,omitempty"`
-	// Status of the notification (e.g., pending, completed)
-	Status string `json:"status,omitempty"`
-	// Timestamp of the last update
-	UpdatedAt time.Time `json:"updated_at,omitempty"`
 	// Edges holds the relations/edges for other nodes in the graph.
 	// The values are being populated by the ScanNotifyQuery when eager-loading is set.
 	Edges        ScanNotifyEdges `json:"edges"`
@@ -58,10 +53,8 @@ func (*ScanNotify) scanValues(columns []string) ([]any, error) {
 	values := make([]any, len(columns))
 	for i := range columns {
 		switch columns[i] {
-		case scannotify.FieldHash, scannotify.FieldStatus:
+		case scannotify.FieldHash:
 			values[i] = new(sql.NullString)
-		case scannotify.FieldUpdatedAt:
-			values[i] = new(sql.NullTime)
 		case scannotify.FieldID, scannotify.FieldScanID:
 			values[i] = new(uuid.UUID)
 		default:
@@ -96,18 +89,6 @@ func (sn *ScanNotify) assignValues(columns []string, values []any) error {
 				return fmt.Errorf("unexpected type %T for field hash", values[i])
 			} else if value.Valid {
 				sn.Hash = value.String
-			}
-		case scannotify.FieldStatus:
-			if value, ok := values[i].(*sql.NullString); !ok {
-				return fmt.Errorf("unexpected type %T for field status", values[i])
-			} else if value.Valid {
-				sn.Status = value.String
-			}
-		case scannotify.FieldUpdatedAt:
-			if value, ok := values[i].(*sql.NullTime); !ok {
-				return fmt.Errorf("unexpected type %T for field updated_at", values[i])
-			} else if value.Valid {
-				sn.UpdatedAt = value.Time
 			}
 		default:
 			sn.selectValues.Set(columns[i], values[i])
@@ -155,12 +136,6 @@ func (sn *ScanNotify) String() string {
 	builder.WriteString(", ")
 	builder.WriteString("hash=")
 	builder.WriteString(sn.Hash)
-	builder.WriteString(", ")
-	builder.WriteString("status=")
-	builder.WriteString(sn.Status)
-	builder.WriteString(", ")
-	builder.WriteString("updated_at=")
-	builder.WriteString(sn.UpdatedAt.Format(time.ANSIC))
 	builder.WriteByte(')')
 	return builder.String()
 }

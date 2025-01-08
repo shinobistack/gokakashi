@@ -146,8 +146,6 @@ var (
 	ScanNotifiesColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeUUID, Unique: true},
 		{Name: "hash", Type: field.TypeString},
-		{Name: "status", Type: field.TypeString, Default: "pending"},
-		{Name: "updated_at", Type: field.TypeTime},
 		{Name: "scan_id", Type: field.TypeUUID},
 	}
 	// ScanNotifiesTable holds the schema information for the "scan_notifies" table.
@@ -158,7 +156,7 @@ var (
 		ForeignKeys: []*schema.ForeignKey{
 			{
 				Symbol:     "scan_notifies_scans_scan_notifications",
-				Columns:    []*schema.Column{ScanNotifiesColumns[4]},
+				Columns:    []*schema.Column{ScanNotifiesColumns[2]},
 				RefColumns: []*schema.Column{ScansColumns[0]},
 				OnDelete:   schema.NoAction,
 			},

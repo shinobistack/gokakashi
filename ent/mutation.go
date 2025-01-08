@@ -4140,8 +4140,6 @@ type ScanNotifyMutation struct {
 	typ           string
 	id            *uuid.UUID
 	hash          *string
-	status        *string
-	updated_at    *time.Time
 	clearedFields map[string]struct{}
 	scan          *uuid.UUID
 	clearedscan   bool
@@ -4326,78 +4324,6 @@ func (m *ScanNotifyMutation) ResetHash() {
 	m.hash = nil
 }
 
-// SetStatus sets the "status" field.
-func (m *ScanNotifyMutation) SetStatus(s string) {
-	m.status = &s
-}
-
-// Status returns the value of the "status" field in the mutation.
-func (m *ScanNotifyMutation) Status() (r string, exists bool) {
-	v := m.status
-	if v == nil {
-		return
-	}
-	return *v, true
-}
-
-// OldStatus returns the old "status" field's value of the ScanNotify entity.
-// If the ScanNotify object wasn't provided to the builder, the object is fetched from the database.
-// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *ScanNotifyMutation) OldStatus(ctx context.Context) (v string, err error) {
-	if !m.op.Is(OpUpdateOne) {
-		return v, errors.New("OldStatus is only allowed on UpdateOne operations")
-	}
-	if m.id == nil || m.oldValue == nil {
-		return v, errors.New("OldStatus requires an ID field in the mutation")
-	}
-	oldValue, err := m.oldValue(ctx)
-	if err != nil {
-		return v, fmt.Errorf("querying old value for OldStatus: %w", err)
-	}
-	return oldValue.Status, nil
-}
-
-// ResetStatus resets all changes to the "status" field.
-func (m *ScanNotifyMutation) ResetStatus() {
-	m.status = nil
-}
-
-// SetUpdatedAt sets the "updated_at" field.
-func (m *ScanNotifyMutation) SetUpdatedAt(t time.Time) {
-	m.updated_at = &t
-}
-
-// UpdatedAt returns the value of the "updated_at" field in the mutation.
-func (m *ScanNotifyMutation) UpdatedAt() (r time.Time, exists bool) {
-	v := m.updated_at
-	if v == nil {
-		return
-	}
-	return *v, true
-}
-
-// OldUpdatedAt returns the old "updated_at" field's value of the ScanNotify entity.
-// If the ScanNotify object wasn't provided to the builder, the object is fetched from the database.
-// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *ScanNotifyMutation) OldUpdatedAt(ctx context.Context) (v time.Time, err error) {
-	if !m.op.Is(OpUpdateOne) {
-		return v, errors.New("OldUpdatedAt is only allowed on UpdateOne operations")
-	}
-	if m.id == nil || m.oldValue == nil {
-		return v, errors.New("OldUpdatedAt requires an ID field in the mutation")
-	}
-	oldValue, err := m.oldValue(ctx)
-	if err != nil {
-		return v, fmt.Errorf("querying old value for OldUpdatedAt: %w", err)
-	}
-	return oldValue.UpdatedAt, nil
-}
-
-// ResetUpdatedAt resets all changes to the "updated_at" field.
-func (m *ScanNotifyMutation) ResetUpdatedAt() {
-	m.updated_at = nil
-}
-
 // ClearScan clears the "scan" edge to the Scans entity.
 func (m *ScanNotifyMutation) ClearScan() {
 	m.clearedscan = true
@@ -4459,18 +4385,12 @@ func (m *ScanNotifyMutation) Type() string {
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
 func (m *ScanNotifyMutation) Fields() []string {
-	fields := make([]string, 0, 4)
+	fields := make([]string, 0, 2)
 	if m.scan != nil {
 		fields = append(fields, scannotify.FieldScanID)
 	}
 	if m.hash != nil {
 		fields = append(fields, scannotify.FieldHash)
-	}
-	if m.status != nil {
-		fields = append(fields, scannotify.FieldStatus)
-	}
-	if m.updated_at != nil {
-		fields = append(fields, scannotify.FieldUpdatedAt)
 	}
 	return fields
 }
@@ -4484,10 +4404,6 @@ func (m *ScanNotifyMutation) Field(name string) (ent.Value, bool) {
 		return m.ScanID()
 	case scannotify.FieldHash:
 		return m.Hash()
-	case scannotify.FieldStatus:
-		return m.Status()
-	case scannotify.FieldUpdatedAt:
-		return m.UpdatedAt()
 	}
 	return nil, false
 }
@@ -4501,10 +4417,6 @@ func (m *ScanNotifyMutation) OldField(ctx context.Context, name string) (ent.Val
 		return m.OldScanID(ctx)
 	case scannotify.FieldHash:
 		return m.OldHash(ctx)
-	case scannotify.FieldStatus:
-		return m.OldStatus(ctx)
-	case scannotify.FieldUpdatedAt:
-		return m.OldUpdatedAt(ctx)
 	}
 	return nil, fmt.Errorf("unknown ScanNotify field %s", name)
 }
@@ -4527,20 +4439,6 @@ func (m *ScanNotifyMutation) SetField(name string, value ent.Value) error {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetHash(v)
-		return nil
-	case scannotify.FieldStatus:
-		v, ok := value.(string)
-		if !ok {
-			return fmt.Errorf("unexpected type %T for field %s", value, name)
-		}
-		m.SetStatus(v)
-		return nil
-	case scannotify.FieldUpdatedAt:
-		v, ok := value.(time.Time)
-		if !ok {
-			return fmt.Errorf("unexpected type %T for field %s", value, name)
-		}
-		m.SetUpdatedAt(v)
 		return nil
 	}
 	return fmt.Errorf("unknown ScanNotify field %s", name)
@@ -4596,12 +4494,6 @@ func (m *ScanNotifyMutation) ResetField(name string) error {
 		return nil
 	case scannotify.FieldHash:
 		m.ResetHash()
-		return nil
-	case scannotify.FieldStatus:
-		m.ResetStatus()
-		return nil
-	case scannotify.FieldUpdatedAt:
-		m.ResetUpdatedAt()
 		return nil
 	}
 	return fmt.Errorf("unknown ScanNotify field %s", name)
