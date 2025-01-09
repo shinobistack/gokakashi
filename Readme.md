@@ -52,7 +52,7 @@ Find, analyze, and remediate vulnerabilities present in your container images.
 | Clair |    [Open for contribution](https://github.com/shinobistack/gokakashi/issues/88)    |
 
 
-#### Notification Systems
+### Alerting & Notifications
 
 | Platform |                                    Status                                     |
 |----------|:-----------------------------------------------------------------------------:|
@@ -60,19 +60,10 @@ Find, analyze, and remediate vulnerabilities present in your container images.
 | Jira     | [Open for contribution](https://github.com/shinobistack/gokakashi/issues/105) |
 | Slack    | [Open for contribution](https://github.com/shinobistack/gokakashi/issues/106) |
 
-#### Database Integration
-Integrated with PostgreSQL using the modern, type-safe [ent ORM](https://entgo.io/).
-
-| Database     |                                    Status                                     |
-|--------------|:-----------------------------------------------------------------------------:|
-| PostgresSQL  |                                  ✅ Complete                                   |
-| Other DBs | [Open for contribution](https://github.com/shinobistack/gokakashi/issues/107) |
-Currently integrated with PostgreSQL using the modern, type-safe [ent ORM](https://entgo.io/).
-Future support for databases like MySQL, MariaDB, CockroachDB, SQLite, and more is planned.
-With ent ORM, goKakashi is designed to be database-agnostic, allowing seamless integration with existing infrastructure, 
-regardless of the database technology is used.
 
 ## Install 🛠️
+
+
 Using Docker Compose
 
 Here’s how you can set up gokakashi using Docker Compose for both the server and PostgreSQL database.
