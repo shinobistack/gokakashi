@@ -15,6 +15,8 @@ import (
 	"time"
 )
 
+// Assigns scanID to available Agents
+
 func normalizeServer(server string) string {
 	if !strings.HasPrefix(server, "http://") && !strings.HasPrefix(server, "https://") {
 		server = "http://" + server // Default to HTTP
