@@ -78,7 +78,7 @@ func NotifyProcess(server string, port int, token string) {
 			// Evaluate the 'when' condition using ReportParser
 			matched, severities, err := parser.ReportParser(notify.When, &scan)
 			if err != nil {
-				log.Printf("Error evaluating notify condition: %v", err)
+				log.Printf("Error evaluating notify.when:%v, %v", notify.When, err)
 				continue
 			}
 
@@ -149,6 +149,15 @@ func NotifyProcess(server string, port int, token string) {
 					}
 				}
 			}
+			if !matched {
+				log.Printf("Condition not matched for scanID: %s and image: %s. Updating status to success.", scan.ID, scan.Image)
+				err = updateScanStatus(server, port, token, scan.ID, "success")
+				if err != nil {
+					log.Printf("Failed to update status for scanID: %s: %v", scan.ID, err)
+				}
+				continue
+			}
+
 		}
 	}
 }
