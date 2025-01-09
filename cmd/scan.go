@@ -117,6 +117,10 @@ func scanImage(cmd *cobra.Command, args []string) {
 }
 
 func getScanStatus(cmd *cobra.Command, args []string) {
+	if server == "" || token == "" || scanID == "" {
+		log.Fatalf("Error: Missing required inputs. Please provide --server, --token, and --workspace.")
+	}
+
 	url := constructURL(server, 0, fmt.Sprintf("/api/v1/scans/%s", scanID))
 
 	req, err := http.NewRequest("GET", url, nil)
