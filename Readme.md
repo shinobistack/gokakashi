@@ -63,47 +63,20 @@ Find, analyze, and remediate vulnerabilities present in your container images.
 
 ## Install 🛠️
 
+### Docker Compose
 
-Using Docker Compose
+```sh
+wget https://raw.githubusercontent.com/shinobistack/gokakashi/refs/heads/main/docker-compose.yml
+docker compose up -f 
+
+# brings up
+# - a postgres DB
+# - gokakashi server
+# - gokakshi agent
+```
 
 Here’s how you can set up gokakashi using Docker Compose for both the server and PostgreSQL database.
 Add your configuration file, e.g., [`./config/latest_config.yaml`](config/latest_config.yaml)
-
-
-```sh
-docker-compose up --build -d
-./gokakashi agent start --server=http://localhost:8000 --token=letsdoit --workspace=/tmp
-
-```
-Or
-### DB
-```sh 
-docker network create gokakashi-network
-
-docker run -d --rm --name postgresdb --network gokakashi-network -p 5432:5432 \
-  -e POSTGRES_PASSWORD=secret \
-  -e POSTGRES_USER=postgres \
-  -e POSTGRES_DB=postgres \
-  postgres:latest
-
-```
-### Server
-
-```sh
-docker run -d --rm --name gokakashi-server --network gokakashi-network -p 8000:8000 \
-  -v $(pwd)/lts.yaml:/app/lts.yaml \
-  gokakashi server --config=lts.yaml
-
-```
-
-### Agent
-
-```sh
-docker run -it --rm --name gokakashi-agent --network gokakashi-network \
-  -v /tmp:/tmp \
-  gokakashi agent start --server=http://gokakashi-server:8000 --token=letsdoit --workspace=/tmp
-  
-```
 
 ## Transparency & Feedback ✨
 We’re excited to share gokakashi early with the community to gather feedback and improve quickly.
