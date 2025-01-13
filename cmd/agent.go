@@ -46,9 +46,9 @@ var agentStartCmd = &cobra.Command{
 			headers["CF-Access-Client-Id"] = cfClientID
 			headers["CF-Access-Client-Secret"] = cfClientSecret
 		} else if cfClientSecret != "" {
-			fmt.Printf("Warning: ignoring CF_ACCESS_CLIENT_SECRET because CF_ACCESS_CLIENT_ID is not set")
+			fmt.Println("Warning: ignoring CF_ACCESS_CLIENT_SECRET because CF_ACCESS_CLIENT_ID is not set")
 		} else if cfClientID != "" {
-			fmt.Printf("Warning: ignoring CF_ACCESS_CLIENT_ID because CF_ACCESS_CLIENT_SECRET is not set")
+			fmt.Println("Warning: ignoring CF_ACCESS_CLIENT_ID because CF_ACCESS_CLIENT_SECRET is not set")
 		}
 
 		httpClient := client.New(
