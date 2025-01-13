@@ -25,7 +25,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var httpClientKey struct{}
+type httpClientKey struct{}
 
 var agentCmd = &cobra.Command{
 	Use:   "agent",
@@ -56,7 +56,7 @@ var agentStartCmd = &cobra.Command{
 			client.WithHeaders(headers),
 		)
 
-		ctx := context.WithValue(context.Background(), httpClientKey, httpClient)
+		ctx := context.WithValue(context.Background(), httpClientKey{}, httpClient)
 		cmd.SetContext(ctx)
 	},
 	Run: agentRegister,
@@ -106,7 +106,7 @@ func registerAgent(ctx context.Context, server, token, workspace, name string) (
 	}
 	req.Header.Set("Content-Type", "application/json")
 
-	resp, err := ctx.Value(httpClientKey).(*client.Client).Do(req)
+	resp, err := ctx.Value(httpClientKey{}).(*client.Client).Do(req)
 	if err != nil {
 		return 0, fmt.Errorf("failed to send registration request: %w", err)
 	}
@@ -161,7 +161,7 @@ func fetchTasks(ctx context.Context, server, token string, agentID int, status s
 		return nil, fmt.Errorf("failed to create task polling request: %w", err)
 	}
 
-	resp, err := ctx.Value(httpClientKey).(*client.Client).Do(req)
+	resp, err := ctx.Value(httpClientKey{}).(*client.Client).Do(req)
 	if err != nil {
 		return nil, fmt.Errorf("failed to send task polling request: %w", err)
 	}
@@ -194,7 +194,7 @@ func updateAgentTaskStatus(ctx context.Context, server, token string, taskID uui
 	}
 	req.Header.Set("Content-Type", "application/json")
 
-	resp, err := ctx.Value(httpClientKey).(*client.Client).Do(req)
+	resp, err := ctx.Value(httpClientKey{}).(*client.Client).Do(req)
 	if err != nil {
 		return fmt.Errorf("failed to update task status: %w", err)
 	}
@@ -286,7 +286,7 @@ func updateScanStatus(ctx context.Context, server, token string, scanID uuid.UUI
 	}
 	req.Header.Set("Content-Type", "application/json")
 
-	resp, err := ctx.Value(httpClientKey).(*client.Client).Do(req)
+	resp, err := ctx.Value(httpClientKey{}).(*client.Client).Do(req)
 	if err != nil {
 		return fmt.Errorf("failed to update scan status: %w", err)
 	}
@@ -305,7 +305,7 @@ func fetchScan(ctx context.Context, server, token string, scanID uuid.UUID) (*sc
 		return nil, fmt.Errorf("failed to create scan request: %w", err)
 	}
 
-	resp, err := ctx.Value(httpClientKey).(*client.Client).Do(req)
+	resp, err := ctx.Value(httpClientKey{}).(*client.Client).Do(req)
 	if err != nil {
 		return nil, fmt.Errorf("failed to fetch scan details: %w", err)
 	}
@@ -329,7 +329,7 @@ func fetchIntegration(ctx context.Context, server, token string, integrationID u
 		return nil, fmt.Errorf("failed to create integration fetch request: %w", err)
 	}
 
-	resp, err := ctx.Value(httpClientKey).(*client.Client).Do(req)
+	resp, err := ctx.Value(httpClientKey{}).(*client.Client).Do(req)
 	if err != nil {
 		return nil, fmt.Errorf("failed to fetch integration details: %w", err)
 	}
@@ -407,7 +407,7 @@ func uploadReport(ctx context.Context, server, token string, scanID uuid.UUID, r
 
 	req.Header.Set("Content-Type", "application/json")
 
-	resp, err := ctx.Value(httpClientKey).(*client.Client).Do(req)
+	resp, err := ctx.Value(httpClientKey{}).(*client.Client).Do(req)
 	if err != nil {
 		return fmt.Errorf("failed to upload scan report: %w", err)
 	}
