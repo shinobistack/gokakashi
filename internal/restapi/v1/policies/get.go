@@ -26,7 +26,9 @@ type GetPolicyResponse struct {
 	Notify  *[]schema.Notify       `json:"notify"`
 }
 
-type ListPoliciesRequest struct{}
+type ListPoliciesRequest struct {
+	Name string `query:"name"`
+}
 
 type ListPoliciesResponse struct {
 	Policies []GetPolicyResponse `json:"policies"`
@@ -35,9 +37,12 @@ type ListPoliciesResponse struct {
 func ListPolicies(client *ent.Client) func(ctx context.Context, req ListPoliciesRequest, res *[]GetPolicyResponse) error {
 	return func(ctx context.Context, req ListPoliciesRequest, res *[]GetPolicyResponse) error {
 		// Query all policies with their labels
-		policies, err := client.Policies.Query().
-			WithPolicyLabels().
-			All(ctx)
+		query := client.Policies.Query().WithPolicyLabels()
+		if req.Name != "" {
+			query = query.Where(policies.Name(req.Name))
+		}
+
+		policies, err := query.All(ctx)
 		if err != nil {
 			return status.Wrap(errors.New("failed to fetch policies"), status.Internal)
 		}

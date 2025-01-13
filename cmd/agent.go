@@ -37,6 +37,7 @@ var (
 	server    string
 	token     string
 	workspace string
+	name      string
 )
 
 //ToDo: for any table status which results to error should we upload err message or just status error
@@ -50,7 +51,7 @@ func agentRegister(cmd *cobra.Command, args []string) {
 	// log.Printf("Server: %s, Token: %s, Workspace: %s", server, token, workspace)
 
 	// Register the agent
-	agentID, err := registerAgent(server, token, workspace)
+	agentID, err := registerAgent(server, token, workspace, name)
 	if err != nil {
 		log.Fatalf("Failed to register the agent: %v", err)
 	}
@@ -61,11 +62,12 @@ func agentRegister(cmd *cobra.Command, args []string) {
 	pollTasks(server, token, agentID, workspace)
 }
 
-func registerAgent(server, token, workspace string) (int, error) {
+func registerAgent(server, token, workspace, name string) (int, error) {
 	reqBody := agents.RegisterAgentRequest{
 		Server:    server,
 		Token:     token,
 		Workspace: workspace,
+		Name:      name,
 	}
 	reqBodyJSON, _ := json.Marshal(reqBody)
 
@@ -227,9 +229,16 @@ func processTask(server, token string, task agenttasks.GetAgentTaskResponse, wor
 
 	// step 6: Verify scans.Notify field exist
 	// Todo: if exists update the status to notify_pending else complete
-	err = updateScanStatus(server, token, scan.ID, "notify_pending")
-	if err != nil {
-		log.Printf("Failed to update scan status to 'scan_in_progress': %v", err)
+	if scan.Notify == nil || len(*scan.Notify) == 0 {
+		log.Printf("No notify specified for scan ID: %s", scan.ID)
+		if err := updateScanStatus(server, token, scan.ID, "success"); err != nil {
+			log.Printf("Failed to update scan status to 'success': %v", err)
+		}
+	} else {
+		err = updateScanStatus(server, token, scan.ID, "notify_pending")
+		if err != nil {
+			log.Printf("Failed to update scan status to 'scan_in_progress': %v", err)
+		}
 	}
 
 	if err := updateAgentTaskStatus(server, token, task.ID, agentID, "complete"); err != nil {

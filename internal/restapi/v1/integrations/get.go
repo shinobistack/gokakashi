@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"github.com/google/uuid"
 	"github.com/shinobistack/gokakashi/ent"
+	"github.com/shinobistack/gokakashi/ent/integrations"
 	"github.com/swaggest/usecase/status"
 )
 
@@ -18,6 +19,10 @@ type GetIntegrationResponse struct {
 	Name   string                 `json:"name"`
 	Type   string                 `json:"type"`
 	Config map[string]interface{} `json:"config"`
+}
+
+type ListGetIntegrationRequests struct {
+	Name string `query:"name"`
 }
 
 type ListIntegrationResponse struct {
@@ -50,9 +55,14 @@ func GetIntegration(client *ent.Client) func(ctx context.Context, req GetIntegra
 	}
 }
 
-func ListIntegrations(client *ent.Client) func(ctx context.Context, req struct{}, res *[]GetIntegrationResponse) error {
-	return func(ctx context.Context, req struct{}, res *[]GetIntegrationResponse) error {
-		integrations, err := client.Integrations.Query().All(ctx)
+func ListIntegrations(client *ent.Client) func(ctx context.Context, req ListGetIntegrationRequests, res *[]GetIntegrationResponse) error {
+	return func(ctx context.Context, req ListGetIntegrationRequests, res *[]GetIntegrationResponse) error {
+		query := client.Integrations.Query()
+		if req.Name != "" {
+			query = query.Where(integrations.Name(req.Name))
+		}
+
+		integrations, err := query.All(ctx)
 		if err != nil {
 			return status.Wrap(errors.New("failed to fetch integrations"), status.Internal)
 		}
