@@ -3,7 +3,6 @@ package client
 import (
 	"fmt"
 	"net/http"
-	"os"
 )
 
 type Client struct {
@@ -31,13 +30,6 @@ func (c *Client) Do(req *http.Request) (*http.Response, error) {
 
 	for k, v := range c.headers {
 		req.Header.Set(k, v)
-	}
-
-	cfClientID := os.Getenv("CF_ACCESS_CLIENT_ID")
-	cfClientSecret := os.Getenv("CF_ACCESS_CLIENT_SECRET")
-	if cfClientID != "" && cfClientSecret != "" {
-		req.Header.Set("CF-Access-Client-Id", cfClientID)
-		req.Header.Set("CF-Access-Client-Secret", cfClientSecret)
 	}
 
 	return c.client.Do(req)

@@ -6,9 +6,16 @@ package cmd
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"fmt"
+	"log"
+	"net/http"
+	"os"
+	"time"
+
 	"github.com/google/uuid"
+	"github.com/shinobistack/gokakashi/internal/http/client"
 	"github.com/shinobistack/gokakashi/internal/restapi/v1/agents"
 	"github.com/shinobistack/gokakashi/internal/restapi/v1/agenttasks"
 	"github.com/shinobistack/gokakashi/internal/restapi/v1/integrations"
@@ -16,11 +23,9 @@ import (
 	"github.com/shinobistack/gokakashi/pkg/registry/v1"
 	"github.com/shinobistack/gokakashi/pkg/scanner/v1"
 	"github.com/spf13/cobra"
-	"log"
-	"net/http"
-	"os"
-	"time"
 )
+
+var httpClientKey struct{}
 
 var agentCmd = &cobra.Command{
 	Use:   "agent",
@@ -30,7 +35,31 @@ var agentCmd = &cobra.Command{
 var agentStartCmd = &cobra.Command{
 	Use:   "start",
 	Short: "Register an agent and start polling for tasks",
-	Run:   agentRegister,
+	PersistentPreRun: func(cmd *cobra.Command, args []string) {
+		if token == "" {
+			log.Fatalf("Error: missing required flag --token")
+		}
+		headers := make(map[string]string)
+		cfClientID := os.Getenv("CF_ACCESS_CLIENT_ID")
+		cfClientSecret := os.Getenv("CF_ACCESS_CLIENT_SECRET")
+		if cfClientID != "" && cfClientSecret != "" {
+			headers["CF-Access-Client-Id"] = cfClientID
+			headers["CF-Access-Client-Secret"] = cfClientSecret
+		} else if cfClientSecret != "" {
+			fmt.Printf("Warning: ignoring CF_ACCESS_CLIENT_SECRET because CF_ACCESS_CLIENT_ID is not set")
+		} else if cfClientID != "" {
+			fmt.Printf("Warning: ignoring CF_ACCESS_CLIENT_ID because CF_ACCESS_CLIENT_SECRET is not set")
+		}
+
+		httpClient := client.New(
+			WithToken(token),
+			WithHeaders(headers),
+		)
+
+		ctx := context.WithValue(context.Background(), httpClientKey, httpClient)
+		cmd.SetContext(ctx)
+	},
+	Run: agentRegister,
 }
 
 var (
@@ -75,10 +104,9 @@ func registerAgent(server, token, workspace, name string) (int, error) {
 	if err != nil {
 		return 0, fmt.Errorf("failed to create registration request: %w", err)
 	}
-	req.Header.Set("Authorization", "Bearer "+token)
 	req.Header.Set("Content-Type", "application/json")
 
-	resp, err := http.DefaultClient.Do(req)
+	resp, err := cmd.Context.Value(httpClientKey).(*client.Client).Do(req)
 	if err != nil {
 		return 0, fmt.Errorf("failed to send registration request: %w", err)
 	}
@@ -133,9 +161,7 @@ func fetchTasks(server, token string, agentID int, status string) ([]agenttasks.
 		return nil, fmt.Errorf("failed to create task polling request: %w", err)
 	}
 
-	req.Header.Set("Authorization", "Bearer "+token)
-
-	resp, err := http.DefaultClient.Do(req)
+	resp, err := cmd.Context.Value(httpClientKey).(*client.Client).Do(req)
 	if err != nil {
 		return nil, fmt.Errorf("failed to send task polling request: %w", err)
 	}
@@ -166,10 +192,9 @@ func updateAgentTaskStatus(server, token string, taskID uuid.UUID, agentID int, 
 	if err != nil {
 		return fmt.Errorf("failed to create task status update request: %w", err)
 	}
-	req.Header.Set("Authorization", "Bearer "+token)
 	req.Header.Set("Content-Type", "application/json")
 
-	resp, err := http.DefaultClient.Do(req)
+	resp, err := cmd.Context.Value(httpClientKey).(*client.Client).Do(req)
 	if err != nil {
 		return fmt.Errorf("failed to update task status: %w", err)
 	}
@@ -259,10 +284,9 @@ func updateScanStatus(server, token string, scanID uuid.UUID, status string) err
 	if err != nil {
 		return fmt.Errorf("failed to create scan status update request: %w", err)
 	}
-	req.Header.Set("Authorization", "Bearer "+token)
 	req.Header.Set("Content-Type", "application/json")
 
-	resp, err := http.DefaultClient.Do(req)
+	resp, err := cmd.Context.Value(httpClientKey).(*client.Client).Do(req)
 	if err != nil {
 		return fmt.Errorf("failed to update scan status: %w", err)
 	}
@@ -280,9 +304,8 @@ func fetchScan(server, token string, scanID uuid.UUID) (*scans.GetScanResponse, 
 	if err != nil {
 		return nil, fmt.Errorf("failed to create scan request: %w", err)
 	}
-	req.Header.Set("Authorization", "Bearer "+token)
 
-	resp, err := http.DefaultClient.Do(req)
+	resp, err := cmd.Context.Value(httpClientKey).(*client.Client).Do(req)
 	if err != nil {
 		return nil, fmt.Errorf("failed to fetch scan details: %w", err)
 	}
@@ -305,9 +328,8 @@ func fetchIntegration(server, token string, integrationID uuid.UUID) (*integrati
 	if err != nil {
 		return nil, fmt.Errorf("failed to create integration fetch request: %w", err)
 	}
-	req.Header.Set("Authorization", "Bearer "+token)
 
-	resp, err := http.DefaultClient.Do(req)
+	resp, err := cmd.Context.Value(httpClientKey).(*client.Client).Do(req)
 	if err != nil {
 		return nil, fmt.Errorf("failed to fetch integration details: %w", err)
 	}
@@ -383,10 +405,9 @@ func uploadReport(server, token string, scanID uuid.UUID, reportPath string) err
 		return fmt.Errorf("failed to create report upload request: %w", err)
 	}
 
-	req.Header.Set("Authorization", "Bearer "+token)
 	req.Header.Set("Content-Type", "application/json")
 
-	resp, err := http.DefaultClient.Do(req)
+	resp, err := cmd.Context.Value(httpClientKey).(*client.Client).Do(req)
 	if err != nil {
 		return fmt.Errorf("failed to upload scan report: %w", err)
 	}
