@@ -52,8 +52,8 @@ var agentStartCmd = &cobra.Command{
 		}
 
 		httpClient := client.New(
-			WithToken(token),
-			WithHeaders(headers),
+			client.WithToken(token),
+			client.WithHeaders(headers),
 		)
 
 		ctx := context.WithValue(context.Background(), httpClientKey, httpClient)
@@ -80,7 +80,7 @@ func agentRegister(cmd *cobra.Command, args []string) {
 	// log.Printf("Server: %s, Token: %s, Workspace: %s", server, token, workspace)
 
 	// Register the agent
-	agentID, err := registerAgent(server, token, workspace, name)
+	agentID, err := registerAgent(cmd.Context(), server, token, workspace, name)
 	if err != nil {
 		log.Fatalf("Failed to register the agent: %v", err)
 	}
@@ -88,10 +88,10 @@ func agentRegister(cmd *cobra.Command, args []string) {
 	log.Printf("Agent registered successfully! Agent ID: %d", agentID)
 
 	// Start polling for tasks
-	pollTasks(server, token, agentID, workspace)
+	pollTasks(cmd.Context(), server, token, agentID, workspace)
 }
 
-func registerAgent(server, token, workspace, name string) (int, error) {
+func registerAgent(ctx context.Context, server, token, workspace, name string) (int, error) {
 	reqBody := agents.RegisterAgentRequest{
 		Server:    server,
 		Token:     token,
@@ -106,7 +106,7 @@ func registerAgent(server, token, workspace, name string) (int, error) {
 	}
 	req.Header.Set("Content-Type", "application/json")
 
-	resp, err := cmd.Context.Value(httpClientKey).(*client.Client).Do(req)
+	resp, err := ctx.Value(httpClientKey).(*client.Client).Do(req)
 	if err != nil {
 		return 0, fmt.Errorf("failed to send registration request: %w", err)
 	}
@@ -123,10 +123,10 @@ func registerAgent(server, token, workspace, name string) (int, error) {
 	return response.ID, nil
 }
 
-func pollTasks(server, token string, agentID int, workspace string) {
+func pollTasks(ctx context.Context, server, token string, agentID int, workspace string) {
 	for {
 		// Process only tasks with status "pending" in the order returned (created_at ASC)
-		tasks, err := fetchTasks(server, token, agentID, "pending")
+		tasks, err := fetchTasks(ctx, server, token, agentID, "pending")
 		if err != nil {
 			log.Printf("Error fetching tasks: %v", err)
 			time.Sleep(10 * time.Second)
@@ -141,12 +141,12 @@ func pollTasks(server, token string, agentID int, workspace string) {
 
 		for _, task := range tasks {
 			// Update task status to "in_progress"
-			err := updateAgentTaskStatus(server, token, task.ID, agentID, "in_progress")
+			err := updateAgentTaskStatus(ctx, server, token, task.ID, agentID, "in_progress")
 			if err != nil {
 				log.Printf("Failed to update agent_task status to 'in_progress': %v", err)
 				return
 			}
-			processTask(server, token, task, workspace, agentID)
+			processTask(ctx, server, token, task, workspace, agentID)
 			continue
 		}
 		// Todo: Polling interval time decide
@@ -155,13 +155,13 @@ func pollTasks(server, token string, agentID int, workspace string) {
 	}
 }
 
-func fetchTasks(server, token string, agentID int, status string) ([]agenttasks.GetAgentTaskResponse, error) {
+func fetchTasks(ctx context.Context, server, token string, agentID int, status string) ([]agenttasks.GetAgentTaskResponse, error) {
 	req, err := http.NewRequest("GET", fmt.Sprintf("%s/api/v1/agents/%d/tasks?status=%s", server, agentID, status), nil)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create task polling request: %w", err)
 	}
 
-	resp, err := cmd.Context.Value(httpClientKey).(*client.Client).Do(req)
+	resp, err := ctx.Value(httpClientKey).(*client.Client).Do(req)
 	if err != nil {
 		return nil, fmt.Errorf("failed to send task polling request: %w", err)
 	}
@@ -179,7 +179,7 @@ func fetchTasks(server, token string, agentID int, status string) ([]agenttasks.
 	return tasks, nil
 }
 
-func updateAgentTaskStatus(server, token string, taskID uuid.UUID, agentID int, status string) error {
+func updateAgentTaskStatus(ctx context.Context, server, token string, taskID uuid.UUID, agentID int, status string) error {
 	reqBody := agenttasks.UpdateAgentTaskRequest{
 		ID:      taskID,
 		AgentID: intPtr(agentID),
@@ -194,7 +194,7 @@ func updateAgentTaskStatus(server, token string, taskID uuid.UUID, agentID int, 
 	}
 	req.Header.Set("Content-Type", "application/json")
 
-	resp, err := cmd.Context.Value(httpClientKey).(*client.Client).Do(req)
+	resp, err := ctx.Value(httpClientKey).(*client.Client).Do(req)
 	if err != nil {
 		return fmt.Errorf("failed to update task status: %w", err)
 	}
@@ -207,16 +207,16 @@ func updateAgentTaskStatus(server, token string, taskID uuid.UUID, agentID int, 
 	return nil
 }
 
-func processTask(server, token string, task agenttasks.GetAgentTaskResponse, workspace string, agentID int) {
+func processTask(ctx context.Context, server, token string, task agenttasks.GetAgentTaskResponse, workspace string, agentID int) {
 	// Step 1: Fetch scan details
-	scan, err := fetchScan(server, token, task.ScanID)
+	scan, err := fetchScan(ctx, server, token, task.ScanID)
 	if err != nil {
 		log.Printf("Failed to fetch scan details: %v", err)
 		return
 	}
 
 	// Step 2: Fetch integration details
-	integration, err := fetchIntegration(server, token, scan.IntegrationID)
+	integration, err := fetchIntegration(ctx, server, token, scan.IntegrationID)
 	if err != nil {
 		log.Printf("Failed to fetch integration details: %v", err)
 		return
@@ -228,7 +228,7 @@ func processTask(server, token string, task agenttasks.GetAgentTaskResponse, wor
 		return
 	}
 
-	err = updateScanStatus(server, token, scan.ID, "scan_in_progress")
+	err = updateScanStatus(ctx, server, token, scan.ID, "scan_in_progress")
 	if err != nil {
 		log.Printf("Failed to update scan status to 'scan_in_progress': %v", err)
 	}
@@ -237,16 +237,16 @@ func processTask(server, token string, task agenttasks.GetAgentTaskResponse, wor
 	reportPath, err := performScan(scan.Image, scan.Scanner)
 	if err != nil {
 		log.Printf("Failed to perform scan: %v", err)
-		if err := updateScanStatus(server, token, scan.ID, "error"); err != nil {
+		if err := updateScanStatus(ctx, server, token, scan.ID, "error"); err != nil {
 			log.Printf("Failed to update scan status to 'error': %v", err)
 		}
 		return
 	}
 
 	// Step 5: Upload the scan report
-	if err := uploadReport(server, token, scan.ID, reportPath); err != nil {
+	if err := uploadReport(ctx, server, token, scan.ID, reportPath); err != nil {
 		log.Printf("Failed to upload scan report: %v", err)
-		if err := updateScanStatus(server, token, scan.ID, "error"); err != nil {
+		if err := updateScanStatus(ctx, server, token, scan.ID, "error"); err != nil {
 			log.Printf("Failed to update scan status to 'error': %v", err)
 		}
 		return
@@ -256,24 +256,24 @@ func processTask(server, token string, task agenttasks.GetAgentTaskResponse, wor
 	// Todo: if exists update the status to notify_pending else complete
 	if scan.Notify == nil || len(*scan.Notify) == 0 {
 		log.Printf("No notify specified for scan ID: %s", scan.ID)
-		if err := updateScanStatus(server, token, scan.ID, "success"); err != nil {
+		if err := updateScanStatus(ctx, server, token, scan.ID, "success"); err != nil {
 			log.Printf("Failed to update scan status to 'success': %v", err)
 		}
 	} else {
-		err = updateScanStatus(server, token, scan.ID, "notify_pending")
+		err = updateScanStatus(ctx, server, token, scan.ID, "notify_pending")
 		if err != nil {
 			log.Printf("Failed to update scan status to 'scan_in_progress': %v", err)
 		}
 	}
 
-	if err := updateAgentTaskStatus(server, token, task.ID, agentID, "complete"); err != nil {
+	if err := updateAgentTaskStatus(ctx, server, token, task.ID, agentID, "complete"); err != nil {
 		log.Printf("Failed to update agent_task status to 'complete': %v", err)
 	}
 
 	log.Printf("AgentTaskID completed successfully: %v", task.ID)
 }
 
-func updateScanStatus(server, token string, scanID uuid.UUID, status string) error {
+func updateScanStatus(ctx context.Context, server, token string, scanID uuid.UUID, status string) error {
 	reqBody := scans.UpdateScanRequest{
 		ID:     scanID,
 		Status: strPtr(status),
@@ -286,7 +286,7 @@ func updateScanStatus(server, token string, scanID uuid.UUID, status string) err
 	}
 	req.Header.Set("Content-Type", "application/json")
 
-	resp, err := cmd.Context.Value(httpClientKey).(*client.Client).Do(req)
+	resp, err := ctx.Value(httpClientKey).(*client.Client).Do(req)
 	if err != nil {
 		return fmt.Errorf("failed to update scan status: %w", err)
 	}
@@ -299,13 +299,13 @@ func updateScanStatus(server, token string, scanID uuid.UUID, status string) err
 	return nil
 }
 
-func fetchScan(server, token string, scanID uuid.UUID) (*scans.GetScanResponse, error) {
+func fetchScan(ctx context.Context, server, token string, scanID uuid.UUID) (*scans.GetScanResponse, error) {
 	req, err := http.NewRequest("GET", fmt.Sprintf("%s/api/v1/scans/%s", server, scanID), nil)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create scan request: %w", err)
 	}
 
-	resp, err := cmd.Context.Value(httpClientKey).(*client.Client).Do(req)
+	resp, err := ctx.Value(httpClientKey).(*client.Client).Do(req)
 	if err != nil {
 		return nil, fmt.Errorf("failed to fetch scan details: %w", err)
 	}
@@ -323,13 +323,13 @@ func fetchScan(server, token string, scanID uuid.UUID) (*scans.GetScanResponse, 
 	return &scan, nil
 }
 
-func fetchIntegration(server, token string, integrationID uuid.UUID) (*integrations.GetIntegrationResponse, error) {
+func fetchIntegration(ctx context.Context, server, token string, integrationID uuid.UUID) (*integrations.GetIntegrationResponse, error) {
 	req, err := http.NewRequest("GET", fmt.Sprintf("%s/api/v1/integrations/%s", server, integrationID), nil)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create integration fetch request: %w", err)
 	}
 
-	resp, err := cmd.Context.Value(httpClientKey).(*client.Client).Do(req)
+	resp, err := ctx.Value(httpClientKey).(*client.Client).Do(req)
 	if err != nil {
 		return nil, fmt.Errorf("failed to fetch integration details: %w", err)
 	}
@@ -385,7 +385,7 @@ func performScan(image, scannerType string) (string, error) {
 	return reportPath, nil
 }
 
-func uploadReport(server, token string, scanID uuid.UUID, reportPath string) error {
+func uploadReport(ctx context.Context, server, token string, scanID uuid.UUID, reportPath string) error {
 	report, err := os.ReadFile(reportPath)
 	if err != nil {
 		return fmt.Errorf("failed to read report file: %w", err)
@@ -407,7 +407,7 @@ func uploadReport(server, token string, scanID uuid.UUID, reportPath string) err
 
 	req.Header.Set("Content-Type", "application/json")
 
-	resp, err := cmd.Context.Value(httpClientKey).(*client.Client).Do(req)
+	resp, err := ctx.Value(httpClientKey).(*client.Client).Do(req)
 	if err != nil {
 		return fmt.Errorf("failed to upload scan report: %w", err)
 	}
