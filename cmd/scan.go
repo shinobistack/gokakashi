@@ -2,21 +2,50 @@ package cmd
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"fmt"
+	"log"
+	"net/http"
+	"net/url"
+	"os"
+	"strings"
+
+	"github.com/shinobistack/gokakashi/internal/http/client"
 	"github.com/shinobistack/gokakashi/internal/restapi/v1/integrations"
 	"github.com/shinobistack/gokakashi/internal/restapi/v1/policies"
 	"github.com/shinobistack/gokakashi/internal/restapi/v1/scans"
 	"github.com/spf13/cobra"
-	"log"
-	"net/http"
-	"net/url"
-	"strings"
 )
 
 var scanCmd = &cobra.Command{
 	Use:   "scan",
 	Short: "Scan a container image",
+	PersistentPreRun: func(cmd *cobra.Command, args []string) {
+		if token == "" {
+			log.Fatalf("Error: missing required flag --token")
+		}
+
+		headers := make(map[string]string)
+		cfClientID := os.Getenv("CF_ACCESS_CLIENT_ID")
+		cfClientSecret := os.Getenv("CF_ACCESS_CLIENT_SECRET")
+		if cfClientID != "" && cfClientSecret != "" {
+			headers["CF-Access-Client-Id"] = cfClientID
+			headers["CF-Access-Client-Secret"] = cfClientSecret
+		} else if cfClientSecret != "" {
+			fmt.Println("Warning: ignoring CF_ACCESS_CLIENT_SECRET because CF_ACCESS_CLIENT_ID is not set")
+		} else if cfClientID != "" {
+			fmt.Println("Warning: ignoring CF_ACCESS_CLIENT_ID because CF_ACCESS_CLIENT_SECRET is not set")
+		}
+
+		httpClient := client.New(
+			client.WithToken(token),
+			client.WithHeaders(headers),
+		)
+
+		ctx := context.WithValue(context.Background(), httpClientKey{}, httpClient)
+		cmd.SetContext(ctx)
+	},
 }
 
 var scanImageCmd = &cobra.Command{
@@ -35,46 +64,43 @@ var (
 	image      string
 	policyName string
 	scanID     string
-	// server and token are Defined in agent.go
 )
 
 func normalizeServer(server string) string {
 	if !strings.HasPrefix(server, "http://") && !strings.HasPrefix(server, "https://") {
-		server = "http://" + server // Default to HTTP
+		server = "http://" + server
 	}
 	return server
 }
 
-func constructURL(server string, port int, path string) string {
+func constructURL(server string, path string) string {
 	base := normalizeServer(server)
 	u, err := url.Parse(base)
 	if err != nil {
 		log.Fatalf("Invalid server URL: %s", base)
-	}
-	if u.Port() == "" {
-		u.Host = fmt.Sprintf("%s:%d", u.Host, port)
 	}
 	u.Path = path
 	return u.String()
 }
 
 func scanImage(cmd *cobra.Command, args []string) {
+	ctx := cmd.Context()
+	httpClient := ctx.Value(httpClientKey{}).(*client.Client)
 
 	if server == "" || token == "" || image == "" || policyName == "" {
-		log.Fatalf("Error: Missing required inputs. Please provide --server, --token, and --workspace.")
+		log.Fatalf("Error: Missing required inputs. Please provide --server, --token, and --image.")
 	}
 
-	policy, err := fetchPolicyByName(server, 0, token, policyName)
+	policy, err := fetchPolicyByName(ctx, httpClient, policyName)
 	if err != nil {
 		log.Fatalf("Failed to fetch policy: %v", err)
 	}
 	log.Println(policy)
 
-	integration, err := fetchIntegrationByName(server, 0, token, policy.Image.Registry)
+	integration, err := fetchIntegrationByName(ctx, httpClient, policy.Image.Registry)
 	if err != nil {
 		log.Fatalf("Failed to fetch integration: %v", err)
 	}
-
 	log.Println(integration)
 
 	reqBody := map[string]interface{}{
@@ -85,20 +111,16 @@ func scanImage(cmd *cobra.Command, args []string) {
 		"notify":         policy.Notify,
 		"status":         "scan_pending",
 	}
-	log.Println(reqBody)
-
 	reqBodyJSON, _ := json.Marshal(reqBody)
-	url := constructURL(server, 0, "/api/v1/scans")
+	url := constructURL(server, "/api/v1/scans")
 
 	req, err := http.NewRequest("POST", url, bytes.NewBuffer(reqBodyJSON))
-
 	if err != nil {
 		log.Fatalf("Failed to create scan request: %v", err)
 	}
-	req.Header.Set("Authorization", "Bearer "+token)
 	req.Header.Set("Content-Type", "application/json")
 
-	resp, err := http.DefaultClient.Do(req)
+	resp, err := httpClient.Do(req)
 	if err != nil {
 		log.Fatalf("Failed to send scan request: %v", err)
 	}
@@ -107,7 +129,7 @@ func scanImage(cmd *cobra.Command, args []string) {
 	if resp.StatusCode != http.StatusOK {
 		log.Fatalf("Server responded with status: %d", resp.StatusCode)
 	}
-	log.Println(resp)
+
 	var response scans.CreateScanResponse
 	if err := json.NewDecoder(resp.Body).Decode(&response); err != nil {
 		log.Fatalf("Failed to decode scan response: %v", err)
@@ -117,20 +139,21 @@ func scanImage(cmd *cobra.Command, args []string) {
 }
 
 func getScanStatus(cmd *cobra.Command, args []string) {
+	ctx := cmd.Context()
+	httpClient := ctx.Value(httpClientKey{}).(*client.Client)
+
 	if server == "" || token == "" || scanID == "" {
-		log.Fatalf("Error: Missing required inputs. Please provide --server, --token, and --workspace.")
+		log.Fatalf("Error: Missing required inputs. Please provide --server, --token, and --scanID.")
 	}
 
-	url := constructURL(server, 0, fmt.Sprintf("/api/v1/scans/%s", scanID))
+	url := constructURL(server, fmt.Sprintf("/api/v1/scans/%s", scanID))
 
 	req, err := http.NewRequest("GET", url, nil)
-
 	if err != nil {
 		log.Fatalf("Failed to create status request: %v", err)
 	}
-	req.Header.Set("Authorization", "Bearer "+token)
 
-	resp, err := http.DefaultClient.Do(req)
+	resp, err := httpClient.Do(req)
 	if err != nil {
 		log.Fatalf("Failed to send status request: %v", err)
 	}
@@ -150,17 +173,15 @@ func getScanStatus(cmd *cobra.Command, args []string) {
 	log.Printf("Scan status: %s", response.Status)
 }
 
-func fetchPolicyByName(server string, port int, token string, policyName string) (*policies.GetPolicyResponse, error) {
-	url := constructURL(server, port, "/api/v1/policies") + fmt.Sprintf("?name=%s", policyName)
+func fetchPolicyByName(ctx context.Context, httpClient *client.Client, policyName string) (*policies.GetPolicyResponse, error) {
+	url := constructURL(server, "/api/v1/policies") + fmt.Sprintf("?name=%s", policyName)
 
 	req, err := http.NewRequest("GET", url, nil)
-
 	if err != nil {
 		return nil, fmt.Errorf("failed to create policy fetch request: %w", err)
 	}
-	req.Header.Set("Authorization", "Bearer "+token)
 
-	resp, err := http.DefaultClient.Do(req)
+	resp, err := httpClient.Do(req)
 	if err != nil {
 		return nil, fmt.Errorf("failed to fetch policy: %w", err)
 	}
@@ -178,17 +199,15 @@ func fetchPolicyByName(server string, port int, token string, policyName string)
 	return &policy[0], nil
 }
 
-func fetchIntegrationByName(server string, port int, token string, integrationName string) (*integrations.GetIntegrationResponse, error) {
-	url := constructURL(server, port, "/api/v1/integrations") + fmt.Sprintf("?name=%s", integrationName)
+func fetchIntegrationByName(ctx context.Context, httpClient *client.Client, integrationName string) (*integrations.GetIntegrationResponse, error) {
+	url := constructURL(server, "/api/v1/integrations") + fmt.Sprintf("?name=%s", integrationName)
 
 	req, err := http.NewRequest("GET", url, nil)
-
 	if err != nil {
 		return nil, fmt.Errorf("failed to create integration fetch request: %w", err)
 	}
-	req.Header.Set("Authorization", "Bearer "+token)
 
-	resp, err := http.DefaultClient.Do(req)
+	resp, err := httpClient.Do(req)
 	if err != nil {
 		return nil, fmt.Errorf("failed to fetch integration: %w", err)
 	}
