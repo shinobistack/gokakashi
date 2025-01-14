@@ -1,0 +1,75 @@
+integrations:
+  - name: lts-org-docker-hub
+    type: docker-hub
+    config:
+      username: ${DOCKER_USERNAME}
+      password: ${DOCKER_PASSWORD}
+
+  - name: team-project-artifact-registry
+    type: google-cloud-artifact-registry
+    config:
+      auth_type: serviceAccount
+      json_key_path: ee-service-account.json
+
+  - name: acme-linear
+    type: linear
+    config:
+      api_key: ${LINEAR_API_KEY}
+      project_id: ${LINEAR_PROJECT_UUID}
+      team_id: ${LINEAR_TEAM_UUID}
+      issue_title: ${OPTIONAL}
+      issue_priority: 2
+      issue_assignee_id: ${LINEAR_ASSIGNER_UUID}
+      issue_state_id: ${LINEAR_STATE_UUID_LIKE_BACKLOG-UUID_TRIAGE-UUID_ETC}
+      issue_due_date: ${LINEAR_ISSUE_DUE_DATE}
+
+# API server configuration
+site:
+  api_token: letsdoit
+  host: 0.0.0.0
+  port: 8000
+
+database:
+  host: postgresdb
+  port: 5432
+  user: postgres
+  password: secret
+  name: postgres
+
+policies:
+  - name: public-service-lts-scans
+    image:
+      registry: lts-org-docker-hub
+      name: ${REGISTERY_NAME}
+      tags:
+        - v2.36.0
+        - v2.34.0
+        - v2.30.0
+        - v2.33.0
+        - v2.35.2
+    trigger:
+      type: cron
+      schedule: "0 */8 * * *"
+    labels:
+      lts_version: v2.36
+    scanner: trivy
+    notify:
+      - to: acme-linear
+        when: |
+          report.Results.exists(r, r.Vulnerabilities.exists(v, v.Severity == 'CRITICAL'))
+  - name: cps-scans
+    image:
+      registry: CP-project-artifact-registry
+      name: gcr.io/hasura-ee/lux-api
+      tags:
+        - 2.2.10
+    trigger:
+      type: cron
+      schedule: "0 */8 * * *"
+    labels:
+      lts_version: v2.36
+    scanner: trivy
+    notify:
+      - to: acme-linear
+        when: |
+          report.Results.exists(r, r.Vulnerabilities.exists(v, v.Severity == 'HIGH' || v.Severity == 'CRITICAL'))

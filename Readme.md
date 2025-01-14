@@ -37,34 +37,46 @@ Find, analyze, and remediate vulnerabilities present in your container images.
 
 | Regisry | Status |
 |--------------|:-----------------:|
-| Docker Hub | [In progress ⏳](https://github.com/shinobistack/gokakashi/issues/81) |
-| Google Artifact Registry | [In progress ⏳](https://github.com/shinobistack/gokakashi/issues/82) |
+| Docker Hub | ✅ [Enhancement in progress ⏳](https://github.com/shinobistack/gokakashi/issues/81) |
+| Google Artifact Registry | ✅ [Enhancement in progress ⏳](https://github.com/shinobistack/gokakashi/issues/82) |
 | GitHub Container Registry | [In progress ⏳](https://github.com/shinobistack/gokakashi/issues/83) |
 | Amazon Elastic Container Registry | [Open for contribution](https://github.com/shinobistack/gokakashi/issues/84)  |
 | Azure Container Registry | [Open for contribution](https://github.com/shinobistack/gokakashi/issues/85) |
 
 #### Image Scanners
 
-| Scanner | Status |
-|---------|:------:|
-| Trivy | [In progress ⏳](https://github.com/shinobistack/gokakashi/issues/86) |
-| Snyk  | [Open for contribution](https://github.com/shinobistack/gokakashi/issues/87) |
-| Clair | [Open for contribution](https://github.com/shinobistack/gokakashi/issues/88) |
+| Scanner |                                       Status                                       |
+|---------|:----------------------------------------------------------------------------------:|
+| Trivy | ✅ [Enhancement in progress ⏳](https://github.com/shinobistack/gokakashi/issues/86) |
+| Snyk  |    [Open for contribution](https://github.com/shinobistack/gokakashi/issues/87)    |
+| Clair |    [Open for contribution](https://github.com/shinobistack/gokakashi/issues/88)    |
+
+
+### Alerting & Notifications
+
+| Platform |                                    Status                                     |
+|----------|:-----------------------------------------------------------------------------:|
+| Linear   |                                  ✅ Complete                                   |
+| Jira     | [Open for contribution](https://github.com/shinobistack/gokakashi/issues/105) |
+| Slack    | [Open for contribution](https://github.com/shinobistack/gokakashi/issues/106) |
 
 
 ## Install 🛠️
 
-### Server
+### Docker Compose
 
 ```sh
-docker run -d ghcr.io/shinobistack/gokakashi server 
+wget https://raw.githubusercontent.com/shinobistack/gokakashi/refs/heads/main/docker-compose.yml
+docker compose up -f 
+
+# brings up
+# - a postgres DB
+# - gokakashi server
+# - gokakshi agent
 ```
 
-### Agent
-
-```sh
-docker run --rm -it ghcr.io/shinobistack/gokakashi agent
-```
+Here’s how you can set up gokakashi using Docker Compose for both the server and PostgreSQL database.
+Add your configuration file, e.g., [`./config/latest_config.yaml`](config/latest_config.yaml)
 
 ## Transparency & Feedback ✨
 We’re excited to share gokakashi early with the community to gather feedback and improve quickly.
