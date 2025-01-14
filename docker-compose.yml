@@ -30,6 +30,7 @@ services:
       - gokakashi-network
     ports:
       - "8000:8000"
+      - "5555:5555"
     volumes:
       - ./lts.yaml:/app/lts.yaml
     depends_on:
@@ -38,6 +39,7 @@ services:
 
 networks:
   gokakashi-network:
+    name: gokakashi-network
 
 volumes:
   pgdata:
