@@ -2,11 +2,9 @@ package v1
 
 import (
 	"fmt"
-	"github.com/shinobistack/gokakashi/ent/schema"
-	"log"
-	"os"
+	"strings"
 
-	"gopkg.in/yaml.v2"
+	"github.com/shinobistack/gokakashi/ent/schema"
 )
 
 // Integration defines the configuration for external services
@@ -18,9 +16,15 @@ type Integration struct {
 
 // SiteConfig defines the API server configuration
 type SiteConfig struct {
-	APIToken string `yaml:"api_token"`
-	Host     string `yaml:"host"`
-	Port     int    `yaml:"port"`
+	APIToken             string `yaml:"api_token"`
+	LogAPITokenOnStartup bool   `yaml:"log_api_token_on_startup"`
+	Host                 string `yaml:"host"`
+	Port                 int    `yaml:"port"`
+}
+
+type WebServerConfig struct {
+	Host string `yaml:"host"`
+	Port int    `yaml:"port"`
 }
 
 // Trigger specifies the action schedule (cron or CI-based)
@@ -59,84 +63,54 @@ type DbConnection struct {
 
 // Config represents the complete configuration for GoKakashi
 type Config struct {
-	Integrations []Integration `yaml:"integrations"`
-	Site         SiteConfig    `yaml:"site"`
-	Policies     []Policy      `yaml:"policies"`
-	Database     DbConnection  `yaml:"database"`
+	Integrations []Integration   `yaml:"integrations"`
+	Site         SiteConfig      `yaml:"site"`
+	Policies     []Policy        `yaml:"policies"`
+	Database     DbConnection    `yaml:"database"`
+	WebServer    WebServerConfig `yaml:"web_server"`
 }
 
 type Scanner struct {
 	Tool string `yaml:"tool"` // Example: Trivy, Synk, etc.
 }
 
-func LoadConfig(configFile string) (*Config, error) {
-	config := &Config{}
-
-	yamlFile, err := os.ReadFile(configFile)
-	if err != nil {
-		return nil, fmt.Errorf("failed to read config file: %v", err)
+func (c *Config) WebServerURL() string {
+	host := c.WebServer.Host
+	if host == "" {
+		host = "localhost"
 	}
-
-	err = yaml.Unmarshal(yamlFile, config)
-	if err != nil {
-		return nil, fmt.Errorf("error parsing YAML file: %v", err)
-	}
-
-	return config, nil
+	return fmt.Sprintf("http://%s:%d", host, c.WebServer.Port)
 }
 
-// validateConfig validates the loaded configuration to ensure required fields are present
-func ValidateConfig(config *Config) error {
-	if config.Site.APIToken == "" {
-		return fmt.Errorf("API token is missing")
+func (c *Config) APIServerURL() string {
+	host := c.Site.Host
+	if host == "" {
+		host = "localhost"
 	}
-
-	// ToDo: Minimum one integration must be provided and that needs to be ...?
-	if len(config.Integrations) == 0 {
-		return fmt.Errorf("At least one integration must be defined")
-	}
-	for _, integration := range config.Integrations {
-		if integration.Name == "" || integration.Type == "" {
-			return fmt.Errorf("Integration name and type are required")
-		}
-	}
-	for _, policy := range config.Policies {
-		if policy.Name == "" {
-			return fmt.Errorf("Policy name is required")
-		}
-		if policy.Image.Registry == "" || policy.Image.Name == "" {
-			return fmt.Errorf("Policy image registry and name are required")
-		}
-		if policy.Trigger.Type == "cron" && policy.Trigger.Schedule == "" {
-			return fmt.Errorf("Policy with cron trigger must define a schedule")
-		}
-		for _, notify := range policy.Notify {
-			if notify.To == "" {
-				return fmt.Errorf("Notify 'to' field is required")
-			}
-			if notify.When == "" {
-				return fmt.Errorf("Notify 'when' field is required")
-			}
-		}
-	}
-	return nil
-
-	// ToDo: more validations to be added as per config design
-	// ToDo: How do we validated the token string for each webserver, currently this is not being used
+	return fmt.Sprintf("http://%s:%d", host, c.Site.Port)
 }
 
-func LoadAndValidateConfig(configPath string) (*Config, error) {
-	// Load the YAML configuration
-	log.Printf("Loading configuration from YAML file: %s", configPath)
-	cfg, err := LoadConfig(configPath)
-	if err != nil {
-		return nil, fmt.Errorf("failed to load config: %w", err)
-	}
+func (cfg *Config) String() string {
+	var s strings.Builder
 
-	// Validate the configuration
-	if err := ValidateConfig(cfg); err != nil {
-		return nil, fmt.Errorf("configuration validation failed: %w", err)
+	s.WriteString("\n")
+	s.WriteString("- - - - Configuration - - - - -")
+	s.WriteString("\n")
+
+	s.WriteString(fmt.Sprintf("  API Server URL: %s\n", cfg.APIServerURL()))
+	if cfg.Site.LogAPITokenOnStartup {
+		s.WriteString(fmt.Sprintf("  API Token: %s\n", cfg.Site.APIToken))
 	}
-	log.Println("Configuration loaded and validated successfully.")
-	return cfg, nil
+	s.WriteString("\n")
+	s.WriteString(fmt.Sprintf("  Web Server URL: %s\n", cfg.WebServerURL()))
+	s.WriteString("\n")
+	s.WriteString(fmt.Sprintf("  Database Host: %s\n", cfg.Database.Host))
+	s.WriteString(fmt.Sprintf("  Database Port: %d\n", cfg.Database.Port))
+	s.WriteString(fmt.Sprintf("  Database User: %s\n", cfg.Database.User))
+	s.WriteString(fmt.Sprintf("  Database Name: %s\n", cfg.Database.Name))
+	s.WriteString(fmt.Sprintf("  Database Password: %s\n", strings.Repeat("*", len(cfg.Database.Password))))
+	s.WriteString("- - - - - - - - - - - - - - - -")
+	s.WriteString("\n")
+
+	return s.String()
 }

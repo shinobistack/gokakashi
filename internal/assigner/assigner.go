@@ -4,15 +4,16 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"github.com/google/uuid"
-	"github.com/shinobistack/gokakashi/internal/restapi/v1/agents"
-	"github.com/shinobistack/gokakashi/internal/restapi/v1/agenttasks"
-	"github.com/shinobistack/gokakashi/internal/restapi/v1/scans"
 	"log"
 	"net/http"
 	"net/url"
 	"strings"
 	"time"
+
+	"github.com/google/uuid"
+	"github.com/shinobistack/gokakashi/internal/restapi/v1/agents"
+	"github.com/shinobistack/gokakashi/internal/restapi/v1/agenttasks"
+	"github.com/shinobistack/gokakashi/internal/restapi/v1/scans"
 )
 
 // Assigns scanID to available Agents
@@ -37,7 +38,7 @@ func constructURL(server string, port int, path string) string {
 	return u.String()
 }
 
-func StartAssigner(server string, port int, token string, interval time.Duration) {
+func Start(server string, port int, token string, interval time.Duration) {
 	log.Println("Starting the periodic task assigner...")
 	ticker := time.NewTicker(interval)
 	defer ticker.Stop()
@@ -45,7 +46,6 @@ func StartAssigner(server string, port int, token string, interval time.Duration
 	for range ticker.C {
 		AssignTasks(server, port, token)
 	}
-
 }
 
 func AssignTasks(server string, port int, token string) {
