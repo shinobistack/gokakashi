@@ -54,8 +54,11 @@ func runServer(cmd *cobra.Command, args []string) {
 	}
 
 	log.Println("==== Starting gokakashi ====")
+	go initDatabase(cfg)
 	go startAPIServer(cfg)
 	go startWebServer(cfg)
+	go assigner.Start(cfg.Site.Host, cfg.Site.Port, cfg.Site.APIToken, 1*time.Minute)
+	go notifier.Start(cfg.Site.Host, cfg.Site.Port, cfg.Site.APIToken, 1*time.Minute)
 	log.Println(cfg)
 
 	<-done
@@ -70,19 +73,6 @@ func startAPIServer(cfg *configv1.Config) {
 		DBConfig:  cfg.Database,
 	}
 	go s.Serve()
-
-	dbConfig := cfg.Database
-
-	// Initialize a separate connection for configuration tasks
-	configDB := restapiv1.InitDB(dbConfig)
-	defer configDB.Close()
-	db.RunMigrations(configDB)
-	db.PopulateDatabase(configDB, cfg)
-
-	// ToDo: To be go routine who independently and routinely checks and assigns scans in agentTasks table
-	go assigner.StartAssigner(cfg.Site.Host, cfg.Site.Port, cfg.Site.APIToken, 1*time.Minute)
-	// Todo: To introduce API calls for scanNotify and remove client passing
-	go notifier.StartScanNotifier(cfg.Site.Host, cfg.Site.Port, cfg.Site.APIToken, 1*time.Minute)
 }
 
 func startWebServer(cfg *configv1.Config) {
@@ -93,4 +83,12 @@ func startWebServer(cfg *configv1.Config) {
 	if err := webServer.ListenAndServe(); err != nil {
 		log.Fatalln("Error starting web server", err)
 	}
+}
+
+func initDatabase(cfg *configv1.Config) {
+	// Initialize a separate connection for configuration tasks
+	configDB := restapiv1.InitDB(cfg.Database)
+	defer configDB.Close()
+	db.RunMigrations(configDB)
+	db.PopulateDatabase(configDB, cfg)
 }

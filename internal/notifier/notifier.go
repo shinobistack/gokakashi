@@ -6,16 +6,17 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
-	"github.com/google/uuid"
-	"github.com/shinobistack/gokakashi/internal/parser"
-	"github.com/shinobistack/gokakashi/internal/restapi/v1/integrations"
-	"github.com/shinobistack/gokakashi/internal/restapi/v1/scans"
-	"github.com/shinobistack/gokakashi/pkg/notifier/v1"
 	"log"
 	"net/http"
 	"net/url"
 	"strings"
 	"time"
+
+	"github.com/google/uuid"
+	"github.com/shinobistack/gokakashi/internal/parser"
+	"github.com/shinobistack/gokakashi/internal/restapi/v1/integrations"
+	"github.com/shinobistack/gokakashi/internal/restapi/v1/scans"
+	"github.com/shinobistack/gokakashi/pkg/notifier/v1"
 )
 
 type HashEntry struct {
@@ -51,7 +52,7 @@ func constructURL(server string, port int, path string) string {
 	return u.String()
 }
 
-func StartScanNotifier(server string, port int, token string, interval time.Duration) {
+func Start(server string, port int, token string, interval time.Duration) {
 	log.Println("Starting the periodic notify execution...")
 	ticker := time.NewTicker(interval)
 	defer ticker.Stop()
