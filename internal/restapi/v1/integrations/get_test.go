@@ -71,7 +71,7 @@ func TestListIntegrations(t *testing.T) {
 	assert.NoError(t, err)
 
 	// Test case: List integrations
-	req := struct{}{}
+	req := integrations.ListGetIntegrationRequests{}
 	var res []integrations.GetIntegrationResponse
 	handler := integrations.ListIntegrations(client)
 	err = handler(context.Background(), req, &res)
@@ -88,10 +88,10 @@ func TestListIntegrations_EmptyDB(t *testing.T) {
 
 	// Prepare response
 	var res []integrations.GetIntegrationResponse
-
+	req := integrations.ListGetIntegrationRequests{}
 	// Execute ListIntegrations handler
 	handler := integrations.ListIntegrations(client)
-	err := handler(context.Background(), struct{}{}, &res)
+	err := handler(context.Background(), req, &res)
 
 	// Validate response
 	assert.NoError(t, err)

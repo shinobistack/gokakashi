@@ -11,7 +11,7 @@ RUN apk add --no-cache git bash gcc sqlite-dev musl-dev libc-dev
 ENV CGO_CFLAGS="-D_LARGEFILE64_SOURCE"
 WORKDIR /app
 COPY go.mod go.sum ./
-RUN go mod tidy
+RUN go mod download
 COPY . .
 COPY --from=frontend /webapp/dist /app/webapp/dist
 # CGO is needed for using sqlite3 in tests

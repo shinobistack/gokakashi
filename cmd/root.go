@@ -23,13 +23,26 @@ func init() {
 	serverConfigFilePath = serverCmd.Flags().String("config", "", "Path to the config YAML file")
 	rootCmd.AddCommand(serverCmd)
 
-	rootCmd.AddCommand(scanCmd)
-
 	agentStartCmd.Flags().StringVar(&server, "server", "", "The server address to connect to")
 	agentStartCmd.Flags().StringVar(&token, "token", "", "Authentication token for the server")
 	agentStartCmd.Flags().StringVar(&workspace, "workspace", "", "Path to the local workspace")
 	rootCmd.AddCommand(agentCmd)
 	agentCmd.AddCommand(agentStartCmd)
+
+	// Flags for the `scan image` command
+	scanImageCmd.Flags().StringVar(&image, "image", "", "Container image to scan")
+	scanImageCmd.Flags().StringVar(&policyName, "policy", "", "Policy name for the scan")
+	scanImageCmd.Flags().StringVar(&server, "server", "", "The server address to connect to")
+	scanImageCmd.Flags().StringVar(&token, "token", "", "Authentication token for the server")
+
+	// Flags for the `scan status` command
+	scanStatusCmd.Flags().StringVar(&scanID, "scanID", "", "Scan ID to check status")
+	scanStatusCmd.Flags().StringVar(&server, "server", "", "The server address to connect to")
+	scanStatusCmd.Flags().StringVar(&token, "token", "", "Authentication token for the server")
+
+	rootCmd.AddCommand(scanCmd)
+	scanCmd.AddCommand(scanImageCmd)
+	scanCmd.AddCommand(scanStatusCmd)
 
 }
 
