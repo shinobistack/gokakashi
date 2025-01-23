@@ -1,10 +1,14 @@
 package v1
 
 import (
+	"crypto/rand"
+	"encoding/base64"
 	"fmt"
-	"github.com/shinobistack/gokakashi/ent/schema"
 	"log"
 	"os"
+	"strconv"
+
+	"github.com/shinobistack/gokakashi/ent/schema"
 
 	"gopkg.in/yaml.v2"
 )
@@ -18,9 +22,15 @@ type Integration struct {
 
 // SiteConfig defines the API server configuration
 type SiteConfig struct {
-	APIToken string `yaml:"api_token"`
-	Host     string `yaml:"host"`
-	Port     int    `yaml:"port"`
+	APIToken             string `yaml:"api_token"`
+	LogAPITokenOnStartup bool   `yaml:"log_api_token_on_startup"`
+	Host                 string `yaml:"host"`
+	Port                 int    `yaml:"port"`
+}
+
+type WebServerConfig struct {
+	Host string `yaml:"host"`
+	Port int    `yaml:"port"`
 }
 
 // Trigger specifies the action schedule (cron or CI-based)
@@ -59,10 +69,11 @@ type DbConnection struct {
 
 // Config represents the complete configuration for GoKakashi
 type Config struct {
-	Integrations []Integration `yaml:"integrations"`
-	Site         SiteConfig    `yaml:"site"`
-	Policies     []Policy      `yaml:"policies"`
-	Database     DbConnection  `yaml:"database"`
+	Integrations []Integration   `yaml:"integrations"`
+	Site         SiteConfig      `yaml:"site"`
+	Policies     []Policy        `yaml:"policies"`
+	Database     DbConnection    `yaml:"database"`
+	WebServer    WebServerConfig `yaml:"web_server"`
 }
 
 type Scanner struct {
@@ -139,4 +150,97 @@ func LoadAndValidateConfig(configPath string) (*Config, error) {
 	}
 	log.Println("Configuration loaded and validated successfully.")
 	return cfg, nil
+}
+
+func DefaultConfig() (*Config, error) {
+	apiToken := os.Getenv("GOKAKASHI_API_SERVER_TOKEN")
+	logAPITokenOnStartup := false
+	if apiToken == "" {
+		generatedToken, err := generateToken(32)
+		if err != nil {
+			return nil, fmt.Errorf("error generating an api token: %w", err)
+		}
+		apiToken = generatedToken
+		logAPITokenOnStartup = true
+	}
+
+	apiHost := os.Getenv("GOKAKASHI_API_SERVER_HOST")
+	apiPort, _ := strconv.Atoi(os.Getenv("GOKAKASHI_API_SERVER_PORT"))
+	if apiPort == 0 {
+		apiPort = 5556
+	}
+
+	webHost := os.Getenv("GOKAKASHI_WEB_SERVER_HOST")
+	webPort, _ := strconv.Atoi(os.Getenv("GOKAKASHI_WEB_SERVER_PORT"))
+	if webPort == 0 {
+		webPort = 5555
+	}
+
+	dbHost := os.Getenv("DB_HOST")
+	if dbHost == "" {
+		dbHost = "localhost"
+	}
+	dbPort, _ := strconv.Atoi(os.Getenv("DB_PORT"))
+	if dbPort == 0 {
+		dbPort = 5432
+	}
+	dbName := os.Getenv("DB_NAME")
+	if dbName == "" {
+		dbName = "postgres"
+	}
+	dbUser := os.Getenv("DB_USER")
+	if dbUser == "" {
+		dbUser = "postgres"
+	}
+	dbPassword := os.Getenv("DB_PASSWORD")
+	if dbPassword == "" {
+		dbPassword = "postgres"
+	}
+
+	return &Config{
+		Site: SiteConfig{
+			APIToken:             apiToken,
+			LogAPITokenOnStartup: logAPITokenOnStartup,
+			Host:                 apiHost,
+			Port:                 apiPort,
+		},
+		WebServer: WebServerConfig{
+			Host: webHost,
+			Port: webPort,
+		},
+		Database: DbConnection{
+			Host:     dbHost,
+			Port:     dbPort,
+			User:     dbUser,
+			Password: dbPassword,
+			Name:     dbName,
+		},
+	}, nil
+}
+
+func (c *Config) WebServerURL() string {
+	host := c.WebServer.Host
+	if host == "" {
+		host = "localhost"
+	}
+	return fmt.Sprintf("http://%s:%d", host, c.WebServer.Port)
+}
+
+func (c *Config) APIServerURL() string {
+	host := c.Site.Host
+	if host == "" {
+		host = "localhost"
+	}
+	return fmt.Sprintf("http://%s:%d", host, c.Site.Port)
+}
+
+func generateToken(length int) (string, error) {
+	token := make([]byte, length)
+
+	_, err := rand.Read(token)
+	if err != nil {
+		return "", err
+	}
+
+	return base64.URLEncoding.EncodeToString(token), nil
 }

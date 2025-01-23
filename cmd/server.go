@@ -2,9 +2,6 @@ package cmd
 
 import (
 	"fmt"
-	"github.com/shinobistack/gokakashi/internal/assigner"
-	"github.com/shinobistack/gokakashi/internal/db"
-	"github.com/shinobistack/gokakashi/internal/notifier"
 	"log"
 	"os"
 	"os/signal"
@@ -12,13 +9,12 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/robfig/cron/v3"
-	config "github.com/shinobistack/gokakashi/internal/config/v0"
+	"github.com/shinobistack/gokakashi/internal/assigner"
+	"github.com/shinobistack/gokakashi/internal/db"
+	"github.com/shinobistack/gokakashi/internal/notifier"
+
 	configv1 "github.com/shinobistack/gokakashi/internal/config/v1"
-	restapi "github.com/shinobistack/gokakashi/internal/restapi/v0"
 	restapiv1 "github.com/shinobistack/gokakashi/internal/restapi/v1"
-	"github.com/shinobistack/gokakashi/pkg/utils"
-	"github.com/shinobistack/gokakashi/pkg/web"
 	"github.com/shinobistack/gokakashi/webapp"
 	"github.com/spf13/cobra"
 )
@@ -42,52 +38,32 @@ func runServer(cmd *cobra.Command, args []string) {
 		done <- true
 	}()
 
-	go func() {
-		if os.Getenv("WEB_ONLY") != "" || *serverConfigFilePath == "" {
-			return
-		}
-
-		handleConfigV1()
-	}()
-
-	go func() {
-		webServerAddr := ":5555" // TODO make this come from a config
-		log.Println("Starting webapp server at", webServerAddr)
-		webServer, err := webapp.New(webServerAddr)
+	var cfg *configv1.Config
+	if *serverConfigFilePath != "" {
+		customCfg, err := configv1.LoadAndValidateConfig(*serverConfigFilePath)
 		if err != nil {
-			log.Fatalln("Error creating web app server", err)
+			log.Fatalf("Error: %v", err)
 		}
-		if err := webServer.ListenAndServe(); err != nil {
-			log.Fatalln("Error starting web server", err)
+		cfg = customCfg
+	}
+	if cfg == nil {
+		defaultCfg, err := configv1.DefaultConfig()
+		if err != nil {
+			log.Fatalf("Error: %v", err)
 		}
-	}()
+		cfg = defaultCfg
+	}
 
-	go func() {
-		if os.Getenv("WEB_ONLY") != "" || *serverConfigFilePath != "" {
-			return
-		}
-
-		// TODO: get rid of the old config at some point.
-		handleConfigV0()
-	}()
+	log.Println("==== Starting gokakashi ====")
+	go startAPIServer(cfg)
+	go startWebServer(cfg)
+	logConfig(cfg)
 
 	<-done
-	log.Println("Exiting gokakashi. Bye!")
+	log.Println("====  Exiting gokakashi. Bye! ==== ")
 }
 
-func handleConfigV1() {
-	log.Println("=== Starting goKakashi Tool ===")
-
-	// Load and validate the configuration file
-	cfg, err := configv1.LoadAndValidateConfig(*serverConfigFilePath)
-	if err != nil {
-		log.Fatalf("Error: %v", err)
-	}
-	// Todo: To implement connection pooling. Explore and implement.
-	//dbClient := restapiv1.InitDB(cfg.Database)
-	//defer dbClient.Close()
-
-	log.Println("Starting API server for scan functionality...")
+func startAPIServer(cfg *configv1.Config) {
 	s := &restapiv1.Server{
 		AuthToken: cfg.Site.APIToken,
 		Websites:  cfg.Site.Host,
@@ -109,80 +85,33 @@ func handleConfigV1() {
 	go assigner.StartAssigner(cfg.Site.Host, cfg.Site.Port, cfg.Site.APIToken, 1*time.Minute)
 	// Todo: To introduce API calls for scanNotify and remove client passing
 	go notifier.StartScanNotifier(cfg.Site.Host, cfg.Site.Port, cfg.Site.APIToken, 1*time.Minute)
-
 }
 
-func handleConfigV0() {
-	log.Println("=== Starting goKakashi Tool ===")
-
-	// Load and validate the configuration file
-	cfg, err := config.LoadAndValidateConfig(*serverConfigFilePath)
+func startWebServer(cfg *configv1.Config) {
+	webServer, err := webapp.New(fmt.Sprintf("%s:%d", cfg.WebServer.Host, cfg.WebServer.Port))
 	if err != nil {
-		log.Fatalf("Error: %v", err)
+		log.Fatalln("Error creating web server", err)
 	}
-
-	// Start web servers to serve reports
-	log.Println("Starting web servers...")
-	// Initialize web servers
-	webServer := web.NewWebServer()
-	err = webServer.StartWebServers(cfg)
-	if err != nil {
-		log.Fatalf("Failed to start web servers: %v", err)
+	if err := webServer.ListenAndServe(); err != nil {
+		log.Fatalln("Error starting web server", err)
 	}
+}
 
-	log.Println("Starting API server for scan functionality at port 8000...")
-	s := &restapi.Server{
-		AuthToken: cfg.APIToken,
-		Websites:  cfg.Websites,
-		Port:      8000,
+func logConfig(cfg *configv1.Config) {
+	log.Println()
+	log.Println("- - - - Configuration - - - - -")
+	log.Printf("  API Server URL: %s\n", cfg.APIServerURL())
+	if cfg.Site.LogAPITokenOnStartup {
+		log.Printf("  API Token: %s\n", cfg.Site.APIToken)
 	}
-	go s.Serve()
-
-	// Initialize cron job for scheduling scans
-	cronSchedule := cron.New()
-	// Ensure cron is stopped when program exits
-	defer cronSchedule.Stop()
-
-	// Register cron jobs for each scan target
-	// Process scan targets and images
-	for _, target := range cfg.ScanTargets {
-		// Iterate over the images and scan them
-		for _, image := range target.Images {
-			if image.ScanPolicy.CronSchedule != "" {
-				schedule := image.ScanPolicy.CronSchedule
-				_, err := cronSchedule.AddFunc(schedule, func() {
-					start := time.Now()
-					log.Printf("Scheduled scan started at %v for %s:%s", start, image.Name, strings.Join(image.Tags, ", "))
-					err := utils.RunImageScan(target, image, cfg)
-					if err != nil {
-						log.Println("Error running image scan", err)
-						return
-					}
-					log.Printf("Scheduled scan completed at %v for %s:%s", time.Now(), image.Name, strings.Join(image.Tags, ", "))
-				})
-				if err != nil {
-					log.Printf("Invalid cron schedule for image %s: %v", image.Name, err)
-				} else {
-					log.Printf("Scheduled scan for image %s:%s with cron schedule %s", image.Name, strings.Join(image.Tags, ", "), schedule)
-				}
-			} else {
-				log.Printf("No cron schedule for image %s. Running scan immediately.", image.Name)
-				err := utils.RunImageScan(target, image, cfg)
-				if err != nil {
-					log.Println("Error running image scan", err)
-					return
-				}
-			}
-		}
-	}
-	// Start cron scheduler
-	log.Println("Starting cron scheduler...")
-	cronSchedule.Start()
-
-	// Graceful shutdown handling
-	shutdown := make(chan os.Signal, 1)
-	signal.Notify(shutdown, syscall.SIGINT, syscall.SIGTERM)
-	<-shutdown
-
-	log.Println("Shutting down goKakashi gracefully...")
+	log.Println("")
+	log.Printf("  Web Server URL: %s\n", cfg.WebServerURL())
+	log.Println("")
+	log.Printf("  Database Host: %s\n", cfg.Database.Host)
+	log.Printf("  Database Port: %d\n", cfg.Database.Port)
+	log.Printf("  Database User: %s\n", cfg.Database.User)
+	log.Printf("  Database Name: %s\n", cfg.Database.Name)
+	log.Printf("  Database Password: %s\n", strings.Repeat("*", len(cfg.Database.Password)))
+	log.Println("- - - - - - - - - - - - - - - -")
+	log.Println()
 }
