@@ -1,0 +1,47 @@
+services:
+  db:
+    image: postgres:17.2
+    container_name: postgresdb
+    networks:
+      - gokakashi-network
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: CHANGE_THIS_PASSWORD
+      POSTGRES_DB: gokakashi
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+  gokakashi-server:
+    build: ../
+    container_name: gokakashi-server
+    command: server --config=/app/config.yaml
+    volumes:
+      - ./config.yaml:/app/config.yaml
+    networks:
+      - gokakashi-network
+    ports:
+      - "5555:5555"
+      - "5556:5556"
+    environment:
+      DB_HOST: db
+      DB_PORT: 5432
+      DB_USER: postgres
+      DB_PASSWORD: CHANGE_THIS_PASSWORD
+      DB_NAME: gokakashi
+    depends_on:
+      db:
+        condition: service_healthy
+
+networks:
+  gokakashi-network:
+
+volumes:
+  pgdata:
+  workspace:
