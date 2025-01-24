@@ -12,15 +12,12 @@
 
 &nbsp;
 
-gokakashi is a security platform to help ship secure software.
+gokakashi is a security platform to help ship secure software. It aims to
 
-## Motivation 🔥
-
-- Be vendor-agnostic and open(-sourced).
 - Centralized: You need one place to understand your security posture.
+- Be vendor-agnostic and open(-sourced).
 - Help teams adopt industry standards like [SLSA](https://slsa.dev/).
-- Educate: Security is not an afterthought.
-- Any team, any size.
+- For any team of any size.
 
 ## Features 🎁
 
