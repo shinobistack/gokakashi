@@ -12,15 +12,12 @@
 
 &nbsp;
 
-gokakashi is a security platform to help ship secure software.
+gokakashi is a security platform to help ship secure software. It aims to
 
-## Motivation 🔥
-
+- Be centralized: You need one place to understand your security posture.
 - Be vendor-agnostic and open(-sourced).
-- Centralized: You need one place to understand your security posture.
 - Help teams adopt industry standards like [SLSA](https://slsa.dev/).
-- Educate: Security is not an afterthought.
-- Any team, any size.
+- For any team of any size.
 
 ## Features 🎁
 
@@ -64,6 +61,20 @@ docker run -d ghcr.io/shinobistack/gokakashi server
 
 ```sh
 docker run --rm -it ghcr.io/shinobistack/gokakashi agent
+```
+
+## Contributing 🏗️
+
+Thanks for your interest in contributing to the project.
+
+You will need [docker](https://docs.docker.com/) and [docker-compose](https://docs.docker.com/compose/) for building gokakashi. You can follow the below workflow after having those software.
+
+```
+git clone git@github.com:shinobistack/gokakashi.git
+cd gokakashi
+docker compose -f docker-compose/dev.yaml up --build
+
+# make changes to the code and run the docker compose command again
 ```
 
 ## Transparency & Feedback ✨
