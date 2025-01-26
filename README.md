@@ -63,21 +63,24 @@ docker run -d ghcr.io/shinobistack/gokakashi server
 docker run --rm -it ghcr.io/shinobistack/gokakashi agent
 ```
 
-## Contributing 🏗️
+## Develop 🏗️
 
 Thanks for your interest in contributing to the project.
 
 You will need [docker](https://docs.docker.com/) and [docker-compose](https://docs.docker.com/compose/) for building gokakashi. You can follow the below workflow after having those software.
 
-```
+```sh
 git clone git@github.com:shinobistack/gokakashi.git
-cd gokakashi
-docker compose -f docker-compose/dev.yaml up --build
 
-# make changes to the code and run the docker compose command again
+cd gokakashi
+
+# Make code changes
+
+docker compose -f docker-compose/dev.yaml up --build
 ```
 
 ## Transparency & Feedback ✨
+
 We’re excited to share gokakashi early with the community to gather feedback and improve quickly.
 
-Whether you're curious, have suggestions, or if your team is looking for a fast and efficient way to streamline vulnerability scanning (and get back to enjoying that extra ice cream or your favorite anime), we’d love to hear from you. Feel free to open an issue or submit a pull request or request any features that would help on GitHub. Let’s build something awesome together!
+Whether you're curious, have suggestions, or if your team is looking for a fast and efficient way to streamline your security workflows (and get back to enjoying that extra ice cream or your favorite anime), we’d love to hear from you. Feel free to open an issue or submit a pull request or request any features that would help on GitHub. Let’s build something awesome together!
