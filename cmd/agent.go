@@ -9,11 +9,13 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"github.com/shinobistack/gokakashi/ent/schema"
 	"io"
 	"log"
 	"net/http"
 	"net/url"
 	"os"
+	"strings"
 	"time"
 
 	"github.com/google/uuid"
@@ -101,6 +103,7 @@ var (
 	name      string
 	id        int
 	chidori   bool
+	labels    string
 )
 
 func agentDeRegister(cmd *cobra.Command, args []string) {
@@ -155,8 +158,13 @@ func agentRegister(cmd *cobra.Command, args []string) {
 		log.Fatalf("Error: Missing required inputs. Please provide --server, --token.")
 	}
 
+	parsedLabels, err := parseLabels(labels)
+	if err != nil {
+		log.Fatalf("Error parsing labels: %v", err)
+	}
+
 	// Register the agent
-	agentID, err := registerAgent(cmd.Context(), server, token, workspace, name)
+	agentID, err := registerAgent(cmd.Context(), server, token, workspace, name, parsedLabels)
 	if err != nil {
 		log.Fatalf("Failed to register the agent: %v", err)
 	}
@@ -168,12 +176,36 @@ func agentRegister(cmd *cobra.Command, args []string) {
 	pollTasks(cmd.Context(), server, token, agentID, workspace)
 }
 
-func registerAgent(ctx context.Context, server, token, workspace, name string) (int, error) {
+func parseLabels(labels string) ([]schema.CommonLabels, error) {
+	if labels == "" {
+		return nil, nil
+	}
+
+	// Split the labels string into key=value pairs
+	pairs := strings.Split(labels, ",")
+	parsedLabels := make([]schema.CommonLabels, len(pairs))
+
+	for i, pair := range pairs {
+		kv := strings.Split(pair, "=")
+		if len(kv) != 2 || kv[0] == "" || kv[1] == "" {
+			return nil, fmt.Errorf("invalid label format: %s (expected key=value)", pair)
+		}
+		parsedLabels[i] = schema.CommonLabels{
+			Key:   strings.TrimSpace(kv[0]),
+			Value: strings.TrimSpace(kv[1]),
+		}
+	}
+
+	return parsedLabels, nil
+}
+
+func registerAgent(ctx context.Context, server, token, workspace, name string, labels []schema.CommonLabels) (int, error) {
 	reqBody := agents.RegisterAgentRequest{
 		Server:    server,
 		Token:     token,
 		Workspace: workspace,
 		Name:      name,
+		Labels:    labels,
 	}
 	reqBodyJSON, _ := json.Marshal(reqBody)
 

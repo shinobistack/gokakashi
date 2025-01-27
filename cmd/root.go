@@ -27,6 +27,7 @@ func init() {
 
 	agentStartCmd.Flags().StringVar(&name, "name", "", "Unique name for the agent (optional, defaults to agent-<random_suffix>)")
 	agentStartCmd.Flags().StringVar(&workspace, "workspace", "", "Workspace for the agent (optional, defaults to /tmp/<agent-name>)")
+	agentStartCmd.Flags().StringVar(&labels, "labels", "", "Labels for the agent in key=value format (e.g., --labels=\"key1=value1,key2=value2\")")
 
 	agentStopCmd.Flags().IntVar(&id, "id", 0, "ID of the agent to deregister")
 	agentStopCmd.Flags().StringVar(&name, "name", "", "Name of the agent to deregister")
