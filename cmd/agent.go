@@ -73,8 +73,8 @@ var (
 
 func agentRegister(cmd *cobra.Command, args []string) {
 	// Validate inputs
-	if server == "" || token == "" || workspace == "" {
-		log.Fatalf("Error: Missing required inputs. Please provide --server, --token, and --workspace.")
+	if server == "" || token == "" {
+		log.Fatalf("Error: Missing required inputs. Please provide --server, --token.")
 	}
 
 	// log.Printf("Server: %s, Token: %s, Workspace: %s", server, token, workspace)

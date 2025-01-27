@@ -37,6 +37,7 @@ func (Agents) Fields() []ent.Field {
 			Comment("Enum: { connected, scan_in_progress, disconnected }."),
 		field.String("workspace").
 			Optional().
+			Unique().
 			Comment("Optional workspace path for the agent."),
 		field.String("server").
 			Optional().

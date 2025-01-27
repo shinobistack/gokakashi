@@ -1,0 +1,48 @@
+version: "3.9"
+
+services:
+  postgresdb:
+    image: postgres:latest
+    container_name: postgresdb
+    networks:
+      - gokakashi-network
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: secret
+      POSTGRES_DB: postgres
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U postgres" ]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+  gokakashi-server:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: gokakashi-server
+    command: server --config=/app/lts.yaml
+    networks:
+      - gokakashi-network
+    ports:
+      - "8000:8000"
+      - "5555:5555"
+    volumes:
+      - ./lts.yaml:/app/lts.yaml
+    depends_on:
+      postgresdb:
+        condition: service_healthy
+
+networks:
+  gokakashi-network:
+    name: gokakashi-network
+
+volumes:
+  pgdata:
+  workspace:
+
+# ./gokakashi agent start --server=http://localhost:8000 --token=letsdoit --workspace=/tmp

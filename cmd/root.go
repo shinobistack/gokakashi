@@ -25,7 +25,8 @@ func init() {
 
 	agentStartCmd.Flags().StringVar(&server, "server", "", "The server address to connect to")
 	agentStartCmd.Flags().StringVar(&token, "token", "", "Authentication token for the server")
-	agentStartCmd.Flags().StringVar(&workspace, "workspace", "", "Path to the local workspace")
+	agentStartCmd.Flags().StringVar(&name, "name", "", "Unique name for the agent (optional, defaults to agent-<random_suffix>)")
+	agentStartCmd.Flags().StringVar(&workspace, "workspace", "", "Workspace for the agent (optional, defaults to /tmp/<agent-name>)")
 	rootCmd.AddCommand(agentCmd)
 	agentCmd.AddCommand(agentStartCmd)
 
