@@ -41,7 +41,7 @@ var (
 		{Name: "id", Type: field.TypeInt, Increment: true},
 		{Name: "name", Type: field.TypeString, Unique: true, Nullable: true},
 		{Name: "status", Type: field.TypeString, Default: "connected"},
-		{Name: "workspace", Type: field.TypeString, Nullable: true},
+		{Name: "workspace", Type: field.TypeString, Unique: true, Nullable: true},
 		{Name: "server", Type: field.TypeString, Nullable: true},
 		{Name: "last_seen", Type: field.TypeTime},
 	}

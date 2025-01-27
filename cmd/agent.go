@@ -9,8 +9,10 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"io"
 	"log"
 	"net/http"
+	"net/url"
 	"os"
 	"time"
 
@@ -62,14 +64,88 @@ var agentStartCmd = &cobra.Command{
 	Run: agentRegister,
 }
 
+var agentStopCmd = &cobra.Command{
+	Use:   "stop",
+	Short: "Deregister an agent gracefully",
+	PersistentPreRun: func(cmd *cobra.Command, args []string) {
+		if token == "" {
+			log.Fatalf("Error: missing required flag --token")
+		}
+		headers := make(map[string]string)
+		cfClientID := os.Getenv("CF_ACCESS_CLIENT_ID")
+		cfClientSecret := os.Getenv("CF_ACCESS_CLIENT_SECRET")
+		if cfClientID != "" && cfClientSecret != "" {
+			headers["CF-Access-Client-Id"] = cfClientID
+			headers["CF-Access-Client-Secret"] = cfClientSecret
+		} else if cfClientSecret != "" {
+			fmt.Println("Warning: ignoring CF_ACCESS_CLIENT_SECRET because CF_ACCESS_CLIENT_ID is not set")
+		} else if cfClientID != "" {
+			fmt.Println("Warning: ignoring CF_ACCESS_CLIENT_ID because CF_ACCESS_CLIENT_SECRET is not set")
+		}
+
+		httpClient := client.New(
+			client.WithToken(token),
+			client.WithHeaders(headers),
+		)
+
+		ctx := context.WithValue(context.Background(), httpClientKey{}, httpClient)
+		cmd.SetContext(ctx)
+	},
+	Run: agentDeRegister,
+}
+
 var (
-	server      string
-	token       string
-	workspace   string
-	name        string
-	id          int
-	chidoriFlag bool
+	server    string
+	token     string
+	workspace string
+	name      string
+	id        int
+	chidori   bool
 )
+
+func agentDeRegister(cmd *cobra.Command, args []string) {
+	if name == "" && id == 0 {
+		log.Fatalf("Error: Either --name or --id must be provided")
+	}
+
+	queryParams := url.Values{}
+	if id != 0 {
+		queryParams.Add("id", fmt.Sprintf("%d", id))
+	}
+	if name != "" {
+		queryParams.Add("name", name)
+	}
+	if chidori {
+		queryParams.Add("chidori", "true")
+	}
+
+	url := fmt.Sprintf("%s/api/v1/agents?%s", server, queryParams.Encode())
+
+	req, err := http.NewRequest("DELETE", url, nil)
+	if err != nil {
+		log.Fatalf("Failed to create deregistration request: %v", err)
+	}
+	req.Header.Set("Content-Type", "application/json")
+
+	httpClient := cmd.Context().Value(httpClientKey{}).(*client.Client)
+	resp, err := httpClient.Do(req)
+	if err != nil {
+		log.Fatalf("Failed to deregister the agent: %v", err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		body, _ := io.ReadAll(resp.Body)
+		log.Fatalf("Failed to deregister the agent. Status: %d, Response: %s", resp.StatusCode, string(body))
+	}
+
+	var response agents.DeleteAgentResponse
+	if err := json.NewDecoder(resp.Body).Decode(&response); err != nil {
+		log.Fatalf("Failed to parse deregistration response: %v", err)
+	}
+
+	log.Printf("Agent successfully deregistered. ID: %d, Status: %s", response.ID, response.Status)
+}
 
 //ToDo: for any table status which results to error should we upload err message or just status error
 
@@ -85,6 +161,7 @@ func agentRegister(cmd *cobra.Command, args []string) {
 		log.Fatalf("Failed to register the agent: %v", err)
 	}
 
+	// ToDo: to display auto assigned name
 	log.Printf("Agent registered successfully! Agent ID: %d, Name: %s, Workspace: %s", agentID, name, workspace)
 
 	// Start polling for tasks
@@ -157,8 +234,7 @@ func pollTasks(ctx context.Context, server, token string, agentID int, workspace
 }
 
 func fetchTasks(ctx context.Context, server, token string, agentID int, status string) ([]agenttasks.GetAgentTaskResponse, error) {
-	path := fmt.Sprintf("/api/v1/agents/%d/tasks?status=%s", agentID, status)
-	url := constructURL(server, path)
+	url := constructURL(server, fmt.Sprintf("/api/v1/agents/%d/tasks", agentID)) + fmt.Sprintf("?status=%s", status)
 
 	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {

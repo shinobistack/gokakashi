@@ -25,7 +25,7 @@ func TestDeleteAgent_Valid(t *testing.T) {
 
 	assert.NoError(t, err)
 	assert.Equal(t, agent.ID, res.ID)
-	assert.Equal(t, "deleted", res.Status)
+	assert.Equal(t, "disconnected", res.Status)
 }
 
 func TestDeleteAgent_NotFound(t *testing.T) {

@@ -93,7 +93,7 @@ func (srv *Server) Service() *web.Service {
 	apiV1.Get("/agents", usecase.NewInteractor(agents1.PollAgents(srv.DB)))
 	apiV1.Get("/agents/{id}", usecase.NewInteractor(agents1.GetAgent(srv.DB)))
 	apiV1.Put("/agents/{id}", usecase.NewInteractor(agents1.UpdateAgent(srv.DB)))
-	apiV1.Delete("/agents/{id}", usecase.NewInteractor(agents1.DeleteAgent(srv.DB)))
+	apiV1.Delete("/agents", usecase.NewInteractor(agents1.DeleteAgent(srv.DB)))
 
 	apiV1.Post("/agents/{agent_id}/tasks", usecase.NewInteractor(agenttasks1.CreateAgentTask(srv.DB)))
 	apiV1.Get("/agents/tasks", usecase.NewInteractor(agenttasks1.ListAgentTasks(srv.DB)))
