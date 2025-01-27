@@ -3,7 +3,9 @@ package agents
 import (
 	"context"
 	"errors"
+	"fmt"
 	"github.com/shinobistack/gokakashi/ent"
+	"github.com/shinobistack/gokakashi/ent/agentlabels"
 	"github.com/shinobistack/gokakashi/ent/agents"
 	"github.com/shinobistack/gokakashi/ent/agenttasks"
 	"github.com/swaggest/usecase/status"
@@ -45,19 +47,44 @@ func DeleteAgent(client *ent.Client) func(ctx context.Context, req DeleteAgentRe
 			return status.Wrap(err, status.Internal)
 		}
 
+		tx, err := client.Tx(ctx)
+		if err != nil {
+			return status.Wrap(err, status.Internal)
+		}
+
 		// Check for Flag
 		if req.Chidori {
 			// Delete related tasks
-			_, err = client.AgentTasks.Delete().
+			_, err = tx.AgentTasks.Delete().
 				Where(agenttasks.HasAgentWith(agents.ID(agent.ID))).
 				Exec(ctx)
 			if err != nil {
-				return status.Wrap(err, status.Internal)
+				tx.Rollback()
+				return status.Wrap(fmt.Errorf("failed to delete associated tasks: %w", err), status.Internal)
 			}
-			// Hard delete the agent
-			err = client.Agents.DeleteOne(agent).Exec(ctx)
+
+			// Delete associated labels
+			_, err = tx.AgentLabels.Delete().
+				Where(agentlabels.AgentID(agent.ID)).
+				Exec(ctx)
 			if err != nil {
-				return status.Wrap(err, status.Internal)
+				if rollbackErr := tx.Rollback(); rollbackErr != nil {
+					fmt.Printf("rollback failed: %v\n", rollbackErr)
+				}
+				return status.Wrap(fmt.Errorf("failed to delete associated labels: %w", err), status.Internal)
+			}
+
+			// Hard delete the agent
+			err = tx.Agents.DeleteOne(agent).Exec(ctx)
+			if err != nil {
+				if rollbackErr := tx.Rollback(); rollbackErr != nil {
+					fmt.Printf("rollback failed: %v\n", rollbackErr)
+				}
+				return status.Wrap(fmt.Errorf("failed to delete agent: %w", err), status.Internal)
+			}
+
+			if err := tx.Commit(); err != nil {
+				return status.Wrap(fmt.Errorf("failed to commit transaction: %w", err), status.Internal)
 			}
 
 			res.ID = agent.ID
@@ -66,21 +93,31 @@ func DeleteAgent(client *ent.Client) func(ctx context.Context, req DeleteAgentRe
 		}
 
 		// Default Soft De-registration
-		_, err = client.Agents.UpdateOne(agent).
+		_, err = tx.Agents.UpdateOne(agent).
 			SetStatus("disconnected").
 			SetLastSeen(time.Now()).
 			Save(ctx)
 		if err != nil {
-			return status.Wrap(err, status.Internal)
+			if rollbackErr := tx.Rollback(); rollbackErr != nil {
+				fmt.Printf("rollback failed: %v\n", rollbackErr)
+			}
+			return status.Wrap(fmt.Errorf("failed to update agent status: %w", err), status.Internal)
 		}
 
 		// Mark related tasks as abandoned
-		err = client.AgentTasks.Update().
+		err = tx.AgentTasks.Update().
 			Where(agenttasks.HasAgentWith(agents.ID(agent.ID))).
 			SetStatus("abandoned").
 			Exec(ctx)
 		if err != nil {
-			return status.Wrap(err, status.Internal)
+			if rollbackErr := tx.Rollback(); rollbackErr != nil {
+				fmt.Printf("rollback failed: %v\n", rollbackErr)
+			}
+			return status.Wrap(fmt.Errorf("failed to mark tasks as abandoned: %w", err), status.Internal)
+		}
+
+		if err := tx.Commit(); err != nil {
+			return status.Wrap(fmt.Errorf("failed to commit transaction: %w", err), status.Internal)
 		}
 
 		res.ID = agent.ID

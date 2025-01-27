@@ -7,6 +7,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/shinobistack/gokakashi/ent"
 	"github.com/shinobistack/gokakashi/ent/agents"
+	"github.com/shinobistack/gokakashi/ent/schema"
 	"github.com/swaggest/usecase/status"
 	"time"
 )
@@ -20,11 +21,12 @@ type CreateAgentResponse struct {
 	Status string `json:"status"`
 }
 type RegisterAgentRequest struct {
-	Server    string `json:"server"`
-	Token     string `json:"token"`
-	Workspace string `json:"workspace"`
-	Status    string `json:"status"`
-	Name      string `json:"name,omitempty"`
+	Server    string                `json:"server"`
+	Token     string                `json:"token"`
+	Workspace string                `json:"workspace"`
+	Status    string                `json:"status"`
+	Name      string                `json:"name,omitempty"`
+	Labels    []schema.CommonLabels `json:"labels,omitempty"`
 }
 
 type RegisterAgentResponse struct {
@@ -65,7 +67,7 @@ func RegisterAgent(client *ent.Client) func(ctx context.Context, req RegisterAge
 		}
 
 		if req.Name == "" {
-			req.Name = fmt.Sprintf("agent-%s", uuid.New().String()[:8])
+			req.Name = fmt.Sprintf("agent-%s", uuid.New().String()[:6])
 		}
 		if req.Workspace == "" {
 			req.Workspace = fmt.Sprintf("/tmp/%s", req.Name)
@@ -95,6 +97,11 @@ func RegisterAgent(client *ent.Client) func(ctx context.Context, req RegisterAge
 			return status.Wrap(err, status.Internal)
 		}
 
+		tx, err := client.Tx(ctx)
+		if err != nil {
+			return status.Wrap(err, status.Internal)
+		}
+
 		// Register the new agent
 		newAgent, err := client.Agents.Create().
 			SetName(req.Name).
@@ -104,6 +111,28 @@ func RegisterAgent(client *ent.Client) func(ctx context.Context, req RegisterAge
 			SetLastSeen(time.Now()).
 			Save(ctx)
 		if err != nil {
+			return status.Wrap(err, status.Internal)
+		}
+
+		// Save agent labels
+		if len(req.Labels) > 0 {
+			bulk := make([]*ent.AgentLabelsCreate, len(req.Labels))
+			for i, label := range req.Labels {
+				bulk[i] = tx.AgentLabels.Create().
+					SetAgentsID(newAgent.ID).
+					SetKey(label.Key).
+					SetValue(label.Value)
+			}
+
+			if _, err := tx.AgentLabels.CreateBulk(bulk...).Save(ctx); err != nil {
+				if rollbackErr := tx.Rollback(); rollbackErr != nil {
+					fmt.Printf("rollback failed: %v\n", rollbackErr)
+				}
+				return status.Wrap(err, status.Internal)
+			}
+		}
+
+		if err := tx.Commit(); err != nil {
 			return status.Wrap(err, status.Internal)
 		}
 

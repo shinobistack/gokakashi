@@ -11,6 +11,11 @@ type AgentLabels struct {
 	ent.Schema
 }
 
+type CommonLabels struct {
+	Key   string `json:"key"`
+	Value string `json:"value"`
+}
+
 // Fields of the AgentLabels.
 func (AgentLabels) Fields() []ent.Field {
 	return []ent.Field{
