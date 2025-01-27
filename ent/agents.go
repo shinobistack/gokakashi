@@ -38,9 +38,11 @@ type Agents struct {
 type AgentsEdges struct {
 	// An agent can have multiple tasks.
 	AgentTasks []*AgentTasks `json:"agent_tasks,omitempty"`
+	// AgentLabels holds the value of the agent_labels edge.
+	AgentLabels []*AgentLabels `json:"agent_labels,omitempty"`
 	// loadedTypes holds the information for reporting if a
 	// type was loaded (or requested) in eager-loading or not.
-	loadedTypes [1]bool
+	loadedTypes [2]bool
 }
 
 // AgentTasksOrErr returns the AgentTasks value or an error if the edge
@@ -50,6 +52,15 @@ func (e AgentsEdges) AgentTasksOrErr() ([]*AgentTasks, error) {
 		return e.AgentTasks, nil
 	}
 	return nil, &NotLoadedError{edge: "agent_tasks"}
+}
+
+// AgentLabelsOrErr returns the AgentLabels value or an error if the edge
+// was not loaded in eager-loading.
+func (e AgentsEdges) AgentLabelsOrErr() ([]*AgentLabels, error) {
+	if e.loadedTypes[1] {
+		return e.AgentLabels, nil
+	}
+	return nil, &NotLoadedError{edge: "agent_labels"}
 }
 
 // scanValues returns the types for scanning values from sql.Rows.
@@ -130,6 +141,11 @@ func (a *Agents) Value(name string) (ent.Value, error) {
 // QueryAgentTasks queries the "agent_tasks" edge of the Agents entity.
 func (a *Agents) QueryAgentTasks() *AgentTasksQuery {
 	return NewAgentsClient(a.config).QueryAgentTasks(a)
+}
+
+// QueryAgentLabels queries the "agent_labels" edge of the Agents entity.
+func (a *Agents) QueryAgentLabels() *AgentLabelsQuery {
+	return NewAgentsClient(a.config).QueryAgentLabels(a)
 }
 
 // Update returns a builder for updating this Agents.

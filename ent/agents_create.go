@@ -11,6 +11,7 @@ import (
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
 	"github.com/google/uuid"
+	"github.com/shinobistack/gokakashi/ent/agentlabels"
 	"github.com/shinobistack/gokakashi/ent/agents"
 	"github.com/shinobistack/gokakashi/ent/agenttasks"
 )
@@ -111,6 +112,21 @@ func (ac *AgentsCreate) AddAgentTasks(a ...*AgentTasks) *AgentsCreate {
 		ids[i] = a[i].ID
 	}
 	return ac.AddAgentTaskIDs(ids...)
+}
+
+// AddAgentLabelIDs adds the "agent_labels" edge to the AgentLabels entity by IDs.
+func (ac *AgentsCreate) AddAgentLabelIDs(ids ...int) *AgentsCreate {
+	ac.mutation.AddAgentLabelIDs(ids...)
+	return ac
+}
+
+// AddAgentLabels adds the "agent_labels" edges to the AgentLabels entity.
+func (ac *AgentsCreate) AddAgentLabels(a ...*AgentLabels) *AgentsCreate {
+	ids := make([]int, len(a))
+	for i := range a {
+		ids[i] = a[i].ID
+	}
+	return ac.AddAgentLabelIDs(ids...)
 }
 
 // Mutation returns the AgentsMutation object of the builder.
@@ -232,6 +248,22 @@ func (ac *AgentsCreate) createSpec() (*Agents, *sqlgraph.CreateSpec) {
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(agenttasks.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges = append(_spec.Edges, edge)
+	}
+	if nodes := ac.mutation.AgentLabelsIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   agents.AgentLabelsTable,
+			Columns: []string{agents.AgentLabelsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(agentlabels.FieldID, field.TypeInt),
 			},
 		}
 		for _, k := range nodes {

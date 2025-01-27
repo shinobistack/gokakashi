@@ -13,6 +13,7 @@ import (
 	"entgo.io/ent"
 	"entgo.io/ent/dialect/sql"
 	"github.com/google/uuid"
+	"github.com/shinobistack/gokakashi/ent/agentlabels"
 	"github.com/shinobistack/gokakashi/ent/agents"
 	"github.com/shinobistack/gokakashi/ent/agenttasks"
 	"github.com/shinobistack/gokakashi/ent/integrations"
@@ -35,6 +36,7 @@ const (
 	OpUpdateOne = ent.OpUpdateOne
 
 	// Node types.
+	TypeAgentLabels     = "AgentLabels"
 	TypeAgentTasks      = "AgentTasks"
 	TypeAgents          = "Agents"
 	TypeIntegrationType = "IntegrationType"
@@ -45,6 +47,510 @@ const (
 	TypeScanNotify      = "ScanNotify"
 	TypeScans           = "Scans"
 )
+
+// AgentLabelsMutation represents an operation that mutates the AgentLabels nodes in the graph.
+type AgentLabelsMutation struct {
+	config
+	op            Op
+	typ           string
+	id            *int
+	key           *string
+	value         *string
+	clearedFields map[string]struct{}
+	agents        *int
+	clearedagents bool
+	done          bool
+	oldValue      func(context.Context) (*AgentLabels, error)
+	predicates    []predicate.AgentLabels
+}
+
+var _ ent.Mutation = (*AgentLabelsMutation)(nil)
+
+// agentlabelsOption allows management of the mutation configuration using functional options.
+type agentlabelsOption func(*AgentLabelsMutation)
+
+// newAgentLabelsMutation creates new mutation for the AgentLabels entity.
+func newAgentLabelsMutation(c config, op Op, opts ...agentlabelsOption) *AgentLabelsMutation {
+	m := &AgentLabelsMutation{
+		config:        c,
+		op:            op,
+		typ:           TypeAgentLabels,
+		clearedFields: make(map[string]struct{}),
+	}
+	for _, opt := range opts {
+		opt(m)
+	}
+	return m
+}
+
+// withAgentLabelsID sets the ID field of the mutation.
+func withAgentLabelsID(id int) agentlabelsOption {
+	return func(m *AgentLabelsMutation) {
+		var (
+			err   error
+			once  sync.Once
+			value *AgentLabels
+		)
+		m.oldValue = func(ctx context.Context) (*AgentLabels, error) {
+			once.Do(func() {
+				if m.done {
+					err = errors.New("querying old values post mutation is not allowed")
+				} else {
+					value, err = m.Client().AgentLabels.Get(ctx, id)
+				}
+			})
+			return value, err
+		}
+		m.id = &id
+	}
+}
+
+// withAgentLabels sets the old AgentLabels of the mutation.
+func withAgentLabels(node *AgentLabels) agentlabelsOption {
+	return func(m *AgentLabelsMutation) {
+		m.oldValue = func(context.Context) (*AgentLabels, error) {
+			return node, nil
+		}
+		m.id = &node.ID
+	}
+}
+
+// Client returns a new `ent.Client` from the mutation. If the mutation was
+// executed in a transaction (ent.Tx), a transactional client is returned.
+func (m AgentLabelsMutation) Client() *Client {
+	client := &Client{config: m.config}
+	client.init()
+	return client
+}
+
+// Tx returns an `ent.Tx` for mutations that were executed in transactions;
+// it returns an error otherwise.
+func (m AgentLabelsMutation) Tx() (*Tx, error) {
+	if _, ok := m.driver.(*txDriver); !ok {
+		return nil, errors.New("ent: mutation is not running in a transaction")
+	}
+	tx := &Tx{config: m.config}
+	tx.init()
+	return tx, nil
+}
+
+// ID returns the ID value in the mutation. Note that the ID is only available
+// if it was provided to the builder or after it was returned from the database.
+func (m *AgentLabelsMutation) ID() (id int, exists bool) {
+	if m.id == nil {
+		return
+	}
+	return *m.id, true
+}
+
+// IDs queries the database and returns the entity ids that match the mutation's predicate.
+// That means, if the mutation is applied within a transaction with an isolation level such
+// as sql.LevelSerializable, the returned ids match the ids of the rows that will be updated
+// or updated by the mutation.
+func (m *AgentLabelsMutation) IDs(ctx context.Context) ([]int, error) {
+	switch {
+	case m.op.Is(OpUpdateOne | OpDeleteOne):
+		id, exists := m.ID()
+		if exists {
+			return []int{id}, nil
+		}
+		fallthrough
+	case m.op.Is(OpUpdate | OpDelete):
+		return m.Client().AgentLabels.Query().Where(m.predicates...).IDs(ctx)
+	default:
+		return nil, fmt.Errorf("IDs is not allowed on %s operations", m.op)
+	}
+}
+
+// SetAgentID sets the "agent_id" field.
+func (m *AgentLabelsMutation) SetAgentID(i int) {
+	m.agents = &i
+}
+
+// AgentID returns the value of the "agent_id" field in the mutation.
+func (m *AgentLabelsMutation) AgentID() (r int, exists bool) {
+	v := m.agents
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldAgentID returns the old "agent_id" field's value of the AgentLabels entity.
+// If the AgentLabels object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *AgentLabelsMutation) OldAgentID(ctx context.Context) (v int, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldAgentID is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldAgentID requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldAgentID: %w", err)
+	}
+	return oldValue.AgentID, nil
+}
+
+// ResetAgentID resets all changes to the "agent_id" field.
+func (m *AgentLabelsMutation) ResetAgentID() {
+	m.agents = nil
+}
+
+// SetKey sets the "key" field.
+func (m *AgentLabelsMutation) SetKey(s string) {
+	m.key = &s
+}
+
+// Key returns the value of the "key" field in the mutation.
+func (m *AgentLabelsMutation) Key() (r string, exists bool) {
+	v := m.key
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldKey returns the old "key" field's value of the AgentLabels entity.
+// If the AgentLabels object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *AgentLabelsMutation) OldKey(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldKey is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldKey requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldKey: %w", err)
+	}
+	return oldValue.Key, nil
+}
+
+// ResetKey resets all changes to the "key" field.
+func (m *AgentLabelsMutation) ResetKey() {
+	m.key = nil
+}
+
+// SetValue sets the "value" field.
+func (m *AgentLabelsMutation) SetValue(s string) {
+	m.value = &s
+}
+
+// Value returns the value of the "value" field in the mutation.
+func (m *AgentLabelsMutation) Value() (r string, exists bool) {
+	v := m.value
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldValue returns the old "value" field's value of the AgentLabels entity.
+// If the AgentLabels object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *AgentLabelsMutation) OldValue(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldValue is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldValue requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldValue: %w", err)
+	}
+	return oldValue.Value, nil
+}
+
+// ResetValue resets all changes to the "value" field.
+func (m *AgentLabelsMutation) ResetValue() {
+	m.value = nil
+}
+
+// SetAgentsID sets the "agents" edge to the Agents entity by id.
+func (m *AgentLabelsMutation) SetAgentsID(id int) {
+	m.agents = &id
+}
+
+// ClearAgents clears the "agents" edge to the Agents entity.
+func (m *AgentLabelsMutation) ClearAgents() {
+	m.clearedagents = true
+	m.clearedFields[agentlabels.FieldAgentID] = struct{}{}
+}
+
+// AgentsCleared reports if the "agents" edge to the Agents entity was cleared.
+func (m *AgentLabelsMutation) AgentsCleared() bool {
+	return m.clearedagents
+}
+
+// AgentsID returns the "agents" edge ID in the mutation.
+func (m *AgentLabelsMutation) AgentsID() (id int, exists bool) {
+	if m.agents != nil {
+		return *m.agents, true
+	}
+	return
+}
+
+// AgentsIDs returns the "agents" edge IDs in the mutation.
+// Note that IDs always returns len(IDs) <= 1 for unique edges, and you should use
+// AgentsID instead. It exists only for internal usage by the builders.
+func (m *AgentLabelsMutation) AgentsIDs() (ids []int) {
+	if id := m.agents; id != nil {
+		ids = append(ids, *id)
+	}
+	return
+}
+
+// ResetAgents resets all changes to the "agents" edge.
+func (m *AgentLabelsMutation) ResetAgents() {
+	m.agents = nil
+	m.clearedagents = false
+}
+
+// Where appends a list predicates to the AgentLabelsMutation builder.
+func (m *AgentLabelsMutation) Where(ps ...predicate.AgentLabels) {
+	m.predicates = append(m.predicates, ps...)
+}
+
+// WhereP appends storage-level predicates to the AgentLabelsMutation builder. Using this method,
+// users can use type-assertion to append predicates that do not depend on any generated package.
+func (m *AgentLabelsMutation) WhereP(ps ...func(*sql.Selector)) {
+	p := make([]predicate.AgentLabels, len(ps))
+	for i := range ps {
+		p[i] = ps[i]
+	}
+	m.Where(p...)
+}
+
+// Op returns the operation name.
+func (m *AgentLabelsMutation) Op() Op {
+	return m.op
+}
+
+// SetOp allows setting the mutation operation.
+func (m *AgentLabelsMutation) SetOp(op Op) {
+	m.op = op
+}
+
+// Type returns the node type of this mutation (AgentLabels).
+func (m *AgentLabelsMutation) Type() string {
+	return m.typ
+}
+
+// Fields returns all fields that were changed during this mutation. Note that in
+// order to get all numeric fields that were incremented/decremented, call
+// AddedFields().
+func (m *AgentLabelsMutation) Fields() []string {
+	fields := make([]string, 0, 3)
+	if m.agents != nil {
+		fields = append(fields, agentlabels.FieldAgentID)
+	}
+	if m.key != nil {
+		fields = append(fields, agentlabels.FieldKey)
+	}
+	if m.value != nil {
+		fields = append(fields, agentlabels.FieldValue)
+	}
+	return fields
+}
+
+// Field returns the value of a field with the given name. The second boolean
+// return value indicates that this field was not set, or was not defined in the
+// schema.
+func (m *AgentLabelsMutation) Field(name string) (ent.Value, bool) {
+	switch name {
+	case agentlabels.FieldAgentID:
+		return m.AgentID()
+	case agentlabels.FieldKey:
+		return m.Key()
+	case agentlabels.FieldValue:
+		return m.Value()
+	}
+	return nil, false
+}
+
+// OldField returns the old value of the field from the database. An error is
+// returned if the mutation operation is not UpdateOne, or the query to the
+// database failed.
+func (m *AgentLabelsMutation) OldField(ctx context.Context, name string) (ent.Value, error) {
+	switch name {
+	case agentlabels.FieldAgentID:
+		return m.OldAgentID(ctx)
+	case agentlabels.FieldKey:
+		return m.OldKey(ctx)
+	case agentlabels.FieldValue:
+		return m.OldValue(ctx)
+	}
+	return nil, fmt.Errorf("unknown AgentLabels field %s", name)
+}
+
+// SetField sets the value of a field with the given name. It returns an error if
+// the field is not defined in the schema, or if the type mismatched the field
+// type.
+func (m *AgentLabelsMutation) SetField(name string, value ent.Value) error {
+	switch name {
+	case agentlabels.FieldAgentID:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetAgentID(v)
+		return nil
+	case agentlabels.FieldKey:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetKey(v)
+		return nil
+	case agentlabels.FieldValue:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetValue(v)
+		return nil
+	}
+	return fmt.Errorf("unknown AgentLabels field %s", name)
+}
+
+// AddedFields returns all numeric fields that were incremented/decremented during
+// this mutation.
+func (m *AgentLabelsMutation) AddedFields() []string {
+	var fields []string
+	return fields
+}
+
+// AddedField returns the numeric value that was incremented/decremented on a field
+// with the given name. The second boolean return value indicates that this field
+// was not set, or was not defined in the schema.
+func (m *AgentLabelsMutation) AddedField(name string) (ent.Value, bool) {
+	switch name {
+	}
+	return nil, false
+}
+
+// AddField adds the value to the field with the given name. It returns an error if
+// the field is not defined in the schema, or if the type mismatched the field
+// type.
+func (m *AgentLabelsMutation) AddField(name string, value ent.Value) error {
+	switch name {
+	}
+	return fmt.Errorf("unknown AgentLabels numeric field %s", name)
+}
+
+// ClearedFields returns all nullable fields that were cleared during this
+// mutation.
+func (m *AgentLabelsMutation) ClearedFields() []string {
+	return nil
+}
+
+// FieldCleared returns a boolean indicating if a field with the given name was
+// cleared in this mutation.
+func (m *AgentLabelsMutation) FieldCleared(name string) bool {
+	_, ok := m.clearedFields[name]
+	return ok
+}
+
+// ClearField clears the value of the field with the given name. It returns an
+// error if the field is not defined in the schema.
+func (m *AgentLabelsMutation) ClearField(name string) error {
+	return fmt.Errorf("unknown AgentLabels nullable field %s", name)
+}
+
+// ResetField resets all changes in the mutation for the field with the given name.
+// It returns an error if the field is not defined in the schema.
+func (m *AgentLabelsMutation) ResetField(name string) error {
+	switch name {
+	case agentlabels.FieldAgentID:
+		m.ResetAgentID()
+		return nil
+	case agentlabels.FieldKey:
+		m.ResetKey()
+		return nil
+	case agentlabels.FieldValue:
+		m.ResetValue()
+		return nil
+	}
+	return fmt.Errorf("unknown AgentLabels field %s", name)
+}
+
+// AddedEdges returns all edge names that were set/added in this mutation.
+func (m *AgentLabelsMutation) AddedEdges() []string {
+	edges := make([]string, 0, 1)
+	if m.agents != nil {
+		edges = append(edges, agentlabels.EdgeAgents)
+	}
+	return edges
+}
+
+// AddedIDs returns all IDs (to other nodes) that were added for the given edge
+// name in this mutation.
+func (m *AgentLabelsMutation) AddedIDs(name string) []ent.Value {
+	switch name {
+	case agentlabels.EdgeAgents:
+		if id := m.agents; id != nil {
+			return []ent.Value{*id}
+		}
+	}
+	return nil
+}
+
+// RemovedEdges returns all edge names that were removed in this mutation.
+func (m *AgentLabelsMutation) RemovedEdges() []string {
+	edges := make([]string, 0, 1)
+	return edges
+}
+
+// RemovedIDs returns all IDs (to other nodes) that were removed for the edge with
+// the given name in this mutation.
+func (m *AgentLabelsMutation) RemovedIDs(name string) []ent.Value {
+	return nil
+}
+
+// ClearedEdges returns all edge names that were cleared in this mutation.
+func (m *AgentLabelsMutation) ClearedEdges() []string {
+	edges := make([]string, 0, 1)
+	if m.clearedagents {
+		edges = append(edges, agentlabels.EdgeAgents)
+	}
+	return edges
+}
+
+// EdgeCleared returns a boolean which indicates if the edge with the given name
+// was cleared in this mutation.
+func (m *AgentLabelsMutation) EdgeCleared(name string) bool {
+	switch name {
+	case agentlabels.EdgeAgents:
+		return m.clearedagents
+	}
+	return false
+}
+
+// ClearEdge clears the value of the edge with the given name. It returns an error
+// if that edge is not defined in the schema.
+func (m *AgentLabelsMutation) ClearEdge(name string) error {
+	switch name {
+	case agentlabels.EdgeAgents:
+		m.ClearAgents()
+		return nil
+	}
+	return fmt.Errorf("unknown AgentLabels unique edge %s", name)
+}
+
+// ResetEdge resets all changes to the edge with the given name in this mutation.
+// It returns an error if the edge is not defined in the schema.
+func (m *AgentLabelsMutation) ResetEdge(name string) error {
+	switch name {
+	case agentlabels.EdgeAgents:
+		m.ResetAgents()
+		return nil
+	}
+	return fmt.Errorf("unknown AgentLabels edge %s", name)
+}
 
 // AgentTasksMutation represents an operation that mutates the AgentTasks nodes in the graph.
 type AgentTasksMutation struct {
@@ -646,21 +1152,24 @@ func (m *AgentTasksMutation) ResetEdge(name string) error {
 // AgentsMutation represents an operation that mutates the Agents nodes in the graph.
 type AgentsMutation struct {
 	config
-	op                 Op
-	typ                string
-	id                 *int
-	name               *string
-	status             *string
-	workspace          *string
-	server             *string
-	last_seen          *time.Time
-	clearedFields      map[string]struct{}
-	agent_tasks        map[uuid.UUID]struct{}
-	removedagent_tasks map[uuid.UUID]struct{}
-	clearedagent_tasks bool
-	done               bool
-	oldValue           func(context.Context) (*Agents, error)
-	predicates         []predicate.Agents
+	op                  Op
+	typ                 string
+	id                  *int
+	name                *string
+	status              *string
+	workspace           *string
+	server              *string
+	last_seen           *time.Time
+	clearedFields       map[string]struct{}
+	agent_tasks         map[uuid.UUID]struct{}
+	removedagent_tasks  map[uuid.UUID]struct{}
+	clearedagent_tasks  bool
+	agent_labels        map[int]struct{}
+	removedagent_labels map[int]struct{}
+	clearedagent_labels bool
+	done                bool
+	oldValue            func(context.Context) (*Agents, error)
+	predicates          []predicate.Agents
 }
 
 var _ ent.Mutation = (*AgentsMutation)(nil)
@@ -1040,6 +1549,60 @@ func (m *AgentsMutation) ResetAgentTasks() {
 	m.removedagent_tasks = nil
 }
 
+// AddAgentLabelIDs adds the "agent_labels" edge to the AgentLabels entity by ids.
+func (m *AgentsMutation) AddAgentLabelIDs(ids ...int) {
+	if m.agent_labels == nil {
+		m.agent_labels = make(map[int]struct{})
+	}
+	for i := range ids {
+		m.agent_labels[ids[i]] = struct{}{}
+	}
+}
+
+// ClearAgentLabels clears the "agent_labels" edge to the AgentLabels entity.
+func (m *AgentsMutation) ClearAgentLabels() {
+	m.clearedagent_labels = true
+}
+
+// AgentLabelsCleared reports if the "agent_labels" edge to the AgentLabels entity was cleared.
+func (m *AgentsMutation) AgentLabelsCleared() bool {
+	return m.clearedagent_labels
+}
+
+// RemoveAgentLabelIDs removes the "agent_labels" edge to the AgentLabels entity by IDs.
+func (m *AgentsMutation) RemoveAgentLabelIDs(ids ...int) {
+	if m.removedagent_labels == nil {
+		m.removedagent_labels = make(map[int]struct{})
+	}
+	for i := range ids {
+		delete(m.agent_labels, ids[i])
+		m.removedagent_labels[ids[i]] = struct{}{}
+	}
+}
+
+// RemovedAgentLabels returns the removed IDs of the "agent_labels" edge to the AgentLabels entity.
+func (m *AgentsMutation) RemovedAgentLabelsIDs() (ids []int) {
+	for id := range m.removedagent_labels {
+		ids = append(ids, id)
+	}
+	return
+}
+
+// AgentLabelsIDs returns the "agent_labels" edge IDs in the mutation.
+func (m *AgentsMutation) AgentLabelsIDs() (ids []int) {
+	for id := range m.agent_labels {
+		ids = append(ids, id)
+	}
+	return
+}
+
+// ResetAgentLabels resets all changes to the "agent_labels" edge.
+func (m *AgentsMutation) ResetAgentLabels() {
+	m.agent_labels = nil
+	m.clearedagent_labels = false
+	m.removedagent_labels = nil
+}
+
 // Where appends a list predicates to the AgentsMutation builder.
 func (m *AgentsMutation) Where(ps ...predicate.Agents) {
 	m.predicates = append(m.predicates, ps...)
@@ -1262,9 +1825,12 @@ func (m *AgentsMutation) ResetField(name string) error {
 
 // AddedEdges returns all edge names that were set/added in this mutation.
 func (m *AgentsMutation) AddedEdges() []string {
-	edges := make([]string, 0, 1)
+	edges := make([]string, 0, 2)
 	if m.agent_tasks != nil {
 		edges = append(edges, agents.EdgeAgentTasks)
+	}
+	if m.agent_labels != nil {
+		edges = append(edges, agents.EdgeAgentLabels)
 	}
 	return edges
 }
@@ -1279,15 +1845,24 @@ func (m *AgentsMutation) AddedIDs(name string) []ent.Value {
 			ids = append(ids, id)
 		}
 		return ids
+	case agents.EdgeAgentLabels:
+		ids := make([]ent.Value, 0, len(m.agent_labels))
+		for id := range m.agent_labels {
+			ids = append(ids, id)
+		}
+		return ids
 	}
 	return nil
 }
 
 // RemovedEdges returns all edge names that were removed in this mutation.
 func (m *AgentsMutation) RemovedEdges() []string {
-	edges := make([]string, 0, 1)
+	edges := make([]string, 0, 2)
 	if m.removedagent_tasks != nil {
 		edges = append(edges, agents.EdgeAgentTasks)
+	}
+	if m.removedagent_labels != nil {
+		edges = append(edges, agents.EdgeAgentLabels)
 	}
 	return edges
 }
@@ -1302,15 +1877,24 @@ func (m *AgentsMutation) RemovedIDs(name string) []ent.Value {
 			ids = append(ids, id)
 		}
 		return ids
+	case agents.EdgeAgentLabels:
+		ids := make([]ent.Value, 0, len(m.removedagent_labels))
+		for id := range m.removedagent_labels {
+			ids = append(ids, id)
+		}
+		return ids
 	}
 	return nil
 }
 
 // ClearedEdges returns all edge names that were cleared in this mutation.
 func (m *AgentsMutation) ClearedEdges() []string {
-	edges := make([]string, 0, 1)
+	edges := make([]string, 0, 2)
 	if m.clearedagent_tasks {
 		edges = append(edges, agents.EdgeAgentTasks)
+	}
+	if m.clearedagent_labels {
+		edges = append(edges, agents.EdgeAgentLabels)
 	}
 	return edges
 }
@@ -1321,6 +1905,8 @@ func (m *AgentsMutation) EdgeCleared(name string) bool {
 	switch name {
 	case agents.EdgeAgentTasks:
 		return m.clearedagent_tasks
+	case agents.EdgeAgentLabels:
+		return m.clearedagent_labels
 	}
 	return false
 }
@@ -1339,6 +1925,9 @@ func (m *AgentsMutation) ResetEdge(name string) error {
 	switch name {
 	case agents.EdgeAgentTasks:
 		m.ResetAgentTasks()
+		return nil
+	case agents.EdgeAgentLabels:
+		m.ResetAgentLabels()
 		return nil
 	}
 	return fmt.Errorf("unknown Agents edge %s", name)

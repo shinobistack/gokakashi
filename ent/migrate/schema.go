@@ -8,6 +8,27 @@ import (
 )
 
 var (
+	// AgentLabelsColumns holds the columns for the "agent_labels" table.
+	AgentLabelsColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeInt, Increment: true},
+		{Name: "key", Type: field.TypeString},
+		{Name: "value", Type: field.TypeString},
+		{Name: "agent_id", Type: field.TypeInt},
+	}
+	// AgentLabelsTable holds the schema information for the "agent_labels" table.
+	AgentLabelsTable = &schema.Table{
+		Name:       "agent_labels",
+		Columns:    AgentLabelsColumns,
+		PrimaryKey: []*schema.Column{AgentLabelsColumns[0]},
+		ForeignKeys: []*schema.ForeignKey{
+			{
+				Symbol:     "agent_labels_agents_agent_labels",
+				Columns:    []*schema.Column{AgentLabelsColumns[3]},
+				RefColumns: []*schema.Column{AgentsColumns[0]},
+				OnDelete:   schema.NoAction,
+			},
+		},
+	}
 	// AgentTasksColumns holds the columns for the "agent_tasks" table.
 	AgentTasksColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeUUID, Unique: true},
@@ -195,6 +216,7 @@ var (
 	}
 	// Tables holds all the tables in the schema.
 	Tables = []*schema.Table{
+		AgentLabelsTable,
 		AgentTasksTable,
 		AgentsTable,
 		IntegrationTypesTable,
@@ -208,6 +230,7 @@ var (
 )
 
 func init() {
+	AgentLabelsTable.ForeignKeys[0].RefTable = AgentsTable
 	AgentTasksTable.ForeignKeys[0].RefTable = AgentsTable
 	AgentTasksTable.ForeignKeys[1].RefTable = ScansTable
 	IntegrationsTable.ForeignKeys[0].RefTable = IntegrationTypesTable

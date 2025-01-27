@@ -54,5 +54,6 @@ func (Agents) Edges() []ent.Edge {
 	return []ent.Edge{
 		edge.To("agent_tasks", AgentTasks.Type).
 			Comment("An agent can have multiple tasks."),
+		edge.To("agent_labels", AgentLabels.Type),
 	}
 }

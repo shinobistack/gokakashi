@@ -9,6 +9,18 @@ import (
 	"github.com/shinobistack/gokakashi/ent"
 )
 
+// The AgentLabelsFunc type is an adapter to allow the use of ordinary
+// function as AgentLabels mutator.
+type AgentLabelsFunc func(context.Context, *ent.AgentLabelsMutation) (ent.Value, error)
+
+// Mutate calls f(ctx, m).
+func (f AgentLabelsFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error) {
+	if mv, ok := m.(*ent.AgentLabelsMutation); ok {
+		return f(ctx, mv)
+	}
+	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.AgentLabelsMutation", m)
+}
+
 // The AgentTasksFunc type is an adapter to allow the use of ordinary
 // function as AgentTasks mutator.
 type AgentTasksFunc func(context.Context, *ent.AgentTasksMutation) (ent.Value, error)

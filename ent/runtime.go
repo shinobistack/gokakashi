@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/shinobistack/gokakashi/ent/agentlabels"
 	"github.com/shinobistack/gokakashi/ent/agents"
 	"github.com/shinobistack/gokakashi/ent/agenttasks"
 	"github.com/shinobistack/gokakashi/ent/integrations"
@@ -22,6 +23,16 @@ import (
 // (default values, validators, hooks and policies) and stitches it
 // to their package variables.
 func init() {
+	agentlabelsFields := schema.AgentLabels{}.Fields()
+	_ = agentlabelsFields
+	// agentlabelsDescKey is the schema descriptor for key field.
+	agentlabelsDescKey := agentlabelsFields[1].Descriptor()
+	// agentlabels.KeyValidator is a validator for the "key" field. It is called by the builders before save.
+	agentlabels.KeyValidator = agentlabelsDescKey.Validators[0].(func(string) error)
+	// agentlabelsDescValue is the schema descriptor for value field.
+	agentlabelsDescValue := agentlabelsFields[2].Descriptor()
+	// agentlabels.ValueValidator is a validator for the "value" field. It is called by the builders before save.
+	agentlabels.ValueValidator = agentlabelsDescValue.Validators[0].(func(string) error)
 	agenttasksFields := schema.AgentTasks{}.Fields()
 	_ = agenttasksFields
 	// agenttasksDescStatus is the schema descriptor for status field.

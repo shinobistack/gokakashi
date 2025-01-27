@@ -26,6 +26,8 @@ const (
 	FieldLastSeen = "last_seen"
 	// EdgeAgentTasks holds the string denoting the agent_tasks edge name in mutations.
 	EdgeAgentTasks = "agent_tasks"
+	// EdgeAgentLabels holds the string denoting the agent_labels edge name in mutations.
+	EdgeAgentLabels = "agent_labels"
 	// Table holds the table name of the agents in the database.
 	Table = "agents"
 	// AgentTasksTable is the table that holds the agent_tasks relation/edge.
@@ -35,6 +37,13 @@ const (
 	AgentTasksInverseTable = "agent_tasks"
 	// AgentTasksColumn is the table column denoting the agent_tasks relation/edge.
 	AgentTasksColumn = "agent_id"
+	// AgentLabelsTable is the table that holds the agent_labels relation/edge.
+	AgentLabelsTable = "agent_labels"
+	// AgentLabelsInverseTable is the table name for the AgentLabels entity.
+	// It exists in this package in order to avoid circular dependency with the "agentlabels" package.
+	AgentLabelsInverseTable = "agent_labels"
+	// AgentLabelsColumn is the table column denoting the agent_labels relation/edge.
+	AgentLabelsColumn = "agent_id"
 )
 
 // Columns holds all SQL columns for agents fields.
@@ -114,10 +123,31 @@ func ByAgentTasks(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
 		sqlgraph.OrderByNeighborTerms(s, newAgentTasksStep(), append([]sql.OrderTerm{term}, terms...)...)
 	}
 }
+
+// ByAgentLabelsCount orders the results by agent_labels count.
+func ByAgentLabelsCount(opts ...sql.OrderTermOption) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborsCount(s, newAgentLabelsStep(), opts...)
+	}
+}
+
+// ByAgentLabels orders the results by agent_labels terms.
+func ByAgentLabels(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborTerms(s, newAgentLabelsStep(), append([]sql.OrderTerm{term}, terms...)...)
+	}
+}
 func newAgentTasksStep() *sqlgraph.Step {
 	return sqlgraph.NewStep(
 		sqlgraph.From(Table, FieldID),
 		sqlgraph.To(AgentTasksInverseTable, FieldID),
 		sqlgraph.Edge(sqlgraph.O2M, false, AgentTasksTable, AgentTasksColumn),
+	)
+}
+func newAgentLabelsStep() *sqlgraph.Step {
+	return sqlgraph.NewStep(
+		sqlgraph.From(Table, FieldID),
+		sqlgraph.To(AgentLabelsInverseTable, FieldID),
+		sqlgraph.Edge(sqlgraph.O2M, false, AgentLabelsTable, AgentLabelsColumn),
 	)
 }
