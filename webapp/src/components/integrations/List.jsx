@@ -11,8 +11,15 @@ const IntegrationsList = () => {
     const fetchIntegrations = async () => {
       try {
         const response = await axios.get(
-          "http://localhost:5556/v1/integrations"
+          "http://localhost:5556/api/v1/integrations",
+          {
+            headers: {
+              Authorization: `Bearer ${localStorage.getItem("adminSecret")}`,
+              "Content-Type": "application/json",
+            },
+          }
         );
+        console.log(response.data);
         setIntegrationsData(response.data);
       } catch (error) {
         console.error("Error fetching integrations:", error);

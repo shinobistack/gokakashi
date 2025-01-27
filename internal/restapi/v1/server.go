@@ -2,9 +2,11 @@ package v1
 
 import (
 	"encoding/json"
-	"entgo.io/ent/dialect"
 	"fmt"
+
+	"entgo.io/ent/dialect"
 	_ "github.com/lib/pq"
+	"github.com/rs/cors"
 	"github.com/shinobistack/gokakashi/ent"
 	configv1 "github.com/shinobistack/gokakashi/internal/config/v1"
 	"github.com/shinobistack/gokakashi/internal/restapi/server/middleware"
@@ -19,14 +21,15 @@ import (
 	scannotify1 "github.com/shinobistack/gokakashi/internal/restapi/v1/scannotify"
 	scans1 "github.com/shinobistack/gokakashi/internal/restapi/v1/scans"
 
+	"log"
+	"net/http"
+	"strconv"
+
 	"github.com/swaggest/openapi-go/openapi31"
 	"github.com/swaggest/rest/web"
 	swg "github.com/swaggest/swgui"
 	swgui "github.com/swaggest/swgui/v5emb"
 	"github.com/swaggest/usecase"
-	"log"
-	"net/http"
-	"strconv"
 )
 
 type Server struct {
@@ -50,8 +53,26 @@ func (srv *Server) Service() *web.Service {
 	).WithInfo(openapi31.Info{Title: "GoKakashi API v1"})
 	apiV1 := web.NewService(v1Reflector)
 
+	log.Println("todo adding cors handler")
+	c := cors.New(cors.Options{
+		AllowedOrigins: []string{
+			"http://localhost:5555", // gokakashi web UI default URL
+		},
+		AllowCredentials: true,
+		AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
+		AllowedHeaders:   []string{"Authorization", "Content-Type"},
+		Debug:            true,
+	})
+	apiV1.Wrap(func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			log.Println("before cors middleware")
+			log.Println("allowed?", c.OriginAllowed(r))
+			next.ServeHTTP(w, r)
+		})
+	})
+	apiV1.Wrap(c.Handler)
+
 	bearerAuth := &middleware.BearerTokenAuth{AuthToken: srv.AuthToken}
-	// Auth applied to routers under /api/v1
 	apiV1.Wrap(bearerAuth.Middleware)
 
 	// Define API endpoints
