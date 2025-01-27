@@ -63,10 +63,12 @@ var agentStartCmd = &cobra.Command{
 }
 
 var (
-	server    string
-	token     string
-	workspace string
-	name      string
+	server      string
+	token       string
+	workspace   string
+	name        string
+	id          int
+	chidoriFlag bool
 )
 
 //ToDo: for any table status which results to error should we upload err message or just status error
@@ -77,15 +79,13 @@ func agentRegister(cmd *cobra.Command, args []string) {
 		log.Fatalf("Error: Missing required inputs. Please provide --server, --token.")
 	}
 
-	// log.Printf("Server: %s, Token: %s, Workspace: %s", server, token, workspace)
-
 	// Register the agent
 	agentID, err := registerAgent(cmd.Context(), server, token, workspace, name)
 	if err != nil {
 		log.Fatalf("Failed to register the agent: %v", err)
 	}
 
-	log.Printf("Agent registered successfully! Agent ID: %d", agentID)
+	log.Printf("Agent registered successfully! Agent ID: %d, Name: %s, Workspace: %s", agentID, name, workspace)
 
 	// Start polling for tasks
 	pollTasks(cmd.Context(), server, token, agentID, workspace)
@@ -100,7 +100,8 @@ func registerAgent(ctx context.Context, server, token, workspace, name string) (
 	}
 	reqBodyJSON, _ := json.Marshal(reqBody)
 
-	req, err := http.NewRequest("POST", fmt.Sprintf("%s/api/v1/agents", server), bytes.NewBuffer(reqBodyJSON))
+	url := constructURL(server, "/api/v1/agents")
+	req, err := http.NewRequest("POST", url, bytes.NewBuffer(reqBodyJSON))
 	if err != nil {
 		return 0, fmt.Errorf("failed to create registration request: %w", err)
 	}
@@ -156,7 +157,10 @@ func pollTasks(ctx context.Context, server, token string, agentID int, workspace
 }
 
 func fetchTasks(ctx context.Context, server, token string, agentID int, status string) ([]agenttasks.GetAgentTaskResponse, error) {
-	req, err := http.NewRequest("GET", fmt.Sprintf("%s/api/v1/agents/%d/tasks?status=%s", server, agentID, status), nil)
+	path := fmt.Sprintf("/api/v1/agents/%d/tasks?status=%s", agentID, status)
+	url := constructURL(server, path)
+
+	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create task polling request: %w", err)
 	}
@@ -188,7 +192,10 @@ func updateAgentTaskStatus(ctx context.Context, server, token string, taskID uui
 
 	reqBodyJSON, _ := json.Marshal(reqBody)
 
-	req, err := http.NewRequest("PUT", fmt.Sprintf("%s/api/v1/agents/%d/tasks/%s", server, agentID, taskID), bytes.NewBuffer(reqBodyJSON))
+	path := fmt.Sprintf("/api/v1/agents/%d/tasks/%s", agentID, taskID)
+	url := constructURL(server, path)
+	req, err := http.NewRequest("PUT", url, bytes.NewBuffer(reqBodyJSON))
+
 	if err != nil {
 		return fmt.Errorf("failed to create task status update request: %w", err)
 	}
@@ -280,7 +287,10 @@ func updateScanStatus(ctx context.Context, server, token string, scanID uuid.UUI
 	}
 	reqBodyJSON, _ := json.Marshal(reqBody)
 
-	req, err := http.NewRequest("PUT", fmt.Sprintf("%s/api/v1/scans/%s", server, scanID), bytes.NewBuffer(reqBodyJSON))
+	path := fmt.Sprintf("/api/v1/scans/%s", scanID)
+	url := constructURL(server, path)
+	req, err := http.NewRequest("PUT", url, bytes.NewBuffer(reqBodyJSON))
+
 	if err != nil {
 		return fmt.Errorf("failed to create scan status update request: %w", err)
 	}
@@ -300,7 +310,9 @@ func updateScanStatus(ctx context.Context, server, token string, scanID uuid.UUI
 }
 
 func fetchScan(ctx context.Context, server, token string, scanID uuid.UUID) (*scans.GetScanResponse, error) {
-	req, err := http.NewRequest("GET", fmt.Sprintf("%s/api/v1/scans/%s", server, scanID), nil)
+	path := fmt.Sprintf("/api/v1/scans/%s", scanID)
+	url := constructURL(server, path)
+	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create scan request: %w", err)
 	}
@@ -324,7 +336,10 @@ func fetchScan(ctx context.Context, server, token string, scanID uuid.UUID) (*sc
 }
 
 func fetchIntegration(ctx context.Context, server, token string, integrationID uuid.UUID) (*integrations.GetIntegrationResponse, error) {
-	req, err := http.NewRequest("GET", fmt.Sprintf("%s/api/v1/integrations/%s", server, integrationID), nil)
+	path := fmt.Sprintf("/api/v1/integrations/%s", integrationID)
+	url := constructURL(server, path)
+	req, err := http.NewRequest("GET", url, nil)
+
 	if err != nil {
 		return nil, fmt.Errorf("failed to create integration fetch request: %w", err)
 	}
@@ -400,7 +415,10 @@ func uploadReport(ctx context.Context, server, token string, scanID uuid.UUID, r
 		return fmt.Errorf("failed to marshal request body: %w", err)
 	}
 
-	req, err := http.NewRequest("PUT", fmt.Sprintf("%s/api/v1/scans/%s", server, scanID), bytes.NewBuffer(reqBodyJSON))
+	path := fmt.Sprintf("/api/v1/scans/%s", scanID)
+	url := constructURL(server, path)
+	req, err := http.NewRequest("PUT", url, bytes.NewBuffer(reqBodyJSON))
+
 	if err != nil {
 		return fmt.Errorf("failed to create report upload request: %w", err)
 	}
