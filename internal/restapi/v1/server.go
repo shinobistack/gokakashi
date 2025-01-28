@@ -53,25 +53,6 @@ func (srv *Server) Service() *web.Service {
 	).WithInfo(openapi31.Info{Title: "GoKakashi API v1"})
 	apiV1 := web.NewService(v1Reflector)
 
-	log.Println("todo adding cors handler")
-	c := cors.New(cors.Options{
-		AllowedOrigins: []string{
-			"http://localhost:5555", // gokakashi web UI default URL
-		},
-		AllowCredentials: true,
-		AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
-		AllowedHeaders:   []string{"Authorization", "Content-Type"},
-		Debug:            true,
-	})
-	apiV1.Wrap(func(next http.Handler) http.Handler {
-		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			log.Println("before cors middleware")
-			log.Println("allowed?", c.OriginAllowed(r))
-			next.ServeHTTP(w, r)
-		})
-	})
-	apiV1.Wrap(c.Handler)
-
 	bearerAuth := &middleware.BearerTokenAuth{AuthToken: srv.AuthToken}
 	apiV1.Wrap(bearerAuth.Middleware)
 
@@ -128,6 +109,11 @@ func (srv *Server) Service() *web.Service {
 	apiV1.Put("/scannotify/{scan_id}", usecase.NewInteractor(scannotify1.UpdateScanNotify(srv.DB)))
 	apiV1.Delete("/scannotify/{scan_id}", usecase.NewInteractor(scannotify1.DeleteScanNotify(srv.DB)))
 
+	s.Use(cors.New(cors.Options{
+		AllowedOrigins: []string{"http://localhost:5555"},
+		AllowedMethods: []string{http.MethodOptions, http.MethodGet},
+		AllowedHeaders: []string{"Content-Type", "Authorization"},
+	}).Handler)
 	s.Mount("/api/v1/openapi.json", specHandler(apiV1.OpenAPICollector.SpecSchema().(*openapi31.Spec)))
 	s.Mount("/api/v1", apiV1)
 
