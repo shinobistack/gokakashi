@@ -16,6 +16,7 @@ import (
 	"github.com/shinobistack/gokakashi/ent/agents"
 	"github.com/shinobistack/gokakashi/ent/agenttasks"
 	"github.com/shinobistack/gokakashi/ent/predicate"
+	"github.com/shinobistack/gokakashi/ent/schema"
 )
 
 // AgentsUpdate is the builder for updating Agents entities.
@@ -102,6 +103,26 @@ func (au *AgentsUpdate) SetNillableServer(s *string) *AgentsUpdate {
 // ClearServer clears the value of the "server" field.
 func (au *AgentsUpdate) ClearServer() *AgentsUpdate {
 	au.mutation.ClearServer()
+	return au
+}
+
+// SetLabels sets the "labels" field.
+func (au *AgentsUpdate) SetLabels(sl schema.CommonLabels) *AgentsUpdate {
+	au.mutation.SetLabels(sl)
+	return au
+}
+
+// SetNillableLabels sets the "labels" field if the given value is not nil.
+func (au *AgentsUpdate) SetNillableLabels(sl *schema.CommonLabels) *AgentsUpdate {
+	if sl != nil {
+		au.SetLabels(*sl)
+	}
+	return au
+}
+
+// ClearLabels clears the value of the "labels" field.
+func (au *AgentsUpdate) ClearLabels() *AgentsUpdate {
+	au.mutation.ClearLabels()
 	return au
 }
 
@@ -266,6 +287,12 @@ func (au *AgentsUpdate) sqlSave(ctx context.Context) (n int, err error) {
 	}
 	if au.mutation.ServerCleared() {
 		_spec.ClearField(agents.FieldServer, field.TypeString)
+	}
+	if value, ok := au.mutation.Labels(); ok {
+		_spec.SetField(agents.FieldLabels, field.TypeJSON, value)
+	}
+	if au.mutation.LabelsCleared() {
+		_spec.ClearField(agents.FieldLabels, field.TypeJSON)
 	}
 	if value, ok := au.mutation.LastSeen(); ok {
 		_spec.SetField(agents.FieldLastSeen, field.TypeTime, value)
@@ -451,6 +478,26 @@ func (auo *AgentsUpdateOne) SetNillableServer(s *string) *AgentsUpdateOne {
 // ClearServer clears the value of the "server" field.
 func (auo *AgentsUpdateOne) ClearServer() *AgentsUpdateOne {
 	auo.mutation.ClearServer()
+	return auo
+}
+
+// SetLabels sets the "labels" field.
+func (auo *AgentsUpdateOne) SetLabels(sl schema.CommonLabels) *AgentsUpdateOne {
+	auo.mutation.SetLabels(sl)
+	return auo
+}
+
+// SetNillableLabels sets the "labels" field if the given value is not nil.
+func (auo *AgentsUpdateOne) SetNillableLabels(sl *schema.CommonLabels) *AgentsUpdateOne {
+	if sl != nil {
+		auo.SetLabels(*sl)
+	}
+	return auo
+}
+
+// ClearLabels clears the value of the "labels" field.
+func (auo *AgentsUpdateOne) ClearLabels() *AgentsUpdateOne {
+	auo.mutation.ClearLabels()
 	return auo
 }
 
@@ -645,6 +692,12 @@ func (auo *AgentsUpdateOne) sqlSave(ctx context.Context) (_node *Agents, err err
 	}
 	if auo.mutation.ServerCleared() {
 		_spec.ClearField(agents.FieldServer, field.TypeString)
+	}
+	if value, ok := auo.mutation.Labels(); ok {
+		_spec.SetField(agents.FieldLabels, field.TypeJSON, value)
+	}
+	if auo.mutation.LabelsCleared() {
+		_spec.ClearField(agents.FieldLabels, field.TypeJSON)
 	}
 	if value, ok := auo.mutation.LastSeen(); ok {
 		_spec.SetField(agents.FieldLastSeen, field.TypeTime, value)

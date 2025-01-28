@@ -11,17 +11,19 @@ import (
 	"github.com/shinobistack/gokakashi/ent/scans"
 	"github.com/shinobistack/gokakashi/ent/schema"
 	"github.com/swaggest/usecase/status"
+	"log"
 )
 
 type CreateScanRequest struct {
 	PolicyID uuid.UUID `json:"policy_id"`
 	// ToDo: To think if the image stored would be single registery/image:tag.
-	Image         string          `json:"image"`
-	Scanner       string          `json:"scanner"`
-	IntegrationID uuid.UUID       `json:"integration_id"`
-	Notify        []schema.Notify `json:"notify"`
-	Status        string          `json:"status"`
-	Report        json.RawMessage `json:"report,omitempty"`
+	Image         string                `json:"image"`
+	Scanner       string                `json:"scanner"`
+	IntegrationID uuid.UUID             `json:"integration_id"`
+	Notify        []schema.Notify       `json:"notify"`
+	Status        string                `json:"status"`
+	Report        json.RawMessage       `json:"report,omitempty"`
+	Labels        []schema.CommonLabels `json:"labels,omitempty"`
 }
 
 type CreateScanResponse struct {
@@ -79,6 +81,10 @@ func CreateScan(client *ent.Client) func(ctx context.Context, req CreateScanRequ
 			return status.Wrap(errors.New("scan already scheduled for this image"), status.AlreadyExists)
 		}
 
+		tx, err := client.Tx(ctx)
+		if err != nil {
+			return status.Wrap(err, status.Internal)
+		}
 		// Create the scan
 		scan, err := client.Scans.Create().
 			SetPolicyID(req.PolicyID).
@@ -89,13 +95,39 @@ func CreateScan(client *ent.Client) func(ctx context.Context, req CreateScanRequ
 			SetIntegrationID(req.IntegrationID).
 			SetReport(req.Report).
 			Save(ctx)
-
 		if err != nil {
+			if rollbackErr := tx.Rollback(); rollbackErr != nil {
+				log.Printf("rollback failed: %v\n", rollbackErr)
+			}
 			return status.Wrap(err, status.Internal)
 		}
 
-		res.ID = scan.ID
-		res.Status = "scan_pending"
+		// Save agent labels
+		if len(req.Labels) > 0 {
+			bulk := make([]*ent.ScanLabelsCreate, len(req.Labels))
+			for i, label := range req.Labels {
+				bulk[i] = tx.ScanLabels.Create().
+					SetScanID(scan.ID).
+					SetKey(label.Key).
+					SetValue(label.Value)
+			}
+
+			if _, err := tx.ScanLabels.CreateBulk(bulk...).Save(ctx); err != nil {
+				if rollbackErr := tx.Rollback(); rollbackErr != nil {
+					log.Printf("rollback failed: %v\n", rollbackErr)
+				}
+				return status.Wrap(err, status.Internal)
+			}
+		}
+
+		if err := tx.Commit(); err != nil {
+			return status.Wrap(err, status.Internal)
+		}
+
+		*res = CreateScanResponse{
+			ID:     scan.ID,
+			Status: scan.Status,
+		}
 		return nil
 	}
 }

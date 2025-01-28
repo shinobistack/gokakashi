@@ -34,6 +34,8 @@ type Scans struct {
 	Scanner string `json:"scanner,omitempty"`
 	// Conditions to check and stores notification configuration.
 	Notify []schema.Notify `json:"notify,omitempty"`
+	// Scan labels key:value
+	Labels schema.CommonLabels `json:"labels,omitempty"`
 	// Stores the scan results.
 	Report json.RawMessage `json:"report,omitempty"`
 	// Edges holds the relations/edges for other nodes in the graph.
@@ -113,7 +115,7 @@ func (*Scans) scanValues(columns []string) ([]any, error) {
 	values := make([]any, len(columns))
 	for i := range columns {
 		switch columns[i] {
-		case scans.FieldNotify, scans.FieldReport:
+		case scans.FieldNotify, scans.FieldLabels, scans.FieldReport:
 			values[i] = new([]byte)
 		case scans.FieldStatus, scans.FieldImage, scans.FieldScanner:
 			values[i] = new(sql.NullString)
@@ -176,6 +178,14 @@ func (s *Scans) assignValues(columns []string, values []any) error {
 			} else if value != nil && len(*value) > 0 {
 				if err := json.Unmarshal(*value, &s.Notify); err != nil {
 					return fmt.Errorf("unmarshal field notify: %w", err)
+				}
+			}
+		case scans.FieldLabels:
+			if value, ok := values[i].(*[]byte); !ok {
+				return fmt.Errorf("unexpected type %T for field labels", values[i])
+			} else if value != nil && len(*value) > 0 {
+				if err := json.Unmarshal(*value, &s.Labels); err != nil {
+					return fmt.Errorf("unmarshal field labels: %w", err)
 				}
 			}
 		case scans.FieldReport:
@@ -264,6 +274,9 @@ func (s *Scans) String() string {
 	builder.WriteString(", ")
 	builder.WriteString("notify=")
 	builder.WriteString(fmt.Sprintf("%v", s.Notify))
+	builder.WriteString(", ")
+	builder.WriteString("labels=")
+	builder.WriteString(fmt.Sprintf("%v", s.Labels))
 	builder.WriteString(", ")
 	builder.WriteString("report=")
 	builder.WriteString(fmt.Sprintf("%v", s.Report))

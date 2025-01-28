@@ -1159,6 +1159,7 @@ type AgentsMutation struct {
 	status              *string
 	workspace           *string
 	server              *string
+	labels              *schema.CommonLabels
 	last_seen           *time.Time
 	clearedFields       map[string]struct{}
 	agent_tasks         map[uuid.UUID]struct{}
@@ -1459,6 +1460,55 @@ func (m *AgentsMutation) ResetServer() {
 	delete(m.clearedFields, agents.FieldServer)
 }
 
+// SetLabels sets the "labels" field.
+func (m *AgentsMutation) SetLabels(sl schema.CommonLabels) {
+	m.labels = &sl
+}
+
+// Labels returns the value of the "labels" field in the mutation.
+func (m *AgentsMutation) Labels() (r schema.CommonLabels, exists bool) {
+	v := m.labels
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldLabels returns the old "labels" field's value of the Agents entity.
+// If the Agents object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *AgentsMutation) OldLabels(ctx context.Context) (v schema.CommonLabels, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldLabels is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldLabels requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldLabels: %w", err)
+	}
+	return oldValue.Labels, nil
+}
+
+// ClearLabels clears the value of the "labels" field.
+func (m *AgentsMutation) ClearLabels() {
+	m.labels = nil
+	m.clearedFields[agents.FieldLabels] = struct{}{}
+}
+
+// LabelsCleared returns if the "labels" field was cleared in this mutation.
+func (m *AgentsMutation) LabelsCleared() bool {
+	_, ok := m.clearedFields[agents.FieldLabels]
+	return ok
+}
+
+// ResetLabels resets all changes to the "labels" field.
+func (m *AgentsMutation) ResetLabels() {
+	m.labels = nil
+	delete(m.clearedFields, agents.FieldLabels)
+}
+
 // SetLastSeen sets the "last_seen" field.
 func (m *AgentsMutation) SetLastSeen(t time.Time) {
 	m.last_seen = &t
@@ -1637,7 +1687,7 @@ func (m *AgentsMutation) Type() string {
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
 func (m *AgentsMutation) Fields() []string {
-	fields := make([]string, 0, 5)
+	fields := make([]string, 0, 6)
 	if m.name != nil {
 		fields = append(fields, agents.FieldName)
 	}
@@ -1649,6 +1699,9 @@ func (m *AgentsMutation) Fields() []string {
 	}
 	if m.server != nil {
 		fields = append(fields, agents.FieldServer)
+	}
+	if m.labels != nil {
+		fields = append(fields, agents.FieldLabels)
 	}
 	if m.last_seen != nil {
 		fields = append(fields, agents.FieldLastSeen)
@@ -1669,6 +1722,8 @@ func (m *AgentsMutation) Field(name string) (ent.Value, bool) {
 		return m.Workspace()
 	case agents.FieldServer:
 		return m.Server()
+	case agents.FieldLabels:
+		return m.Labels()
 	case agents.FieldLastSeen:
 		return m.LastSeen()
 	}
@@ -1688,6 +1743,8 @@ func (m *AgentsMutation) OldField(ctx context.Context, name string) (ent.Value, 
 		return m.OldWorkspace(ctx)
 	case agents.FieldServer:
 		return m.OldServer(ctx)
+	case agents.FieldLabels:
+		return m.OldLabels(ctx)
 	case agents.FieldLastSeen:
 		return m.OldLastSeen(ctx)
 	}
@@ -1726,6 +1783,13 @@ func (m *AgentsMutation) SetField(name string, value ent.Value) error {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetServer(v)
+		return nil
+	case agents.FieldLabels:
+		v, ok := value.(schema.CommonLabels)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetLabels(v)
 		return nil
 	case agents.FieldLastSeen:
 		v, ok := value.(time.Time)
@@ -1773,6 +1837,9 @@ func (m *AgentsMutation) ClearedFields() []string {
 	if m.FieldCleared(agents.FieldServer) {
 		fields = append(fields, agents.FieldServer)
 	}
+	if m.FieldCleared(agents.FieldLabels) {
+		fields = append(fields, agents.FieldLabels)
+	}
 	return fields
 }
 
@@ -1796,6 +1863,9 @@ func (m *AgentsMutation) ClearField(name string) error {
 	case agents.FieldServer:
 		m.ClearServer()
 		return nil
+	case agents.FieldLabels:
+		m.ClearLabels()
+		return nil
 	}
 	return fmt.Errorf("unknown Agents nullable field %s", name)
 }
@@ -1815,6 +1885,9 @@ func (m *AgentsMutation) ResetField(name string) error {
 		return nil
 	case agents.FieldServer:
 		m.ResetServer()
+		return nil
+	case agents.FieldLabels:
+		m.ResetLabels()
 		return nil
 	case agents.FieldLastSeen:
 		m.ResetLastSeen()
@@ -5173,6 +5246,7 @@ type ScansMutation struct {
 	scanner                   *string
 	notify                    *[]schema.Notify
 	appendnotify              []schema.Notify
+	labels                    *schema.CommonLabels
 	report                    *json.RawMessage
 	appendreport              json.RawMessage
 	clearedFields             map[string]struct{}
@@ -5543,6 +5617,55 @@ func (m *ScansMutation) ResetNotify() {
 	delete(m.clearedFields, scans.FieldNotify)
 }
 
+// SetLabels sets the "labels" field.
+func (m *ScansMutation) SetLabels(sl schema.CommonLabels) {
+	m.labels = &sl
+}
+
+// Labels returns the value of the "labels" field in the mutation.
+func (m *ScansMutation) Labels() (r schema.CommonLabels, exists bool) {
+	v := m.labels
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldLabels returns the old "labels" field's value of the Scans entity.
+// If the Scans object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *ScansMutation) OldLabels(ctx context.Context) (v schema.CommonLabels, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldLabels is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldLabels requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldLabels: %w", err)
+	}
+	return oldValue.Labels, nil
+}
+
+// ClearLabels clears the value of the "labels" field.
+func (m *ScansMutation) ClearLabels() {
+	m.labels = nil
+	m.clearedFields[scans.FieldLabels] = struct{}{}
+}
+
+// LabelsCleared returns if the "labels" field was cleared in this mutation.
+func (m *ScansMutation) LabelsCleared() bool {
+	_, ok := m.clearedFields[scans.FieldLabels]
+	return ok
+}
+
+// ResetLabels resets all changes to the "labels" field.
+func (m *ScansMutation) ResetLabels() {
+	m.labels = nil
+	delete(m.clearedFields, scans.FieldLabels)
+}
+
 // SetReport sets the "report" field.
 func (m *ScansMutation) SetReport(jm json.RawMessage) {
 	m.report = &jm
@@ -5871,7 +5994,7 @@ func (m *ScansMutation) Type() string {
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
 func (m *ScansMutation) Fields() []string {
-	fields := make([]string, 0, 7)
+	fields := make([]string, 0, 8)
 	if m.policy != nil {
 		fields = append(fields, scans.FieldPolicyID)
 	}
@@ -5889,6 +6012,9 @@ func (m *ScansMutation) Fields() []string {
 	}
 	if m.notify != nil {
 		fields = append(fields, scans.FieldNotify)
+	}
+	if m.labels != nil {
+		fields = append(fields, scans.FieldLabels)
 	}
 	if m.report != nil {
 		fields = append(fields, scans.FieldReport)
@@ -5913,6 +6039,8 @@ func (m *ScansMutation) Field(name string) (ent.Value, bool) {
 		return m.Scanner()
 	case scans.FieldNotify:
 		return m.Notify()
+	case scans.FieldLabels:
+		return m.Labels()
 	case scans.FieldReport:
 		return m.Report()
 	}
@@ -5936,6 +6064,8 @@ func (m *ScansMutation) OldField(ctx context.Context, name string) (ent.Value, e
 		return m.OldScanner(ctx)
 	case scans.FieldNotify:
 		return m.OldNotify(ctx)
+	case scans.FieldLabels:
+		return m.OldLabels(ctx)
 	case scans.FieldReport:
 		return m.OldReport(ctx)
 	}
@@ -5989,6 +6119,13 @@ func (m *ScansMutation) SetField(name string, value ent.Value) error {
 		}
 		m.SetNotify(v)
 		return nil
+	case scans.FieldLabels:
+		v, ok := value.(schema.CommonLabels)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetLabels(v)
+		return nil
 	case scans.FieldReport:
 		v, ok := value.(json.RawMessage)
 		if !ok {
@@ -6029,6 +6166,9 @@ func (m *ScansMutation) ClearedFields() []string {
 	if m.FieldCleared(scans.FieldNotify) {
 		fields = append(fields, scans.FieldNotify)
 	}
+	if m.FieldCleared(scans.FieldLabels) {
+		fields = append(fields, scans.FieldLabels)
+	}
 	if m.FieldCleared(scans.FieldReport) {
 		fields = append(fields, scans.FieldReport)
 	}
@@ -6048,6 +6188,9 @@ func (m *ScansMutation) ClearField(name string) error {
 	switch name {
 	case scans.FieldNotify:
 		m.ClearNotify()
+		return nil
+	case scans.FieldLabels:
+		m.ClearLabels()
 		return nil
 	case scans.FieldReport:
 		m.ClearReport()
@@ -6077,6 +6220,9 @@ func (m *ScansMutation) ResetField(name string) error {
 		return nil
 	case scans.FieldNotify:
 		m.ResetNotify()
+		return nil
+	case scans.FieldLabels:
+		m.ResetLabels()
 		return nil
 	case scans.FieldReport:
 		m.ResetReport()

@@ -3,6 +3,7 @@
 package ent
 
 import (
+	"encoding/json"
 	"fmt"
 	"strings"
 	"time"
@@ -10,6 +11,7 @@ import (
 	"entgo.io/ent"
 	"entgo.io/ent/dialect/sql"
 	"github.com/shinobistack/gokakashi/ent/agents"
+	"github.com/shinobistack/gokakashi/ent/schema"
 )
 
 // Agents is the model entity for the Agents schema.
@@ -26,6 +28,8 @@ type Agents struct {
 	Workspace string `json:"workspace,omitempty"`
 	// The server address this agent connects to.
 	Server string `json:"server,omitempty"`
+	// Agent labels key:value
+	Labels schema.CommonLabels `json:"labels,omitempty"`
 	// Timestamp of the agent's last activity.
 	LastSeen time.Time `json:"last_seen,omitempty"`
 	// Edges holds the relations/edges for other nodes in the graph.
@@ -68,6 +72,8 @@ func (*Agents) scanValues(columns []string) ([]any, error) {
 	values := make([]any, len(columns))
 	for i := range columns {
 		switch columns[i] {
+		case agents.FieldLabels:
+			values[i] = new([]byte)
 		case agents.FieldID:
 			values[i] = new(sql.NullInt64)
 		case agents.FieldName, agents.FieldStatus, agents.FieldWorkspace, agents.FieldServer:
@@ -118,6 +124,14 @@ func (a *Agents) assignValues(columns []string, values []any) error {
 				return fmt.Errorf("unexpected type %T for field server", values[i])
 			} else if value.Valid {
 				a.Server = value.String
+			}
+		case agents.FieldLabels:
+			if value, ok := values[i].(*[]byte); !ok {
+				return fmt.Errorf("unexpected type %T for field labels", values[i])
+			} else if value != nil && len(*value) > 0 {
+				if err := json.Unmarshal(*value, &a.Labels); err != nil {
+					return fmt.Errorf("unmarshal field labels: %w", err)
+				}
 			}
 		case agents.FieldLastSeen:
 			if value, ok := values[i].(*sql.NullTime); !ok {
@@ -182,6 +196,9 @@ func (a *Agents) String() string {
 	builder.WriteString(", ")
 	builder.WriteString("server=")
 	builder.WriteString(a.Server)
+	builder.WriteString(", ")
+	builder.WriteString("labels=")
+	builder.WriteString(fmt.Sprintf("%v", a.Labels))
 	builder.WriteString(", ")
 	builder.WriteString("last_seen=")
 	builder.WriteString(a.LastSeen.Format(time.ANSIC))

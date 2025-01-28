@@ -13,22 +13,25 @@ import (
 )
 
 type GetScanResponse struct {
-	ID            uuid.UUID        `json:"id"`
-	PolicyID      uuid.UUID        `json:"policy_id"`
-	Image         string           `json:"image"`
-	Scanner       string           `json:"scanner"`
-	IntegrationID uuid.UUID        `json:"integration_id"`
-	Status        string           `json:"status"`
-	Notify        *[]schema.Notify `json:"notify"`
-	Report        json.RawMessage  `json:"report,omitempty"`
+	ID            uuid.UUID             `json:"id"`
+	PolicyID      uuid.UUID             `json:"policy_id"`
+	Image         string                `json:"image"`
+	Scanner       string                `json:"scanner"`
+	IntegrationID uuid.UUID             `json:"integration_id"`
+	Status        string                `json:"status"`
+	Labels        []schema.CommonLabels `json:"labels,omitempty"`
+	Notify        *[]schema.Notify      `json:"notify"`
+	Report        json.RawMessage       `json:"report,omitempty"`
 }
 
 type ListScanRequest struct {
 	Status string `query:"status"`
+	Name   string `query:"name"`
 }
 
 type GetScanRequest struct {
-	ID uuid.UUID `path:"id"`
+	ID     uuid.UUID             `path:"id"`
+	Labels []schema.CommonLabels `json:"labels,omitempty"`
 }
 
 func ListScans(client *ent.Client) func(ctx context.Context, req ListScanRequest, res *[]GetScanResponse) error {
@@ -46,6 +49,8 @@ func ListScans(client *ent.Client) func(ctx context.Context, req ListScanRequest
 
 		*res = make([]GetScanResponse, len(scanResults))
 		for i, scan := range scanResults {
+			labels := mapScanLabels(scan.Edges.ScanLabels)
+
 			(*res)[i] = GetScanResponse{
 				ID:            scan.ID,
 				PolicyID:      scan.PolicyID,
@@ -53,8 +58,9 @@ func ListScans(client *ent.Client) func(ctx context.Context, req ListScanRequest
 				Scanner:       scan.Scanner,
 				IntegrationID: scan.IntegrationID,
 				Status:        scan.Status,
-				Notify:        convertToPointer(scan.Notify),
+				Notify:        &scan.Notify,
 				Report:        scan.Report,
+				Labels:        labels,
 			}
 		}
 		return nil
@@ -75,18 +81,35 @@ func GetScan(client *ent.Client) func(ctx context.Context, req GetScanRequest, r
 			return status.Wrap(fmt.Errorf("unexpected error: %v", err), status.Internal)
 		}
 
-		res.ID = scan.ID
-		res.PolicyID = scan.PolicyID
-		res.IntegrationID = scan.IntegrationID
-		res.Image = scan.Image
-		res.Scanner = scan.Scanner
-		res.Status = scan.Status
-		res.Notify = convertToPointer(scan.Notify)
-		res.Report = scan.Report
+		labels := mapScanLabels(scan.Edges.ScanLabels)
+
+		*res = GetScanResponse{
+			ID:            scan.ID,
+			PolicyID:      scan.PolicyID,
+			Image:         scan.Image,
+			Scanner:       scan.Scanner,
+			IntegrationID: scan.IntegrationID,
+			Status:        scan.Status,
+			Notify:        &scan.Notify,
+			Report:        scan.Report,
+			Labels:        labels,
+		}
+
 		return nil
 	}
 }
 
-func convertToPointer(data []schema.Notify) *[]schema.Notify {
-	return &data
+func mapScanLabels(labels []*ent.ScanLabels) []schema.CommonLabels {
+	if labels == nil {
+		return nil
+	}
+
+	mapped := make([]schema.CommonLabels, len(labels))
+	for i, label := range labels {
+		mapped[i] = schema.CommonLabels{
+			Key:   label.Key,
+			Value: label.Value,
+		}
+	}
+	return mapped
 }

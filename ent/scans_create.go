@@ -71,6 +71,20 @@ func (sc *ScansCreate) SetNotify(s []schema.Notify) *ScansCreate {
 	return sc
 }
 
+// SetLabels sets the "labels" field.
+func (sc *ScansCreate) SetLabels(sl schema.CommonLabels) *ScansCreate {
+	sc.mutation.SetLabels(sl)
+	return sc
+}
+
+// SetNillableLabels sets the "labels" field if the given value is not nil.
+func (sc *ScansCreate) SetNillableLabels(sl *schema.CommonLabels) *ScansCreate {
+	if sl != nil {
+		sc.SetLabels(*sl)
+	}
+	return sc
+}
+
 // SetReport sets the "report" field.
 func (sc *ScansCreate) SetReport(jm json.RawMessage) *ScansCreate {
 	sc.mutation.SetReport(jm)
@@ -275,6 +289,10 @@ func (sc *ScansCreate) createSpec() (*Scans, *sqlgraph.CreateSpec) {
 	if value, ok := sc.mutation.Notify(); ok {
 		_spec.SetField(scans.FieldNotify, field.TypeJSON, value)
 		_node.Notify = value
+	}
+	if value, ok := sc.mutation.Labels(); ok {
+		_spec.SetField(scans.FieldLabels, field.TypeJSON, value)
+		_node.Labels = value
 	}
 	if value, ok := sc.mutation.Report(); ok {
 		_spec.SetField(scans.FieldReport, field.TypeJSON, value)

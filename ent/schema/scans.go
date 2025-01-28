@@ -50,6 +50,9 @@ func (Scans) Fields() []ent.Field {
 		field.JSON("notify", []Notify{}).
 			Optional().
 			Comment("Conditions to check and stores notification configuration."),
+		field.JSON("labels", CommonLabels{}).
+			Optional().
+			Comment("Scan labels key:value"),
 		field.JSON("report", json.RawMessage{}).
 			Optional().
 			Comment("Stores the scan results."),

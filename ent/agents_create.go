@@ -14,6 +14,7 @@ import (
 	"github.com/shinobistack/gokakashi/ent/agentlabels"
 	"github.com/shinobistack/gokakashi/ent/agents"
 	"github.com/shinobistack/gokakashi/ent/agenttasks"
+	"github.com/shinobistack/gokakashi/ent/schema"
 )
 
 // AgentsCreate is the builder for creating a Agents entity.
@@ -75,6 +76,20 @@ func (ac *AgentsCreate) SetServer(s string) *AgentsCreate {
 func (ac *AgentsCreate) SetNillableServer(s *string) *AgentsCreate {
 	if s != nil {
 		ac.SetServer(*s)
+	}
+	return ac
+}
+
+// SetLabels sets the "labels" field.
+func (ac *AgentsCreate) SetLabels(sl schema.CommonLabels) *AgentsCreate {
+	ac.mutation.SetLabels(sl)
+	return ac
+}
+
+// SetNillableLabels sets the "labels" field if the given value is not nil.
+func (ac *AgentsCreate) SetNillableLabels(sl *schema.CommonLabels) *AgentsCreate {
+	if sl != nil {
+		ac.SetLabels(*sl)
 	}
 	return ac
 }
@@ -234,6 +249,10 @@ func (ac *AgentsCreate) createSpec() (*Agents, *sqlgraph.CreateSpec) {
 	if value, ok := ac.mutation.Server(); ok {
 		_spec.SetField(agents.FieldServer, field.TypeString, value)
 		_node.Server = value
+	}
+	if value, ok := ac.mutation.Labels(); ok {
+		_spec.SetField(agents.FieldLabels, field.TypeJSON, value)
+		_node.Labels = value
 	}
 	if value, ok := ac.mutation.LastSeen(); ok {
 		_spec.SetField(agents.FieldLastSeen, field.TypeTime, value)

@@ -124,6 +124,26 @@ func (su *ScansUpdate) ClearNotify() *ScansUpdate {
 	return su
 }
 
+// SetLabels sets the "labels" field.
+func (su *ScansUpdate) SetLabels(sl schema.CommonLabels) *ScansUpdate {
+	su.mutation.SetLabels(sl)
+	return su
+}
+
+// SetNillableLabels sets the "labels" field if the given value is not nil.
+func (su *ScansUpdate) SetNillableLabels(sl *schema.CommonLabels) *ScansUpdate {
+	if sl != nil {
+		su.SetLabels(*sl)
+	}
+	return su
+}
+
+// ClearLabels clears the value of the "labels" field.
+func (su *ScansUpdate) ClearLabels() *ScansUpdate {
+	su.mutation.ClearLabels()
+	return su
+}
+
 // SetReport sets the "report" field.
 func (su *ScansUpdate) SetReport(jm json.RawMessage) *ScansUpdate {
 	su.mutation.SetReport(jm)
@@ -357,6 +377,12 @@ func (su *ScansUpdate) sqlSave(ctx context.Context) (n int, err error) {
 	}
 	if su.mutation.NotifyCleared() {
 		_spec.ClearField(scans.FieldNotify, field.TypeJSON)
+	}
+	if value, ok := su.mutation.Labels(); ok {
+		_spec.SetField(scans.FieldLabels, field.TypeJSON, value)
+	}
+	if su.mutation.LabelsCleared() {
+		_spec.ClearField(scans.FieldLabels, field.TypeJSON)
 	}
 	if value, ok := su.mutation.Report(); ok {
 		_spec.SetField(scans.FieldReport, field.TypeJSON, value)
@@ -670,6 +696,26 @@ func (suo *ScansUpdateOne) ClearNotify() *ScansUpdateOne {
 	return suo
 }
 
+// SetLabels sets the "labels" field.
+func (suo *ScansUpdateOne) SetLabels(sl schema.CommonLabels) *ScansUpdateOne {
+	suo.mutation.SetLabels(sl)
+	return suo
+}
+
+// SetNillableLabels sets the "labels" field if the given value is not nil.
+func (suo *ScansUpdateOne) SetNillableLabels(sl *schema.CommonLabels) *ScansUpdateOne {
+	if sl != nil {
+		suo.SetLabels(*sl)
+	}
+	return suo
+}
+
+// ClearLabels clears the value of the "labels" field.
+func (suo *ScansUpdateOne) ClearLabels() *ScansUpdateOne {
+	suo.mutation.ClearLabels()
+	return suo
+}
+
 // SetReport sets the "report" field.
 func (suo *ScansUpdateOne) SetReport(jm json.RawMessage) *ScansUpdateOne {
 	suo.mutation.SetReport(jm)
@@ -933,6 +979,12 @@ func (suo *ScansUpdateOne) sqlSave(ctx context.Context) (_node *Scans, err error
 	}
 	if suo.mutation.NotifyCleared() {
 		_spec.ClearField(scans.FieldNotify, field.TypeJSON)
+	}
+	if value, ok := suo.mutation.Labels(); ok {
+		_spec.SetField(scans.FieldLabels, field.TypeJSON, value)
+	}
+	if suo.mutation.LabelsCleared() {
+		_spec.ClearField(scans.FieldLabels, field.TypeJSON)
 	}
 	if value, ok := suo.mutation.Report(); ok {
 		_spec.SetField(scans.FieldReport, field.TypeJSON, value)

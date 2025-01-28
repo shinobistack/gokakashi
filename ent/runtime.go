@@ -58,7 +58,7 @@ func init() {
 	// agents.StatusValidator is a validator for the "status" field. It is called by the builders before save.
 	agents.StatusValidator = agentsDescStatus.Validators[0].(func(string) error)
 	// agentsDescLastSeen is the schema descriptor for last_seen field.
-	agentsDescLastSeen := agentsFields[5].Descriptor()
+	agentsDescLastSeen := agentsFields[6].Descriptor()
 	// agents.DefaultLastSeen holds the default value on creation for the last_seen field.
 	agents.DefaultLastSeen = agentsDescLastSeen.Default.(func() time.Time)
 	// agents.UpdateDefaultLastSeen holds the default value on update for the last_seen field.

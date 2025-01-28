@@ -370,6 +370,16 @@ func ServerContainsFold(v string) predicate.Agents {
 	return predicate.Agents(sql.FieldContainsFold(FieldServer, v))
 }
 
+// LabelsIsNil applies the IsNil predicate on the "labels" field.
+func LabelsIsNil() predicate.Agents {
+	return predicate.Agents(sql.FieldIsNull(FieldLabels))
+}
+
+// LabelsNotNil applies the NotNil predicate on the "labels" field.
+func LabelsNotNil() predicate.Agents {
+	return predicate.Agents(sql.FieldNotNull(FieldLabels))
+}
+
 // LastSeenEQ applies the EQ predicate on the "last_seen" field.
 func LastSeenEQ(v time.Time) predicate.Agents {
 	return predicate.Agents(sql.FieldEQ(FieldLastSeen, v))

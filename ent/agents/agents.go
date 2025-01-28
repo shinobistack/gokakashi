@@ -22,6 +22,8 @@ const (
 	FieldWorkspace = "workspace"
 	// FieldServer holds the string denoting the server field in the database.
 	FieldServer = "server"
+	// FieldLabels holds the string denoting the labels field in the database.
+	FieldLabels = "labels"
 	// FieldLastSeen holds the string denoting the last_seen field in the database.
 	FieldLastSeen = "last_seen"
 	// EdgeAgentTasks holds the string denoting the agent_tasks edge name in mutations.
@@ -53,6 +55,7 @@ var Columns = []string{
 	FieldStatus,
 	FieldWorkspace,
 	FieldServer,
+	FieldLabels,
 	FieldLastSeen,
 }
 

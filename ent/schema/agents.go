@@ -42,6 +42,9 @@ func (Agents) Fields() []ent.Field {
 		field.String("server").
 			Optional().
 			Comment("The server address this agent connects to."),
+		field.JSON("labels", CommonLabels{}).
+			Optional().
+			Comment("Agent labels key:value"),
 		field.Time("last_seen").
 			Default(time.Now).
 			UpdateDefault(time.Now).

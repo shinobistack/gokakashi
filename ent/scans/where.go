@@ -324,6 +324,16 @@ func NotifyNotNil() predicate.Scans {
 	return predicate.Scans(sql.FieldNotNull(FieldNotify))
 }
 
+// LabelsIsNil applies the IsNil predicate on the "labels" field.
+func LabelsIsNil() predicate.Scans {
+	return predicate.Scans(sql.FieldIsNull(FieldLabels))
+}
+
+// LabelsNotNil applies the NotNil predicate on the "labels" field.
+func LabelsNotNil() predicate.Scans {
+	return predicate.Scans(sql.FieldNotNull(FieldLabels))
+}
+
 // ReportIsNil applies the IsNil predicate on the "report" field.
 func ReportIsNil() predicate.Scans {
 	return predicate.Scans(sql.FieldIsNull(FieldReport))

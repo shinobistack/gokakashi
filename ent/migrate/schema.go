@@ -64,6 +64,7 @@ var (
 		{Name: "status", Type: field.TypeString, Default: "connected"},
 		{Name: "workspace", Type: field.TypeString, Unique: true, Nullable: true},
 		{Name: "server", Type: field.TypeString, Nullable: true},
+		{Name: "labels", Type: field.TypeJSON, Nullable: true},
 		{Name: "last_seen", Type: field.TypeTime},
 	}
 	// AgentsTable holds the schema information for the "agents" table.
@@ -190,6 +191,7 @@ var (
 		{Name: "image", Type: field.TypeString},
 		{Name: "scanner", Type: field.TypeString},
 		{Name: "notify", Type: field.TypeJSON, Nullable: true},
+		{Name: "labels", Type: field.TypeJSON, Nullable: true},
 		{Name: "report", Type: field.TypeJSON, Nullable: true},
 		{Name: "integration_id", Type: field.TypeUUID},
 		{Name: "policy_id", Type: field.TypeUUID},
@@ -202,13 +204,13 @@ var (
 		ForeignKeys: []*schema.ForeignKey{
 			{
 				Symbol:     "scans_integrations_scans",
-				Columns:    []*schema.Column{ScansColumns[6]},
+				Columns:    []*schema.Column{ScansColumns[7]},
 				RefColumns: []*schema.Column{IntegrationsColumns[0]},
 				OnDelete:   schema.NoAction,
 			},
 			{
 				Symbol:     "scans_policies_scans",
-				Columns:    []*schema.Column{ScansColumns[7]},
+				Columns:    []*schema.Column{ScansColumns[8]},
 				RefColumns: []*schema.Column{PoliciesColumns[0]},
 				OnDelete:   schema.NoAction,
 			},
