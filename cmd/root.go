@@ -29,6 +29,7 @@ func init() {
 	agentStartCmd.Flags().StringVar(&name, "name", "", "Unique name for the agent (optional, defaults to agent-<random_suffix>)")
 	agentStartCmd.Flags().StringVar(&workspace, "workspace", "", "Workspace for the agent (optional, defaults to /tmp/<agent-name>)")
 	agentStartCmd.Flags().StringVar(&labels, "labels", "", "Labels for the agent in key=value format (e.g., --labels=\"key1=value1,key2=value2\")")
+	agentStartCmd.Flags().BoolVar(&singleStrike, "single-strike", false, "Run as an ephemeral agent that executes one task and then exits. For ephemeral agents please assigne unique labels like github job ID or UUID etc")
 
 	// Flags for the `agent stop` command
 	agentStopCmd.Flags().IntVar(&id, "id", 0, "ID of the agent to deregister")

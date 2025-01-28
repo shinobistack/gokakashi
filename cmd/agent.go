@@ -78,13 +78,14 @@ var agentStopCmd = &cobra.Command{
 }
 
 var (
-	server    string
-	token     string
-	workspace string
-	name      string
-	id        int
-	chidori   bool
-	labels    string
+	server       string
+	token        string
+	workspace    string
+	name         string
+	id           int
+	chidori      bool
+	labels       string
+	singleStrike bool
 )
 
 func agentDeRegister(cmd *cobra.Command, args []string) {
@@ -141,16 +142,23 @@ func agentRegister(cmd *cobra.Command, args []string) {
 	}
 
 	// Register the agent
-	agentID, err := registerAgent(cmd.Context(), server, token, workspace, name, parsedLabels)
+	agent, err := registerAgent(cmd.Context(), server, token, workspace, name, parsedLabels)
 	if err != nil {
 		log.Fatalf("Failed to register the agent: %v", err)
 	}
 
-	// ToDo: to display auto assigned name
-	log.Printf("Agent registered successfully! Agent ID: %d, Name: %s, Workspace: %s", agentID, name, workspace)
+	log.Printf("Agent registered successfully! Agent ID: %d, Name: %s, Workspace: %s", agent.ID, agent.Name, agent.Workspace)
 
-	// Start polling for tasks
-	pollTasks(cmd.Context(), server, token, agentID, workspace)
+	// Ephemeral agents
+	if singleStrike {
+		log.Printf("Ephemeral agent registered. Starting in sometime...")
+		// Todo: Dynamic Delay: Instead of hardcoding 5 seconds, make it configurable
+		time.Sleep(10 * time.Second)
+		executeEphemeraTasks(cmd.Context(), server, token, agent.ID, agent.Workspace)
+	} else {
+		// Long-lived agents keep polling
+		pollTasks(cmd.Context(), server, token, agent.ID, agent.Workspace)
+	}
 }
 
 func parseLabels(labels string) ([]schema.CommonLabels, error) {
@@ -176,7 +184,8 @@ func parseLabels(labels string) ([]schema.CommonLabels, error) {
 	return parsedLabels, nil
 }
 
-func registerAgent(ctx context.Context, server, token, workspace, name string, labels []schema.CommonLabels) (int, error) {
+func registerAgent(ctx context.Context, server, token, workspace, name string, labels []schema.CommonLabels) (agents.RegisterAgentResponse, error) {
+	var response agents.RegisterAgentResponse
 	reqBody := agents.RegisterAgentRequest{
 		Server:    server,
 		Token:     token,
@@ -189,31 +198,90 @@ func registerAgent(ctx context.Context, server, token, workspace, name string, l
 	url := constructURL(server, "/api/v1/agents")
 	req, err := http.NewRequest("POST", url, bytes.NewBuffer(reqBodyJSON))
 	if err != nil {
-		return 0, fmt.Errorf("failed to create registration request: %w", err)
+		return response, fmt.Errorf("failed to create registration request: %w", err)
 	}
 	req.Header.Set("Content-Type", "application/json")
 
 	resp, err := ctx.Value(httpClientKey{}).(*client.Client).Do(req)
 	if err != nil {
-		return 0, fmt.Errorf("failed to send registration request: %w", err)
+		return response, fmt.Errorf("failed to send registration request: %w", err)
 	}
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
-		return 0, fmt.Errorf("server responded with status: %d", resp.StatusCode)
+		return response, fmt.Errorf("server responded with status: %d", resp.StatusCode)
 	}
 
-	var response agents.RegisterAgentResponse
 	if err := json.NewDecoder(resp.Body).Decode(&response); err != nil {
-		return 0, fmt.Errorf("failed to decode registration response: %w", err)
+		return response, fmt.Errorf("failed to decode registration response: %w", err)
 	}
-	return response.ID, nil
+	return response, nil
+}
+
+func executeEphemeraTasks(ctx context.Context, server, token string, agentID int, workspace string) {
+	tasks, err := fetchTasks(ctx, server, token, agentID, "pending", 1)
+	if err != nil {
+		log.Printf("Error fetching task: %v", err)
+		return
+	}
+
+	if len(tasks) == 0 {
+		log.Println("No pending tasks available for the ephemeral agent.")
+		// Deregister the agent if no tasks are available
+		deregisterEphemeralAgent(ctx, agentID, server, token, true)
+		return
+	}
+
+	task := tasks[0]
+
+	// Mark task as "in_progress"
+	err = updateAgentTaskStatus(ctx, server, token, task.ID, agentID, "in_progress")
+	if err != nil {
+		log.Printf("Failed to update task status to 'in_progress': %v", err)
+		return
+	}
+
+	// Process the task
+	processTask(ctx, server, token, task, workspace, agentID)
+
+	// Mark task as "complete"
+	err = updateAgentTaskStatus(ctx, server, token, task.ID, agentID, "complete")
+	if err != nil {
+		log.Printf("Failed to update agent_task status to 'in_progress': %v", err)
+		return
+	}
+
+	log.Printf("Ephemeral agent %d completed its task and will now exit.", agentID)
+	deregisterEphemeralAgent(ctx, agentID, server, token, true)
+	log.Printf("Ephemeral agent %d shutting down.", agentID)
+	os.Exit(0)
+
+}
+
+func deregisterEphemeralAgent(ctx context.Context, agentID int, server, token string, chidori bool) {
+	cmd := &cobra.Command{}
+	args := []string{}
+	if agentID != 0 {
+		args = append(args, fmt.Sprintf("--id=%d", agentID))
+	}
+	if chidori {
+		args = append(args, "--chidori")
+	}
+
+	cmd.Flags().String("server", server, "")
+	cmd.Flags().String("token", token, "")
+	cmd.Flags().Bool("chidori", chidori, "Trigger hard delete")
+	cmd.Flags().Int("id", agentID, "Agent ID")
+	cmd.SetContext(ctx)
+
+	cmd.ParseFlags(args)
+	agentDeRegister(cmd, args)
 }
 
 func pollTasks(ctx context.Context, server, token string, agentID int, workspace string) {
 	for {
 		// Process only tasks with status "pending" in the order returned (created_at ASC)
-		tasks, err := fetchTasks(ctx, server, token, agentID, "pending")
+		tasks, err := fetchTasks(ctx, server, token, agentID, "pending", 0)
 		if err != nil {
 			log.Printf("Error fetching tasks: %v", err)
 			time.Sleep(10 * time.Second)
@@ -242,8 +310,8 @@ func pollTasks(ctx context.Context, server, token string, agentID int, workspace
 	}
 }
 
-func fetchTasks(ctx context.Context, server, token string, agentID int, status string) ([]agenttasks.GetAgentTaskResponse, error) {
-	url := constructURL(server, fmt.Sprintf("/api/v1/agents/%d/tasks", agentID)) + fmt.Sprintf("?status=%s", status)
+func fetchTasks(ctx context.Context, server, token string, agentID int, status string, limit int) ([]agenttasks.GetAgentTaskResponse, error) {
+	url := constructURL(server, fmt.Sprintf("/api/v1/agents/%d/tasks", agentID)) + fmt.Sprintf("?status=%s&limit=%d", status, limit)
 
 	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {

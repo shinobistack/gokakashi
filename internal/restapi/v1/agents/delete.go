@@ -60,7 +60,9 @@ func DeleteAgent(client *ent.Client) func(ctx context.Context, req DeleteAgentRe
 				Where(agenttasks.HasAgentWith(agents.ID(agent.ID))).
 				Exec(ctx)
 			if err != nil {
-				tx.Rollback()
+				if rollbackErr := tx.Rollback(); rollbackErr != nil {
+					fmt.Printf("rollback failed: %v\n", rollbackErr)
+				}
 				return status.Wrap(fmt.Errorf("failed to delete associated tasks: %w", err), status.Internal)
 			}
 
