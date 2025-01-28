@@ -36,7 +36,7 @@ type GetScanRequest struct {
 
 func ListScans(client *ent.Client) func(ctx context.Context, req ListScanRequest, res *[]GetScanResponse) error {
 	return func(ctx context.Context, req ListScanRequest, res *[]GetScanResponse) error {
-		query := client.Scans.Query()
+		query := client.Scans.Query().WithScanLabels()
 
 		if req.Status != "" {
 			query = query.Where(scans.Status(req.Status))

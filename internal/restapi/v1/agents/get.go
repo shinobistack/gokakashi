@@ -97,7 +97,7 @@ func GetAgent(client *ent.Client) func(ctx context.Context, req GetAgentRequest,
 
 func PollAgents(client *ent.Client) func(ctx context.Context, req PollAgentsRequest, res *[]PollAgentsResponse) error {
 	return func(ctx context.Context, req PollAgentsRequest, res *[]PollAgentsResponse) error {
-		query := client.Agents.Query()
+		query := client.Agents.Query().WithAgentLabels()
 
 		if req.Status != "" {
 			query = query.Where(agents.Status(req.Status))
