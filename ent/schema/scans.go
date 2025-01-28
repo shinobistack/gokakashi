@@ -32,7 +32,7 @@ func (Scans) Fields() []ent.Field {
 		field.String("status").
 			Default("scan_pending").
 			Validate(func(s string) error {
-				validStatuses := []string{"scan_pending", "scan_in_progre", "notify_pending", "notify_in_progress", "success", "error"}
+				validStatuses := []string{"scan_pending", "scan_in_progres", "notify_pending", "notify_in_progress", "success", "error"}
 				for _, status := range validStatuses {
 					if s == status {
 						return nil
