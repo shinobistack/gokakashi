@@ -34,66 +34,47 @@ type httpClientKey struct{}
 var agentCmd = &cobra.Command{
 	Use:   "agent",
 	Short: "Manage agents for GoKakashi",
+	PersistentPreRun: func(cmd *cobra.Command, args []string) {
+		if token == "" {
+			log.Fatalf("Error: missing required flag --token")
+		}
+
+		if server == "" {
+			log.Fatalf("Error: missing required flag --server")
+		}
+
+		headers := make(map[string]string)
+		cfClientID := os.Getenv("CF_ACCESS_CLIENT_ID")
+		cfClientSecret := os.Getenv("CF_ACCESS_CLIENT_SECRET")
+		if cfClientID != "" && cfClientSecret != "" {
+			headers["CF-Access-Client-Id"] = cfClientID
+			headers["CF-Access-Client-Secret"] = cfClientSecret
+		} else if cfClientSecret != "" {
+			fmt.Println("Warning: ignoring CF_ACCESS_CLIENT_SECRET because CF_ACCESS_CLIENT_ID is not set")
+		} else if cfClientID != "" {
+			fmt.Println("Warning: ignoring CF_ACCESS_CLIENT_ID because CF_ACCESS_CLIENT_SECRET is not set")
+		}
+
+		httpClient := client.New(
+			client.WithToken(token),
+			client.WithHeaders(headers),
+		)
+
+		ctx := context.WithValue(context.Background(), httpClientKey{}, httpClient)
+		cmd.SetContext(ctx)
+	},
 }
 
 var agentStartCmd = &cobra.Command{
 	Use:   "start",
 	Short: "Register an agent and start polling for tasks",
-	PersistentPreRun: func(cmd *cobra.Command, args []string) {
-		if token == "" {
-			log.Fatalf("Error: missing required flag --token")
-		}
-		headers := make(map[string]string)
-		cfClientID := os.Getenv("CF_ACCESS_CLIENT_ID")
-		cfClientSecret := os.Getenv("CF_ACCESS_CLIENT_SECRET")
-		if cfClientID != "" && cfClientSecret != "" {
-			headers["CF-Access-Client-Id"] = cfClientID
-			headers["CF-Access-Client-Secret"] = cfClientSecret
-		} else if cfClientSecret != "" {
-			fmt.Println("Warning: ignoring CF_ACCESS_CLIENT_SECRET because CF_ACCESS_CLIENT_ID is not set")
-		} else if cfClientID != "" {
-			fmt.Println("Warning: ignoring CF_ACCESS_CLIENT_ID because CF_ACCESS_CLIENT_SECRET is not set")
-		}
-
-		httpClient := client.New(
-			client.WithToken(token),
-			client.WithHeaders(headers),
-		)
-
-		ctx := context.WithValue(context.Background(), httpClientKey{}, httpClient)
-		cmd.SetContext(ctx)
-	},
-	Run: agentRegister,
+	Run:   agentRegister,
 }
 
 var agentStopCmd = &cobra.Command{
 	Use:   "stop",
 	Short: "Deregister an agent gracefully",
-	PersistentPreRun: func(cmd *cobra.Command, args []string) {
-		if token == "" {
-			log.Fatalf("Error: missing required flag --token")
-		}
-		headers := make(map[string]string)
-		cfClientID := os.Getenv("CF_ACCESS_CLIENT_ID")
-		cfClientSecret := os.Getenv("CF_ACCESS_CLIENT_SECRET")
-		if cfClientID != "" && cfClientSecret != "" {
-			headers["CF-Access-Client-Id"] = cfClientID
-			headers["CF-Access-Client-Secret"] = cfClientSecret
-		} else if cfClientSecret != "" {
-			fmt.Println("Warning: ignoring CF_ACCESS_CLIENT_SECRET because CF_ACCESS_CLIENT_ID is not set")
-		} else if cfClientID != "" {
-			fmt.Println("Warning: ignoring CF_ACCESS_CLIENT_ID because CF_ACCESS_CLIENT_SECRET is not set")
-		}
-
-		httpClient := client.New(
-			client.WithToken(token),
-			client.WithHeaders(headers),
-		)
-
-		ctx := context.WithValue(context.Background(), httpClientKey{}, httpClient)
-		cmd.SetContext(ctx)
-	},
-	Run: agentDeRegister,
+	Run:   agentDeRegister,
 }
 
 var (
@@ -153,10 +134,6 @@ func agentDeRegister(cmd *cobra.Command, args []string) {
 //ToDo: for any table status which results to error should we upload err message or just status error
 
 func agentRegister(cmd *cobra.Command, args []string) {
-	// Validate inputs
-	if server == "" || token == "" {
-		log.Fatalf("Error: Missing required inputs. Please provide --server, --token.")
-	}
 
 	parsedLabels, err := parseLabels(labels)
 	if err != nil {
