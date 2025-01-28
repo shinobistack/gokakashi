@@ -141,16 +141,16 @@ func filterAgentsByLabels(agentList []agents.GetAgentResponse, scanLabels []sche
 }
 
 // Matches atleast one label? Todo: Maybe having maritial labels would benefit? Because a scan have many labels for filtering?
-func partialLabelsMatch(agentLabels, scanLabels []schema.CommonLabels) bool {
-	for _, scanLabel := range scanLabels {
-		for _, agentLabel := range agentLabels {
-			if scanLabel.Key == agentLabel.Key && scanLabel.Value == agentLabel.Value {
-				return true // Return true as soon as one label matches
-			}
-		}
-	}
-	return false // Return false if no labels match
-}
+//func partialLabelsMatch(agentLabels, scanLabels []schema.CommonLabels) bool {
+//	for _, scanLabel := range scanLabels {
+//		for _, agentLabel := range agentLabels {
+//			if scanLabel.Key == agentLabel.Key && scanLabel.Value == agentLabel.Value {
+//				return true // Return true as soon as one label matches
+//			}
+//		}
+//	}
+//	return false // Return false if no labels match
+//}
 
 // Matches all labels?
 func labelsMatch(agentLabels, scanLabels []schema.CommonLabels) bool {
