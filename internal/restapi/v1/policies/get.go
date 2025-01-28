@@ -62,7 +62,7 @@ func ListPolicies(client *ent.Client) func(ctx context.Context, req ListPolicies
 				Scanner: policy.Scanner,
 				Labels:  labels,
 				Trigger: policy.Trigger,
-				Notify:  convertToPointer(policy.Notify),
+				Notify:  &policy.Notify,
 			}
 		}
 		return nil
@@ -101,13 +101,8 @@ func GetPolicy(client *ent.Client) func(ctx context.Context, req GetPolicyReques
 		res.Scanner = policy.Scanner
 		res.Labels = labels
 		res.Trigger = policy.Trigger
-		res.Notify = convertToPointer(policy.Notify)
+		res.Notify = &policy.Notify
 
 		return nil
 	}
-}
-
-// Utility function to convert nullable fields to pointers
-func convertToPointer(data []schema.Notify) *[]schema.Notify {
-	return &data
 }

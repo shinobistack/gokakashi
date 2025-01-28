@@ -9,6 +9,7 @@ import (
 	"github.com/shinobistack/gokakashi/ent/agents"
 	"github.com/shinobistack/gokakashi/ent/agenttasks"
 	"github.com/swaggest/usecase/status"
+	"log"
 	"time"
 )
 
@@ -69,16 +70,16 @@ func DeleteAgent(client *ent.Client) func(ctx context.Context, req DeleteAgentRe
 				Exec(ctx)
 			if err != nil {
 				if rollbackErr := tx.Rollback(); rollbackErr != nil {
-					fmt.Printf("rollback failed: %v\n", rollbackErr)
+					log.Printf("rollback failed: %v\n", rollbackErr)
 				}
-				return status.Wrap(fmt.Errorf("failed to delete associated labels: %w", err), status.Internal)
+				return status.Wrap(fmt.Errorf("failed to delete associated labels for agent ID %d: %w", agent.ID, err), status.Internal)
 			}
 
 			// Hard delete the agent
 			err = tx.Agents.DeleteOne(agent).Exec(ctx)
 			if err != nil {
 				if rollbackErr := tx.Rollback(); rollbackErr != nil {
-					fmt.Printf("rollback failed: %v\n", rollbackErr)
+					log.Printf("rollback failed: %v\n", rollbackErr)
 				}
 				return status.Wrap(fmt.Errorf("failed to delete agent: %w", err), status.Internal)
 			}
@@ -99,7 +100,7 @@ func DeleteAgent(client *ent.Client) func(ctx context.Context, req DeleteAgentRe
 			Save(ctx)
 		if err != nil {
 			if rollbackErr := tx.Rollback(); rollbackErr != nil {
-				fmt.Printf("rollback failed: %v\n", rollbackErr)
+				log.Printf("rollback failed: %v\n", rollbackErr)
 			}
 			return status.Wrap(fmt.Errorf("failed to update agent status: %w", err), status.Internal)
 		}
@@ -111,7 +112,7 @@ func DeleteAgent(client *ent.Client) func(ctx context.Context, req DeleteAgentRe
 			Exec(ctx)
 		if err != nil {
 			if rollbackErr := tx.Rollback(); rollbackErr != nil {
-				fmt.Printf("rollback failed: %v\n", rollbackErr)
+				log.Printf("rollback failed: %v\n", rollbackErr)
 			}
 			return status.Wrap(fmt.Errorf("failed to mark tasks as abandoned: %w", err), status.Internal)
 		}

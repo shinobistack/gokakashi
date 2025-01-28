@@ -9,6 +9,7 @@ import (
 	"github.com/shinobistack/gokakashi/ent/agents"
 	"github.com/shinobistack/gokakashi/ent/schema"
 	"github.com/swaggest/usecase/status"
+	"log"
 	"time"
 )
 
@@ -103,7 +104,7 @@ func RegisterAgent(client *ent.Client) func(ctx context.Context, req RegisterAge
 		}
 
 		// Register the new agent
-		newAgent, err := client.Agents.Create().
+		newAgent, err := tx.Agents.Create().
 			SetName(req.Name).
 			SetServer(req.Server).
 			SetWorkspace(req.Workspace).
@@ -111,6 +112,9 @@ func RegisterAgent(client *ent.Client) func(ctx context.Context, req RegisterAge
 			SetLastSeen(time.Now()).
 			Save(ctx)
 		if err != nil {
+			if rollbackErr := tx.Rollback(); rollbackErr != nil {
+				log.Printf("rollback failed: %v\n", rollbackErr)
+			}
 			return status.Wrap(err, status.Internal)
 		}
 
@@ -126,7 +130,7 @@ func RegisterAgent(client *ent.Client) func(ctx context.Context, req RegisterAge
 
 			if _, err := tx.AgentLabels.CreateBulk(bulk...).Save(ctx); err != nil {
 				if rollbackErr := tx.Rollback(); rollbackErr != nil {
-					fmt.Printf("rollback failed: %v\n", rollbackErr)
+					log.Printf("rollback failed: %v\n", rollbackErr)
 				}
 				return status.Wrap(err, status.Internal)
 			}
