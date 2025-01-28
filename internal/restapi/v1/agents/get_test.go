@@ -50,7 +50,7 @@ func TestListAgents_Valid(t *testing.T) {
 		SaveX(context.Background())
 
 	client.Agents.Create().
-		SetStatus("scan_in_progress").
+		SetStatus("scan_in_progre").
 		SaveX(context.Background())
 
 	req := agents.ListAgentsRequest{}

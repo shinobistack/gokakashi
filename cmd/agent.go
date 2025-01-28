@@ -149,6 +149,11 @@ func agentRegister(cmd *cobra.Command, args []string) {
 
 	log.Printf("Agent registered successfully! Agent ID: %d, Name: %s, Workspace: %s", agent.ID, agent.Name, agent.Workspace)
 
+	// Update Agent status
+	if err := updateAgentStatus(cmd.Context(), server, token, agent.ID, "scan_in_progres"); err != nil {
+		log.Printf("Failed to update scan status to 'error': %v", err)
+	}
+
 	// Ephemeral agents
 	if singleStrike {
 		log.Printf("Ephemeral agent registered. Starting in sometime...")
@@ -218,6 +223,35 @@ func registerAgent(ctx context.Context, server, token, workspace, name string, l
 	return response, nil
 }
 
+func updateAgentStatus(ctx context.Context, server, token string, agentID int, status string) error {
+	reqBody := agents.UpdateAgentRequest{
+		ID:     agentID,
+		Status: status,
+	}
+	reqBodyJSON, _ := json.Marshal(reqBody)
+
+	path := fmt.Sprintf("/api/v1/agents/%d", agentID)
+	url := constructURL(server, path)
+	req, err := http.NewRequest("PUT", url, bytes.NewBuffer(reqBodyJSON))
+
+	if err != nil {
+		return fmt.Errorf("failed to create agent status update request: %w", err)
+	}
+	req.Header.Set("Content-Type", "application/json")
+
+	resp, err := ctx.Value(httpClientKey{}).(*client.Client).Do(req)
+	if err != nil {
+		return fmt.Errorf("failed to update agent status: %w", err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		return fmt.Errorf("server responded with status: %d", resp.StatusCode)
+	}
+
+	return nil
+}
+
 func executeEphemeraTasks(ctx context.Context, server, token string, agentID int, workspace string) {
 	tasks, err := fetchTasks(ctx, server, token, agentID, "pending", 1)
 	if err != nil {
@@ -251,6 +285,11 @@ func executeEphemeraTasks(ctx context.Context, server, token string, agentID int
 		return
 	}
 
+	err = updateAgentStatus(ctx, server, token, agentID, "disconnected")
+	if err != nil {
+		log.Printf("Failed to update scan status to 'disconnected': %v", err)
+	}
+
 	log.Printf("Ephemeral agent %d completed its task and will now exit.", agentID)
 	deregisterEphemeralAgent(ctx, agentID, server, token, true)
 	log.Printf("Ephemeral agent %d shutting down.", agentID)
@@ -274,7 +313,10 @@ func deregisterEphemeralAgent(ctx context.Context, agentID int, server, token st
 	cmd.Flags().Int("id", agentID, "Agent ID")
 	cmd.SetContext(ctx)
 
-	cmd.ParseFlags(args)
+	err := cmd.ParseFlags(args)
+	if err != nil {
+		log.Fatalf("Failed to parse flags: %v", err)
+	}
 	agentDeRegister(cmd, args)
 }
 
@@ -388,9 +430,9 @@ func processTask(ctx context.Context, server, token string, task agenttasks.GetA
 		return
 	}
 
-	err = updateScanStatus(ctx, server, token, scan.ID, "scan_in_progress")
+	err = updateScanStatus(ctx, server, token, scan.ID, "scan_in_progres")
 	if err != nil {
-		log.Printf("Failed to update scan status to 'scan_in_progress': %v", err)
+		log.Printf("Failed to update scan status to 'scan_in_progres': %v", err)
 	}
 	// Step 4: Perform the scan
 	// severityLevels := []string{"HIGH", "CRITICAL"}
@@ -422,7 +464,7 @@ func processTask(ctx context.Context, server, token string, task agenttasks.GetA
 	} else {
 		err = updateScanStatus(ctx, server, token, scan.ID, "notify_pending")
 		if err != nil {
-			log.Printf("Failed to update scan status to 'scan_in_progress': %v", err)
+			log.Printf("Failed to update scan status to 'scan_in_progres': %v", err)
 		}
 	}
 

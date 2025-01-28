@@ -26,7 +26,7 @@ func (Agents) Fields() []ent.Field {
 		field.String("status").
 			Default("connected").
 			Validate(func(s string) error {
-				validStatuses := []string{"connected", "scan_in_progress", "disconnected"}
+				validStatuses := []string{"connected", "scan_in_progres", "disconnected"}
 				for _, status := range validStatuses {
 					if s == status {
 						return nil
@@ -34,7 +34,7 @@ func (Agents) Fields() []ent.Field {
 				}
 				return errors.New("invalid status")
 			}).
-			Comment("Enum: { connected, scan_in_progress, disconnected }."),
+			Comment("Enum: { connected, scan_in_progre, disconnected }."),
 		field.String("workspace").
 			Optional().
 			Unique().

@@ -20,7 +20,7 @@ func TestUpdateAgent_Valid(t *testing.T) {
 
 	req := agents.UpdateAgentRequest{
 		ID:     agent.ID,
-		Status: "scan_in_progress",
+		Status: "scan_in_progre",
 	}
 	res := &agents.UpdateAgentResponse{}
 
@@ -36,7 +36,7 @@ func TestUpdateAgent_NotFound(t *testing.T) {
 
 	req := agents.UpdateAgentRequest{
 		ID:     9999, // Non-existent ID
-		Status: "scan_in_progress",
+		Status: "scan_in_progre",
 	}
 	res := &agents.UpdateAgentResponse{}
 
