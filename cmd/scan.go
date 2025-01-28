@@ -26,6 +26,10 @@ var scanCmd = &cobra.Command{
 			log.Fatalf("Error: missing required flag --token")
 		}
 
+		if server == "" {
+			log.Fatalf("Error: missing required flag --server")
+		}
+
 		headers := make(map[string]string)
 		cfClientID := os.Getenv("CF_ACCESS_CLIENT_ID")
 		cfClientSecret := os.Getenv("CF_ACCESS_CLIENT_SECRET")
@@ -87,8 +91,16 @@ func scanImage(cmd *cobra.Command, args []string) {
 	ctx := cmd.Context()
 	httpClient := ctx.Value(httpClientKey{}).(*client.Client)
 
-	if server == "" || token == "" || image == "" || policyName == "" {
-		log.Fatalf("Error: Missing required inputs. Please provide --server, --token, and --image.")
+	if policyName == "" {
+		log.Fatalf("Error: --policy is required to specify the policy name.")
+	}
+	if image == "" {
+		log.Fatalf("Error: --image is required to specify the container image.")
+	}
+
+	parsedLabels, err := parseLabels(labels)
+	if err != nil {
+		log.Fatalf("Error parsing labels: %v", err)
 	}
 
 	policy, err := fetchPolicyByName(ctx, httpClient, policyName)
@@ -110,6 +122,7 @@ func scanImage(cmd *cobra.Command, args []string) {
 		"integration_id": integration.ID,
 		"notify":         policy.Notify,
 		"status":         "scan_pending",
+		"labels":         parsedLabels,
 	}
 	reqBodyJSON, _ := json.Marshal(reqBody)
 	url := constructURL(server, "/api/v1/scans")
