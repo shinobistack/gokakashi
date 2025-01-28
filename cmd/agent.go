@@ -252,6 +252,8 @@ func updateAgentStatus(ctx context.Context, server, token string, agentID int, s
 	return nil
 }
 
+// Todo: Better way to handle polling for some time for ephemeral agent's task
+
 func executeEphemeraTasks(ctx context.Context, server, token string, agentID int, workspace string) {
 	tasks, err := fetchTasks(ctx, server, token, agentID, "pending", 1)
 	if err != nil {
