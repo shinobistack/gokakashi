@@ -149,10 +149,6 @@ func agentRegister(cmd *cobra.Command, args []string) {
 
 	log.Printf("Agent registered successfully! Agent ID: %d, Name: %s, Workspace: %s", agent.ID, agent.Name, agent.Workspace)
 
-	// Update Agent status
-	if err := updateAgentStatus(cmd.Context(), server, token, agent.ID, "scan_in_progress"); err != nil {
-		log.Printf("Failed to update scan status to 'error': %v", err)
-	}
 	if err := sendAgentHeartbeat(cmd.Context(), server, token, agent.ID); err != nil {
 		log.Printf("Failed to send final heartbeat for agent %d: %v", agent.ID, err)
 	}
@@ -210,7 +206,7 @@ func sendAgentHeartbeat(ctx context.Context, server, token string, agentID int) 
 	}
 	defer resp.Body.Close()
 
-	if resp.StatusCode != http.StatusOK {
+	if resp.StatusCode != http.StatusNoContent {
 		body, _ := io.ReadAll(resp.Body)
 		return fmt.Errorf("server responded with status: %d, response: %s", resp.StatusCode, body)
 	}
@@ -418,6 +414,11 @@ func pollTasks(ctx context.Context, server, token string, agentID int, workspace
 			log.Println("No pending tasks. Retrying after 10 seconds.")
 			time.Sleep(10 * time.Second)
 			continue
+		}
+
+		// Update Agent status
+		if err := updateAgentStatus(ctx, server, token, agentID, "scan_in_progress"); err != nil {
+			log.Printf("Failed to update scan status to 'error': %v", err)
 		}
 
 		for _, task := range tasks {

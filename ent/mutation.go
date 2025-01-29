@@ -1577,9 +1577,22 @@ func (m *AgentsMutation) OldLastHeartbeat(ctx context.Context) (v time.Time, err
 	return oldValue.LastHeartbeat, nil
 }
 
+// ClearLastHeartbeat clears the value of the "last_heartbeat" field.
+func (m *AgentsMutation) ClearLastHeartbeat() {
+	m.last_heartbeat = nil
+	m.clearedFields[agents.FieldLastHeartbeat] = struct{}{}
+}
+
+// LastHeartbeatCleared returns if the "last_heartbeat" field was cleared in this mutation.
+func (m *AgentsMutation) LastHeartbeatCleared() bool {
+	_, ok := m.clearedFields[agents.FieldLastHeartbeat]
+	return ok
+}
+
 // ResetLastHeartbeat resets all changes to the "last_heartbeat" field.
 func (m *AgentsMutation) ResetLastHeartbeat() {
 	m.last_heartbeat = nil
+	delete(m.clearedFields, agents.FieldLastHeartbeat)
 }
 
 // AddAgentTaskIDs adds the "agent_tasks" edge to the AgentTasks entity by ids.
@@ -1891,6 +1904,9 @@ func (m *AgentsMutation) ClearedFields() []string {
 	if m.FieldCleared(agents.FieldLabels) {
 		fields = append(fields, agents.FieldLabels)
 	}
+	if m.FieldCleared(agents.FieldLastHeartbeat) {
+		fields = append(fields, agents.FieldLastHeartbeat)
+	}
 	return fields
 }
 
@@ -1916,6 +1932,9 @@ func (m *AgentsMutation) ClearField(name string) error {
 		return nil
 	case agents.FieldLabels:
 		m.ClearLabels()
+		return nil
+	case agents.FieldLastHeartbeat:
+		m.ClearLastHeartbeat()
 		return nil
 	}
 	return fmt.Errorf("unknown Agents nullable field %s", name)

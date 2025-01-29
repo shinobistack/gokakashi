@@ -57,7 +57,7 @@ func AssignTasks(server string, port int, token string) {
 	// Step 1: Fetch scans needing assignment
 	pendingScans, err := fetchPendingScans(server, port, token, "scan_pending")
 	if err != nil {
-		log.Printf("Error fetching pending scans: %v", err)
+		log.Printf("Assigner: Error fetching pending scans: %v", err)
 		return
 	}
 
@@ -69,13 +69,13 @@ func AssignTasks(server string, port int, token string) {
 	// Step 2: Fetch available agents
 	availableAgents, err := fetchAvailableAgents(server, port, token, "connected")
 	if err != nil {
-		log.Printf("Error fetching available agents: %v", err)
+		log.Printf("Assigner: Error fetching available agents: %v", err)
 		return
 	}
 
 	if len(availableAgents) == 0 {
 		log.Println("No agents available for assignment.")
-		log.Printf("Unassignable scans: %d scans pending without agents.", len(pendingScans))
+		log.Printf("Assigner: Unassignable scans: %d scans pending without agents.", len(pendingScans))
 		return
 	}
 
@@ -86,7 +86,7 @@ func AssignTasks(server string, port int, token string) {
 	for _, scan := range pendingScans {
 		// Check if scan is already assigned
 		if isScanAssigned(server, port, token, scan.ID) {
-			log.Printf("Scan ID %s is already assigned. Skipping.", scan.ID)
+			log.Printf("Assigner: Scan ID %s is already assigned. Skipping.", scan.ID)
 			continue
 		}
 
@@ -104,9 +104,9 @@ func AssignTasks(server string, port int, token string) {
 
 		// Assign the scan to the selected agent
 		if assignTaskToAgent(server, port, token, agent, scan) {
-			log.Printf("Successfully assigned scan %s to agent %d", scan.ID, agent.ID)
+			log.Printf("Assigner: Successfully assigned scan %s to agent %d", scan.ID, agent.ID)
 		} else {
-			log.Printf("Failed to assign scan %s. It will be retried in the next cycle.", scan.ID)
+			log.Printf("Assigner: Failed to assign scan %s. It will be retried in the next cycle.", scan.ID)
 		}
 
 		//// Select agent using round-robin
@@ -171,10 +171,10 @@ func labelsMatch(agentLabels, scanLabels []schema.CommonLabels) bool {
 
 func assignTaskToAgent(server string, port int, token string, agent agents.GetAgentResponse, scan scans.GetScanResponse) bool {
 	if err := createAgentTask(server, port, token, agent.ID, scan.ID); err != nil {
-		log.Printf("Failed to assign scan %s to agent %d: %v", scan.ID, agent.ID, err)
+		log.Printf("Assigner: Failed to assign scan %s to agent %d: %v", scan.ID, agent.ID, err)
 		return false
 	}
-	log.Printf("Successfully assigned scan %s to agent %d", scan.ID, agent.ID)
+	log.Printf("Assigner: Successfully assigned scan %s to agent %d", scan.ID, agent.ID)
 	return true
 }
 

@@ -220,9 +220,6 @@ func (ac *AgentsCreate) check() error {
 	if _, ok := ac.mutation.LastSeen(); !ok {
 		return &ValidationError{Name: "last_seen", err: errors.New(`ent: missing required field "Agents.last_seen"`)}
 	}
-	if _, ok := ac.mutation.LastHeartbeat(); !ok {
-		return &ValidationError{Name: "last_heartbeat", err: errors.New(`ent: missing required field "Agents.last_heartbeat"`)}
-	}
 	return nil
 }
 

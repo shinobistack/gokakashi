@@ -465,6 +465,16 @@ func LastHeartbeatLTE(v time.Time) predicate.Agents {
 	return predicate.Agents(sql.FieldLTE(FieldLastHeartbeat, v))
 }
 
+// LastHeartbeatIsNil applies the IsNil predicate on the "last_heartbeat" field.
+func LastHeartbeatIsNil() predicate.Agents {
+	return predicate.Agents(sql.FieldIsNull(FieldLastHeartbeat))
+}
+
+// LastHeartbeatNotNil applies the NotNil predicate on the "last_heartbeat" field.
+func LastHeartbeatNotNil() predicate.Agents {
+	return predicate.Agents(sql.FieldNotNull(FieldLastHeartbeat))
+}
+
 // HasAgentTasks applies the HasEdge predicate on the "agent_tasks" edge.
 func HasAgentTasks() predicate.Agents {
 	return predicate.Agents(func(s *sql.Selector) {

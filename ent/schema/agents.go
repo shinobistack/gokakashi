@@ -52,6 +52,7 @@ func (Agents) Fields() []ent.Field {
 		field.Time("last_heartbeat").
 			Default(time.Now).
 			UpdateDefault(time.Now).
+			Optional(). // To be non nullable
 			Comment("Timestamp of the agent's liveliness."),
 	}
 }

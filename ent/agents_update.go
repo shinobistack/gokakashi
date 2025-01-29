@@ -138,6 +138,12 @@ func (au *AgentsUpdate) SetLastHeartbeat(t time.Time) *AgentsUpdate {
 	return au
 }
 
+// ClearLastHeartbeat clears the value of the "last_heartbeat" field.
+func (au *AgentsUpdate) ClearLastHeartbeat() *AgentsUpdate {
+	au.mutation.ClearLastHeartbeat()
+	return au
+}
+
 // AddAgentTaskIDs adds the "agent_tasks" edge to the AgentTasks entity by IDs.
 func (au *AgentsUpdate) AddAgentTaskIDs(ids ...uuid.UUID) *AgentsUpdate {
 	au.mutation.AddAgentTaskIDs(ids...)
@@ -249,7 +255,7 @@ func (au *AgentsUpdate) defaults() {
 		v := agents.UpdateDefaultLastSeen()
 		au.mutation.SetLastSeen(v)
 	}
-	if _, ok := au.mutation.LastHeartbeat(); !ok {
+	if _, ok := au.mutation.LastHeartbeat(); !ok && !au.mutation.LastHeartbeatCleared() {
 		v := agents.UpdateDefaultLastHeartbeat()
 		au.mutation.SetLastHeartbeat(v)
 	}
@@ -309,6 +315,9 @@ func (au *AgentsUpdate) sqlSave(ctx context.Context) (n int, err error) {
 	}
 	if value, ok := au.mutation.LastHeartbeat(); ok {
 		_spec.SetField(agents.FieldLastHeartbeat, field.TypeTime, value)
+	}
+	if au.mutation.LastHeartbeatCleared() {
+		_spec.ClearField(agents.FieldLastHeartbeat, field.TypeTime)
 	}
 	if au.mutation.AgentTasksCleared() {
 		edge := &sqlgraph.EdgeSpec{
@@ -526,6 +535,12 @@ func (auo *AgentsUpdateOne) SetLastHeartbeat(t time.Time) *AgentsUpdateOne {
 	return auo
 }
 
+// ClearLastHeartbeat clears the value of the "last_heartbeat" field.
+func (auo *AgentsUpdateOne) ClearLastHeartbeat() *AgentsUpdateOne {
+	auo.mutation.ClearLastHeartbeat()
+	return auo
+}
+
 // AddAgentTaskIDs adds the "agent_tasks" edge to the AgentTasks entity by IDs.
 func (auo *AgentsUpdateOne) AddAgentTaskIDs(ids ...uuid.UUID) *AgentsUpdateOne {
 	auo.mutation.AddAgentTaskIDs(ids...)
@@ -650,7 +665,7 @@ func (auo *AgentsUpdateOne) defaults() {
 		v := agents.UpdateDefaultLastSeen()
 		auo.mutation.SetLastSeen(v)
 	}
-	if _, ok := auo.mutation.LastHeartbeat(); !ok {
+	if _, ok := auo.mutation.LastHeartbeat(); !ok && !auo.mutation.LastHeartbeatCleared() {
 		v := agents.UpdateDefaultLastHeartbeat()
 		auo.mutation.SetLastHeartbeat(v)
 	}
@@ -727,6 +742,9 @@ func (auo *AgentsUpdateOne) sqlSave(ctx context.Context) (_node *Agents, err err
 	}
 	if value, ok := auo.mutation.LastHeartbeat(); ok {
 		_spec.SetField(agents.FieldLastHeartbeat, field.TypeTime, value)
+	}
+	if auo.mutation.LastHeartbeatCleared() {
+		_spec.ClearField(agents.FieldLastHeartbeat, field.TypeTime)
 	}
 	if auo.mutation.AgentTasksCleared() {
 		edge := &sqlgraph.EdgeSpec{

@@ -66,7 +66,7 @@ var (
 		{Name: "server", Type: field.TypeString, Nullable: true},
 		{Name: "labels", Type: field.TypeJSON, Nullable: true},
 		{Name: "last_seen", Type: field.TypeTime},
-		{Name: "last_heartbeat", Type: field.TypeTime},
+		{Name: "last_heartbeat", Type: field.TypeTime, Nullable: true},
 	}
 	// AgentsTable holds the schema information for the "agents" table.
 	AgentsTable = &schema.Table{

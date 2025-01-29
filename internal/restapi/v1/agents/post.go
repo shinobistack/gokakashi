@@ -110,6 +110,7 @@ func RegisterAgent(client *ent.Client) func(ctx context.Context, req RegisterAge
 			SetWorkspace(req.Workspace).
 			SetStatus("connected").
 			SetLastSeen(time.Now()).
+			SetLastHeartbeat(time.Now()).
 			Save(ctx)
 		if err != nil {
 			if rollbackErr := tx.Rollback(); rollbackErr != nil {

@@ -62,7 +62,7 @@ func UpdateAgentHeartbeat(client *ent.Client) func(ctx context.Context, req Upda
 			log.Printf("Failed to update heartbeat for agent ID %d: %v", req.ID, err)
 			return status.Wrap(err, status.Internal)
 		}
-		log.Printf("Successfully updated heartbeat for agent ID %d at %v", agent.ID, agent.LastHeartbeat)
+		log.Printf("API: Successfully updated heartbeat for agent ID %d at %v", agent.ID, agent.LastHeartbeat.Format(time.RFC3339))
 		return nil
 
 	}
