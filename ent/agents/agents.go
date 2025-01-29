@@ -26,6 +26,8 @@ const (
 	FieldLabels = "labels"
 	// FieldLastSeen holds the string denoting the last_seen field in the database.
 	FieldLastSeen = "last_seen"
+	// FieldLastHeartbeat holds the string denoting the last_heartbeat field in the database.
+	FieldLastHeartbeat = "last_heartbeat"
 	// EdgeAgentTasks holds the string denoting the agent_tasks edge name in mutations.
 	EdgeAgentTasks = "agent_tasks"
 	// EdgeAgentLabels holds the string denoting the agent_labels edge name in mutations.
@@ -57,6 +59,7 @@ var Columns = []string{
 	FieldServer,
 	FieldLabels,
 	FieldLastSeen,
+	FieldLastHeartbeat,
 }
 
 // ValidColumn reports if the column name is valid (part of the table columns).
@@ -78,6 +81,10 @@ var (
 	DefaultLastSeen func() time.Time
 	// UpdateDefaultLastSeen holds the default value on update for the "last_seen" field.
 	UpdateDefaultLastSeen func() time.Time
+	// DefaultLastHeartbeat holds the default value on creation for the "last_heartbeat" field.
+	DefaultLastHeartbeat func() time.Time
+	// UpdateDefaultLastHeartbeat holds the default value on update for the "last_heartbeat" field.
+	UpdateDefaultLastHeartbeat func() time.Time
 )
 
 // OrderOption defines the ordering options for the Agents queries.
@@ -111,6 +118,11 @@ func ByServer(opts ...sql.OrderTermOption) OrderOption {
 // ByLastSeen orders the results by the last_seen field.
 func ByLastSeen(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldLastSeen, opts...).ToFunc()
+}
+
+// ByLastHeartbeat orders the results by the last_heartbeat field.
+func ByLastHeartbeat(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldLastHeartbeat, opts...).ToFunc()
 }
 
 // ByAgentTasksCount orders the results by agent_tasks count.

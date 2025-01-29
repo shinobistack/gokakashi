@@ -38,7 +38,7 @@ func TestUpdateScan_Valid(t *testing.T) {
 
 	req := scans.UpdateScanRequest{
 		ID:     scan.ID,
-		Status: strPtr("scan_in_progres"),
+		Status: strPtr("scan_in_progress"),
 		Report: nil,
 	}
 
@@ -47,7 +47,7 @@ func TestUpdateScan_Valid(t *testing.T) {
 
 	assert.NoError(t, err)
 	assert.Equal(t, req.ID, res.ID)
-	assert.Equal(t, "scan_in_progres", res.Status)
+	assert.Equal(t, "scan_in_progress", res.Status)
 }
 
 func TestUpdateScan_MissingFields(t *testing.T) {

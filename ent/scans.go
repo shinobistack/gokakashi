@@ -24,7 +24,7 @@ type Scans struct {
 	ID uuid.UUID `json:"id,omitempty"`
 	// Foreign key to Policies.ID
 	PolicyID uuid.UUID `json:"policy_id,omitempty"`
-	// Enum: { scan_pending, scan_in_progre, notify_pending, notify_in_progress,  success, error }.
+	// Enum: { scan_pending, scan_in_progress, notify_pending, notify_in_progress,  success, error }.
 	Status string `json:"status,omitempty"`
 	// Details of the image being scanned.
 	Image string `json:"image,omitempty"`

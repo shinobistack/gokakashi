@@ -1161,6 +1161,7 @@ type AgentsMutation struct {
 	server              *string
 	labels              *schema.CommonLabels
 	last_seen           *time.Time
+	last_heartbeat      *time.Time
 	clearedFields       map[string]struct{}
 	agent_tasks         map[uuid.UUID]struct{}
 	removedagent_tasks  map[uuid.UUID]struct{}
@@ -1545,6 +1546,42 @@ func (m *AgentsMutation) ResetLastSeen() {
 	m.last_seen = nil
 }
 
+// SetLastHeartbeat sets the "last_heartbeat" field.
+func (m *AgentsMutation) SetLastHeartbeat(t time.Time) {
+	m.last_heartbeat = &t
+}
+
+// LastHeartbeat returns the value of the "last_heartbeat" field in the mutation.
+func (m *AgentsMutation) LastHeartbeat() (r time.Time, exists bool) {
+	v := m.last_heartbeat
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldLastHeartbeat returns the old "last_heartbeat" field's value of the Agents entity.
+// If the Agents object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *AgentsMutation) OldLastHeartbeat(ctx context.Context) (v time.Time, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldLastHeartbeat is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldLastHeartbeat requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldLastHeartbeat: %w", err)
+	}
+	return oldValue.LastHeartbeat, nil
+}
+
+// ResetLastHeartbeat resets all changes to the "last_heartbeat" field.
+func (m *AgentsMutation) ResetLastHeartbeat() {
+	m.last_heartbeat = nil
+}
+
 // AddAgentTaskIDs adds the "agent_tasks" edge to the AgentTasks entity by ids.
 func (m *AgentsMutation) AddAgentTaskIDs(ids ...uuid.UUID) {
 	if m.agent_tasks == nil {
@@ -1687,7 +1724,7 @@ func (m *AgentsMutation) Type() string {
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
 func (m *AgentsMutation) Fields() []string {
-	fields := make([]string, 0, 6)
+	fields := make([]string, 0, 7)
 	if m.name != nil {
 		fields = append(fields, agents.FieldName)
 	}
@@ -1705,6 +1742,9 @@ func (m *AgentsMutation) Fields() []string {
 	}
 	if m.last_seen != nil {
 		fields = append(fields, agents.FieldLastSeen)
+	}
+	if m.last_heartbeat != nil {
+		fields = append(fields, agents.FieldLastHeartbeat)
 	}
 	return fields
 }
@@ -1726,6 +1766,8 @@ func (m *AgentsMutation) Field(name string) (ent.Value, bool) {
 		return m.Labels()
 	case agents.FieldLastSeen:
 		return m.LastSeen()
+	case agents.FieldLastHeartbeat:
+		return m.LastHeartbeat()
 	}
 	return nil, false
 }
@@ -1747,6 +1789,8 @@ func (m *AgentsMutation) OldField(ctx context.Context, name string) (ent.Value, 
 		return m.OldLabels(ctx)
 	case agents.FieldLastSeen:
 		return m.OldLastSeen(ctx)
+	case agents.FieldLastHeartbeat:
+		return m.OldLastHeartbeat(ctx)
 	}
 	return nil, fmt.Errorf("unknown Agents field %s", name)
 }
@@ -1797,6 +1841,13 @@ func (m *AgentsMutation) SetField(name string, value ent.Value) error {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetLastSeen(v)
+		return nil
+	case agents.FieldLastHeartbeat:
+		v, ok := value.(time.Time)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetLastHeartbeat(v)
 		return nil
 	}
 	return fmt.Errorf("unknown Agents field %s", name)
@@ -1891,6 +1942,9 @@ func (m *AgentsMutation) ResetField(name string) error {
 		return nil
 	case agents.FieldLastSeen:
 		m.ResetLastSeen()
+		return nil
+	case agents.FieldLastHeartbeat:
+		m.ResetLastHeartbeat()
 		return nil
 	}
 	return fmt.Errorf("unknown Agents field %s", name)

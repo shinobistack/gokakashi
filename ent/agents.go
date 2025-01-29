@@ -22,7 +22,7 @@ type Agents struct {
 	ID int `json:"id,omitempty"`
 	// Unique name or identifier for the agent.
 	Name string `json:"name,omitempty"`
-	// Enum: { connected, scan_in_progre, disconnected }.
+	// Enum: { connected, scan_in_progress, disconnected }.
 	Status string `json:"status,omitempty"`
 	// Optional workspace path for the agent.
 	Workspace string `json:"workspace,omitempty"`
@@ -32,6 +32,8 @@ type Agents struct {
 	Labels schema.CommonLabels `json:"labels,omitempty"`
 	// Timestamp of the agent's last activity.
 	LastSeen time.Time `json:"last_seen,omitempty"`
+	// Timestamp of the agent's liveliness.
+	LastHeartbeat time.Time `json:"last_heartbeat,omitempty"`
 	// Edges holds the relations/edges for other nodes in the graph.
 	// The values are being populated by the AgentsQuery when eager-loading is set.
 	Edges        AgentsEdges `json:"edges"`
@@ -78,7 +80,7 @@ func (*Agents) scanValues(columns []string) ([]any, error) {
 			values[i] = new(sql.NullInt64)
 		case agents.FieldName, agents.FieldStatus, agents.FieldWorkspace, agents.FieldServer:
 			values[i] = new(sql.NullString)
-		case agents.FieldLastSeen:
+		case agents.FieldLastSeen, agents.FieldLastHeartbeat:
 			values[i] = new(sql.NullTime)
 		default:
 			values[i] = new(sql.UnknownType)
@@ -138,6 +140,12 @@ func (a *Agents) assignValues(columns []string, values []any) error {
 				return fmt.Errorf("unexpected type %T for field last_seen", values[i])
 			} else if value.Valid {
 				a.LastSeen = value.Time
+			}
+		case agents.FieldLastHeartbeat:
+			if value, ok := values[i].(*sql.NullTime); !ok {
+				return fmt.Errorf("unexpected type %T for field last_heartbeat", values[i])
+			} else if value.Valid {
+				a.LastHeartbeat = value.Time
 			}
 		default:
 			a.selectValues.Set(columns[i], values[i])
@@ -202,6 +210,9 @@ func (a *Agents) String() string {
 	builder.WriteString(", ")
 	builder.WriteString("last_seen=")
 	builder.WriteString(a.LastSeen.Format(time.ANSIC))
+	builder.WriteString(", ")
+	builder.WriteString("last_heartbeat=")
+	builder.WriteString(a.LastHeartbeat.Format(time.ANSIC))
 	builder.WriteByte(')')
 	return builder.String()
 }

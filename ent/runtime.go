@@ -63,6 +63,12 @@ func init() {
 	agents.DefaultLastSeen = agentsDescLastSeen.Default.(func() time.Time)
 	// agents.UpdateDefaultLastSeen holds the default value on update for the last_seen field.
 	agents.UpdateDefaultLastSeen = agentsDescLastSeen.UpdateDefault.(func() time.Time)
+	// agentsDescLastHeartbeat is the schema descriptor for last_heartbeat field.
+	agentsDescLastHeartbeat := agentsFields[7].Descriptor()
+	// agents.DefaultLastHeartbeat holds the default value on creation for the last_heartbeat field.
+	agents.DefaultLastHeartbeat = agentsDescLastHeartbeat.Default.(func() time.Time)
+	// agents.UpdateDefaultLastHeartbeat holds the default value on update for the last_heartbeat field.
+	agents.UpdateDefaultLastHeartbeat = agentsDescLastHeartbeat.UpdateDefault.(func() time.Time)
 	integrationtypeFields := schema.IntegrationType{}.Fields()
 	_ = integrationtypeFields
 	// integrationtypeDescDisplayName is the schema descriptor for display_name field.

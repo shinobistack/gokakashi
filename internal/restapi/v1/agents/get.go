@@ -18,10 +18,11 @@ type GetAgentRequest struct {
 type ListAgentsRequest struct{}
 
 type GetAgentResponse struct {
-	ID     int                   `json:"id"`
-	Status string                `json:"status"`
-	Name   string                `json:"name,omitempty"`
-	Labels []schema.CommonLabels `json:"labels,omitempty"`
+	ID            int                   `json:"id"`
+	Status        string                `json:"status"`
+	Name          string                `json:"name,omitempty"`
+	Labels        []schema.CommonLabels `json:"labels,omitempty"`
+	LastHeartbeat time.Time             `json:"last_heartbeat"`
 }
 
 type ListAgentsResponse struct {
@@ -86,10 +87,11 @@ func GetAgent(client *ent.Client) func(ctx context.Context, req GetAgentRequest,
 		labels := mapAgentLabels(agent.Edges.AgentLabels)
 
 		*res = GetAgentResponse{
-			ID:     agent.ID,
-			Status: agent.Status,
-			Name:   agent.Name,
-			Labels: labels,
+			ID:            agent.ID,
+			Status:        agent.Status,
+			Name:          agent.Name,
+			Labels:        labels,
+			LastHeartbeat: agent.LastHeartbeat,
 		}
 		return nil
 	}

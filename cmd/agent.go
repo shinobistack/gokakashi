@@ -150,20 +150,74 @@ func agentRegister(cmd *cobra.Command, args []string) {
 	log.Printf("Agent registered successfully! Agent ID: %d, Name: %s, Workspace: %s", agent.ID, agent.Name, agent.Workspace)
 
 	// Update Agent status
-	if err := updateAgentStatus(cmd.Context(), server, token, agent.ID, "scan_in_progres"); err != nil {
+	if err := updateAgentStatus(cmd.Context(), server, token, agent.ID, "scan_in_progress"); err != nil {
 		log.Printf("Failed to update scan status to 'error': %v", err)
 	}
+	if err := sendAgentHeartbeat(cmd.Context(), server, token, agent.ID); err != nil {
+		log.Printf("Failed to send final heartbeat for agent %d: %v", agent.ID, err)
+	}
+
+	//// Start sending heartbeats in a separate goroutine, thinking how to handle stale goroutines then?
+	//go startHeartbeat(cmd.Context(), server, token, agent.ID, 30*time.Second)
 
 	// Ephemeral agents
 	if singleStrike {
 		log.Printf("Ephemeral agent registered. Starting in sometime...")
 		// Todo: Dynamic Delay: Instead of hardcoding 5 seconds, make it configurable
 		time.Sleep(10 * time.Second)
+		if err := sendAgentHeartbeat(cmd.Context(), server, token, agent.ID); err != nil {
+			log.Printf("Failed to send final heartbeat for agent %d: %v", agent.ID, err)
+		}
 		executeEphemeraTasks(cmd.Context(), server, token, agent.ID, agent.Workspace)
 	} else {
 		// Long-lived agents keep polling
 		pollTasks(cmd.Context(), server, token, agent.ID, agent.Workspace)
 	}
+}
+
+func startHeartbeat(ctx context.Context, server, token string, agentID int, interval time.Duration) {
+	ticker := time.NewTicker(interval)
+	defer ticker.Stop()
+
+	for {
+		select {
+		case <-ticker.C:
+			// Send heartbeat
+			if err := sendAgentHeartbeat(ctx, server, token, agentID); err != nil {
+				log.Printf("Failed to send heartbeat for agent %d: %v", agentID, err)
+			}
+		case <-ctx.Done():
+			log.Printf("Stopping heartbeat for agent %d", agentID)
+			return
+		}
+	}
+}
+
+func sendAgentHeartbeat(ctx context.Context, server, token string, agentID int) error {
+	path := fmt.Sprintf("/api/v1/agents/%d/heartbeat", agentID)
+	url := constructURL(server, path)
+
+	req, err := http.NewRequest("PUT", url, nil)
+	if err != nil {
+		return fmt.Errorf("failed to create heartbeat request: %w", err)
+	}
+
+	req.Header.Set("Content-Type", "application/json")
+
+	resp, err := ctx.Value(httpClientKey{}).(*client.Client).Do(req)
+	if err != nil {
+		return fmt.Errorf("failed to send heartbeat: %w", err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		body, _ := io.ReadAll(resp.Body)
+		return fmt.Errorf("server responded with status: %d, response: %s", resp.StatusCode, body)
+	}
+
+	log.Printf("Heartbeat successfully sent for agent ID %d", agentID)
+
+	return nil
 }
 
 func parseLabels(labels string) ([]schema.CommonLabels, error) {
@@ -255,6 +309,10 @@ func updateAgentStatus(ctx context.Context, server, token string, agentID int, s
 // Todo: Better way to handle polling for some time for ephemeral agent's task
 
 func executeEphemeraTasks(ctx context.Context, server, token string, agentID int, workspace string) {
+	if err := sendAgentHeartbeat(ctx, server, token, agentID); err != nil {
+		log.Printf("Failed to send heartbeat for agent %d: %v", agentID, err)
+	}
+
 	tasks, err := fetchTasks(ctx, server, token, agentID, "pending", 1)
 	if err != nil {
 		log.Printf("Error fetching task: %v", err)
@@ -278,6 +336,9 @@ func executeEphemeraTasks(ctx context.Context, server, token string, agentID int
 	}
 
 	// Process the task
+	if err := sendAgentHeartbeat(ctx, server, token, agentID); err != nil {
+		log.Printf("Failed to send heartbeat for agent %d: %v", agentID, err)
+	}
 	processTask(ctx, server, token, task, workspace, agentID)
 
 	// Mark task as "complete"
@@ -290,6 +351,10 @@ func executeEphemeraTasks(ctx context.Context, server, token string, agentID int
 	err = updateAgentStatus(ctx, server, token, agentID, "disconnected")
 	if err != nil {
 		log.Printf("Failed to update scan status to 'disconnected': %v", err)
+	}
+
+	if err := sendAgentHeartbeat(ctx, server, token, agentID); err != nil {
+		log.Printf("Failed to send heartbeat for agent %d: %v", agentID, err)
 	}
 
 	log.Printf("Ephemeral agent %d completed its task and will now exit.", agentID)
@@ -323,7 +388,24 @@ func deregisterEphemeralAgent(ctx context.Context, agentID int, server, token st
 }
 
 func pollTasks(ctx context.Context, server, token string, agentID int, workspace string) {
+	// Heartbeat frequency
+	heartbeatInterval := 30 * time.Second
+	lastHeartbeatSent := time.Now()
+
 	for {
+
+		now := time.Now()
+
+		// Send heartbeat if due
+		// alive as long as it's polling, so heartbeat is sent when loop restarts.
+		if now.Sub(lastHeartbeatSent) >= heartbeatInterval {
+			if err := sendAgentHeartbeat(ctx, server, token, agentID); err != nil {
+				log.Printf("Failed to send heartbeat for agent %d: %v", agentID, err)
+			} else {
+				lastHeartbeatSent = now
+			}
+		}
+
 		// Process only tasks with status "pending" in the order returned (created_at ASC)
 		tasks, err := fetchTasks(ctx, server, token, agentID, "pending", 0)
 		if err != nil {
@@ -344,6 +426,11 @@ func pollTasks(ctx context.Context, server, token string, agentID int, workspace
 			if err != nil {
 				log.Printf("Failed to update agent_task status to 'in_progress': %v", err)
 				return
+			}
+			if err := sendAgentHeartbeat(ctx, server, token, agentID); err != nil {
+				log.Printf("Failed to send heartbeat for agent %d: %v", agentID, err)
+			} else {
+				lastHeartbeatSent = time.Now()
 			}
 			processTask(ctx, server, token, task, workspace, agentID)
 			continue
@@ -432,9 +519,9 @@ func processTask(ctx context.Context, server, token string, task agenttasks.GetA
 		return
 	}
 
-	err = updateScanStatus(ctx, server, token, scan.ID, "scan_in_progres")
+	err = updateScanStatus(ctx, server, token, scan.ID, "scan_in_progress")
 	if err != nil {
-		log.Printf("Failed to update scan status to 'scan_in_progres': %v", err)
+		log.Printf("Failed to update scan status to 'scan_in_progress': %v", err)
 	}
 	// Step 4: Perform the scan
 	// severityLevels := []string{"HIGH", "CRITICAL"}
@@ -466,7 +553,7 @@ func processTask(ctx context.Context, server, token string, task agenttasks.GetA
 	} else {
 		err = updateScanStatus(ctx, server, token, scan.ID, "notify_pending")
 		if err != nil {
-			log.Printf("Failed to update scan status to 'scan_in_progres': %v", err)
+			log.Printf("Failed to update scan status to 'scan_in_progress': %v", err)
 		}
 	}
 
