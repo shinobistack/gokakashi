@@ -14,7 +14,7 @@ type Server struct {
 //go:embed dist
 var WebAssets embed.FS
 
-func New(addr string) (*Server, error) {
+func New(addr, apiUrl string) (*Server, error) {
 	routes := http.NewServeMux()
 
 	reactApp, err := fs.Sub(WebAssets, "dist")
@@ -22,6 +22,9 @@ func New(addr string) (*Server, error) {
 		return nil, fmt.Errorf("error finding the dist folder: %w", err)
 	}
 
+	routes.HandleFunc("/meta", func(w http.ResponseWriter, r *http.Request) {
+		fmt.Fprintf(w, `{ "api_server_url": "%s" }`, apiUrl)
+	})
 	routes.Handle("/", http.FileServerFS(reactApp))
 
 	return &Server{
