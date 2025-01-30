@@ -48,4 +48,4 @@ jobs:
         with:
           tag_name: ${{ github.event.inputs.tag }}
           files: dist/*
-          title: "🚀 gokakashi ${{ github.event.inputs.title }}"
+          title: "🚀 ${{ github.event.inputs.title }}"
