@@ -21,10 +21,10 @@ jobs:
           go-version: "1.23"
 
       - name: Tidy Up Go Modules
-          run: go mod tidy
+        run: go mod tidy
 
-      - name: Tidy Up Go Modules
-          run: npm install
+      - name: Install Dependencies (webapp)
+        run: npm install
 
       - name: Build Binaries
         run: |
