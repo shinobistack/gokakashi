@@ -8,8 +8,8 @@ on:
       tag:
         description: "Tag for the release (e.g., v0.1.0)"
         required: true
-      header:
-        description: "One line description (e.g., v0.1.0 Chidori)"
+      title:
+        description: "Title for the release made (e.g., v0.1.0 Chidori)"
         required: false
 
 jobs:
@@ -48,4 +48,4 @@ jobs:
         with:
           tag_name: ${{ github.event.inputs.tag }}
           files: dist/*
-          body: "🚀 gokakashi - **${{ github.event.inputs.header }}**"
+          title: "🚀 gokakashi ${{ github.event.inputs.title }}"
