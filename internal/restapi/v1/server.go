@@ -2,9 +2,11 @@ package v1
 
 import (
 	"encoding/json"
-	"entgo.io/ent/dialect"
 	"fmt"
+
+	"entgo.io/ent/dialect"
 	_ "github.com/lib/pq"
+	"github.com/rs/cors"
 	"github.com/shinobistack/gokakashi/ent"
 	configv1 "github.com/shinobistack/gokakashi/internal/config/v1"
 	"github.com/shinobistack/gokakashi/internal/restapi/server/middleware"
@@ -19,14 +21,15 @@ import (
 	scannotify1 "github.com/shinobistack/gokakashi/internal/restapi/v1/scannotify"
 	scans1 "github.com/shinobistack/gokakashi/internal/restapi/v1/scans"
 
+	"log"
+	"net/http"
+	"strconv"
+
 	"github.com/swaggest/openapi-go/openapi31"
 	"github.com/swaggest/rest/web"
 	swg "github.com/swaggest/swgui"
 	swgui "github.com/swaggest/swgui/v5emb"
 	"github.com/swaggest/usecase"
-	"log"
-	"net/http"
-	"strconv"
 )
 
 type Server struct {
@@ -51,7 +54,6 @@ func (srv *Server) Service() *web.Service {
 	apiV1 := web.NewService(v1Reflector)
 
 	bearerAuth := &middleware.BearerTokenAuth{AuthToken: srv.AuthToken}
-	// Auth applied to routers under /api/v1
 	apiV1.Wrap(bearerAuth.Middleware)
 
 	// Define API endpoints
@@ -107,6 +109,11 @@ func (srv *Server) Service() *web.Service {
 	apiV1.Put("/scannotify/{scan_id}", usecase.NewInteractor(scannotify1.UpdateScanNotify(srv.DB)))
 	apiV1.Delete("/scannotify/{scan_id}", usecase.NewInteractor(scannotify1.DeleteScanNotify(srv.DB)))
 
+	s.Use(cors.New(cors.Options{
+		AllowedOrigins: []string{"http://localhost:5555"},
+		AllowedMethods: []string{http.MethodOptions, http.MethodGet},
+		AllowedHeaders: []string{"Content-Type", "Authorization"},
+	}).Handler)
 	s.Mount("/api/v1/openapi.json", specHandler(apiV1.OpenAPICollector.SpecSchema().(*openapi31.Spec)))
 	s.Mount("/api/v1", apiV1)
 

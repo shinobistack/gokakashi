@@ -1,63 +1,33 @@
-import { useState } from "react";
-
-// Sample data with UUIDs for the id field
-const integrationsData = [
-  {
-    id: "550e8400-e29b-41d4-a716-446655440000",
-    name: "Integration A",
-    type: "Type 1",
-  },
-  {
-    id: "550e8400-e29b-41d4-a716-446655440001",
-    name: "Integration B",
-    type: "Type 2",
-  },
-  {
-    id: "550e8400-e29b-41d4-a716-446655440002",
-    name: "Integration C",
-    type: "Type 1",
-  },
-  {
-    id: "550e8400-e29b-41d4-a716-446655440003",
-    name: "Integration D",
-    type: "Type 2",
-  },
-  {
-    id: "550e8400-e29b-41d4-a716-446655440004",
-    name: "Integration E",
-    type: "Type 1",
-  },
-  {
-    id: "550e8400-e29b-41d4-a716-446655440005",
-    name: "Integration F",
-    type: "Type 2",
-  },
-  {
-    id: "550e8400-e29b-41d4-a716-446655440006",
-    name: "Integration G",
-    type: "Type 1",
-  },
-  {
-    id: "550e8400-e29b-41d4-a716-446655440007",
-    name: "Integration H",
-    type: "Type 2",
-  },
-  {
-    id: "550e8400-e29b-41d4-a716-446655440008",
-    name: "Integration I",
-    type: "Type 1",
-  },
-  {
-    id: "550e8400-e29b-41d4-a716-446655440009",
-    name: "Integration J",
-    type: "Type 2",
-  },
-];
+import { useState, useEffect } from "react";
+import axios from "axios";
+import { ApiUrl } from "../../feature/meta";
 
 const IntegrationsList = () => {
   const [itemsPerPage, setItemsPerPage] = useState(10);
   const [currentPage, setCurrentPage] = useState(1);
   const [searchQuery, setSearchQuery] = useState("");
+  const [integrationsData, setIntegrationsData] = useState([]);
+
+  useEffect(() => {
+    const fetchIntegrations = async () => {
+      try {
+        const response = await axios.get(
+          `${await ApiUrl()}/api/v1/integrations`,
+          {
+            headers: {
+              Authorization: `Bearer ${localStorage.getItem("adminSecret")}`,
+              "Content-Type": "application/json",
+            },
+          }
+        );
+        setIntegrationsData(response.data);
+      } catch (error) {
+        console.error("Error fetching integrations:", error);
+      }
+    };
+
+    fetchIntegrations();
+  }, []);
 
   // Sorting state
   const [sortConfig, setSortConfig] = useState({
