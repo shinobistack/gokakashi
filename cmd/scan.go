@@ -5,6 +5,8 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"github.com/google/uuid"
+	"github.com/shinobistack/gokakashi/ent/schema"
 	"log"
 	"net/http"
 	"net/url"
@@ -88,8 +90,6 @@ func constructURL(server string, path string) string {
 }
 
 func scanImage(cmd *cobra.Command, args []string) {
-	ctx := cmd.Context()
-	httpClient := ctx.Value(httpClientKey{}).(*client.Client)
 
 	if policyName == "" {
 		log.Fatalf("Error: --policy is required to specify the policy name.")
@@ -103,26 +103,86 @@ func scanImage(cmd *cobra.Command, args []string) {
 		log.Fatalf("Error parsing labels: %v", err)
 	}
 
-	policy, err := fetchPolicyByName(ctx, httpClient, policyName)
+	policy, err := fetchPolicyByName(cmd.Context())
 	if err != nil {
 		log.Fatalf("Failed to fetch policy: %v", err)
 	}
-	log.Println(policy)
 
-	integration, err := fetchIntegrationByName(ctx, httpClient, policy.Image.Registry)
-	if err != nil {
-		log.Fatalf("Failed to fetch integration: %v", err)
+	triggerType, ok := policy.Trigger["type"].(string)
+	if !ok {
+		log.Fatalf("Error: Unable to determine trigger type for policy %s", policyName)
 	}
-	log.Println(integration)
 
-	reqBody := map[string]interface{}{
-		"policy_id":      policy.ID,
-		"image":          image,
-		"scanner":        policy.Scanner,
-		"integration_id": integration.ID,
-		"notify":         policy.Notify,
-		"status":         "scan_pending",
-		"labels":         parsedLabels,
+	switch triggerType {
+	case "ci":
+
+		// No image field (local images)
+		if policy.Image.Registry == "" && policy.Image.Name == "" && policy.Image.Tags == nil {
+			log.Println("Policy type is CI with no image field, directly feeding into scans table.")
+			handleNotifyAndScan(cmd.Context(), policy, nil, parsedLabels)
+			return
+		}
+
+		// Only registry specified
+		if policy.Image.Registry != "" && policy.Image.Name == "" && policy.Image.Tags == nil {
+			log.Printf("Policy type is CI with registry %s.", policy.Image.Registry)
+
+			integrationID, err := fetchIntegrationByName(cmd.Context(), policy.Image.Registry)
+			if err != nil {
+				log.Fatalf("Failed to fetch integration: %v", err)
+			}
+			handleNotifyAndScan(cmd.Context(), policy, integrationID, parsedLabels)
+			return
+
+		}
+		log.Fatalf("Unsupported CI configuration for policy %s", policyName)
+
+	default:
+		log.Println("Trigger type is Cron. Processing scheduled scan... (will support soon)")
+
+		integrationID, err := fetchIntegrationByName(cmd.Context(), policy.Image.Registry)
+		if err != nil {
+			log.Fatalf("Failed to fetch integration: %v", err)
+		}
+		handleNotifyAndScan(cmd.Context(), policy, integrationID, parsedLabels)
+
+	}
+
+}
+
+func handleNotifyAndScan(ctx context.Context, policy *policies.GetPolicyResponse, integrationID *uuid.UUID, labels []schema.CommonLabels) {
+	if policy.Notify != nil && len(*policy.Notify) > 0 {
+		var formattedNotifies []schema.Notify
+
+		for _, notify := range *policy.Notify {
+			notifyDetails, err := fetchIntegrationByName(ctx, notify.To)
+			if err != nil {
+				log.Fatalf("Failed to fetch integration: %v", err)
+			}
+
+			formattedNotifies = append(formattedNotifies, schema.Notify{
+				To:     notifyDetails.String(),
+				When:   notify.When,
+				Format: notify.Format,
+			})
+
+			fmt.Printf("Fetched integration details for: %s\n", notify.To)
+		}
+		postScanDetails(ctx, policy.ID, policy.Scanner, integrationID, labels, formattedNotifies)
+	} else {
+		log.Println("No notify found in policy. Skipping...")
+	}
+}
+
+func postScanDetails(ctx context.Context, policyID uuid.UUID, scanner string, integrationID *uuid.UUID, labels []schema.CommonLabels, notify []schema.Notify) (*scans.CreateScanResponse, error) {
+	reqBody := scans.CreateScanRequest{
+		PolicyID:      policyID,
+		Image:         image,
+		Scanner:       scanner,
+		IntegrationID: integrationID,
+		Notify:        notify,
+		Status:        "scan_pending",
+		Labels:        labels,
 	}
 	reqBodyJSON, _ := json.Marshal(reqBody)
 	url := constructURL(server, "/api/v1/scans")
@@ -133,7 +193,9 @@ func scanImage(cmd *cobra.Command, args []string) {
 	}
 	req.Header.Set("Content-Type", "application/json")
 
-	resp, err := httpClient.Do(req)
+	log.Printf("Scan request body: %s", string(reqBodyJSON))
+
+	resp, err := ctx.Value(httpClientKey{}).(*client.Client).Do(req)
 	if err != nil {
 		log.Fatalf("Failed to send scan request: %v", err)
 	}
@@ -149,6 +211,8 @@ func scanImage(cmd *cobra.Command, args []string) {
 	}
 
 	log.Printf("Scan triggered successfully! Scan ID: %s, status: %s", response.ID, response.Status)
+	return &response, nil
+
 }
 
 func getScanStatus(cmd *cobra.Command, args []string) {
@@ -186,7 +250,7 @@ func getScanStatus(cmd *cobra.Command, args []string) {
 	log.Printf("Scan status: %s", response.Status)
 }
 
-func fetchPolicyByName(ctx context.Context, httpClient *client.Client, policyName string) (*policies.GetPolicyResponse, error) {
+func fetchPolicyByName(ctx context.Context) (*policies.GetPolicyResponse, error) {
 	url := constructURL(server, "/api/v1/policies") + fmt.Sprintf("?name=%s", policyName)
 
 	req, err := http.NewRequest("GET", url, nil)
@@ -194,7 +258,8 @@ func fetchPolicyByName(ctx context.Context, httpClient *client.Client, policyNam
 		return nil, fmt.Errorf("failed to create policy fetch request: %w", err)
 	}
 
-	resp, err := httpClient.Do(req)
+	req.Header.Set("Content-Type", "application/json")
+	resp, err := ctx.Value(httpClientKey{}).(*client.Client).Do(req)
 	if err != nil {
 		return nil, fmt.Errorf("failed to fetch policy: %w", err)
 	}
@@ -212,7 +277,7 @@ func fetchPolicyByName(ctx context.Context, httpClient *client.Client, policyNam
 	return &policy[0], nil
 }
 
-func fetchIntegrationByName(ctx context.Context, httpClient *client.Client, integrationName string) (*integrations.GetIntegrationResponse, error) {
+func fetchIntegrationByName(ctx context.Context, integrationName string) (*uuid.UUID, error) {
 	url := constructURL(server, "/api/v1/integrations") + fmt.Sprintf("?name=%s", integrationName)
 
 	req, err := http.NewRequest("GET", url, nil)
@@ -220,7 +285,8 @@ func fetchIntegrationByName(ctx context.Context, httpClient *client.Client, inte
 		return nil, fmt.Errorf("failed to create integration fetch request: %w", err)
 	}
 
-	resp, err := httpClient.Do(req)
+	req.Header.Set("Content-Type", "application/json")
+	resp, err := ctx.Value(httpClientKey{}).(*client.Client).Do(req)
 	if err != nil {
 		return nil, fmt.Errorf("failed to fetch integration: %w", err)
 	}
@@ -235,5 +301,5 @@ func fetchIntegrationByName(ctx context.Context, httpClient *client.Client, inte
 		return nil, fmt.Errorf("failed to decode integration response: %w", err)
 	}
 
-	return &integration[0], nil
+	return &integration[0].ID, nil
 }

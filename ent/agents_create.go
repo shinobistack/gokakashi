@@ -108,6 +108,20 @@ func (ac *AgentsCreate) SetNillableLastSeen(t *time.Time) *AgentsCreate {
 	return ac
 }
 
+// SetLastHeartbeat sets the "last_heartbeat" field.
+func (ac *AgentsCreate) SetLastHeartbeat(t time.Time) *AgentsCreate {
+	ac.mutation.SetLastHeartbeat(t)
+	return ac
+}
+
+// SetNillableLastHeartbeat sets the "last_heartbeat" field if the given value is not nil.
+func (ac *AgentsCreate) SetNillableLastHeartbeat(t *time.Time) *AgentsCreate {
+	if t != nil {
+		ac.SetLastHeartbeat(*t)
+	}
+	return ac
+}
+
 // SetID sets the "id" field.
 func (ac *AgentsCreate) SetID(i int) *AgentsCreate {
 	ac.mutation.SetID(i)
@@ -187,6 +201,10 @@ func (ac *AgentsCreate) defaults() {
 		v := agents.DefaultLastSeen()
 		ac.mutation.SetLastSeen(v)
 	}
+	if _, ok := ac.mutation.LastHeartbeat(); !ok {
+		v := agents.DefaultLastHeartbeat()
+		ac.mutation.SetLastHeartbeat(v)
+	}
 }
 
 // check runs all checks and user-defined validators on the builder.
@@ -257,6 +275,10 @@ func (ac *AgentsCreate) createSpec() (*Agents, *sqlgraph.CreateSpec) {
 	if value, ok := ac.mutation.LastSeen(); ok {
 		_spec.SetField(agents.FieldLastSeen, field.TypeTime, value)
 		_node.LastSeen = value
+	}
+	if value, ok := ac.mutation.LastHeartbeat(); ok {
+		_spec.SetField(agents.FieldLastHeartbeat, field.TypeTime, value)
+		_node.LastHeartbeat = value
 	}
 	if nodes := ac.mutation.AgentTasksIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{

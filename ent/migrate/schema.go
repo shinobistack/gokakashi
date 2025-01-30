@@ -66,6 +66,7 @@ var (
 		{Name: "server", Type: field.TypeString, Nullable: true},
 		{Name: "labels", Type: field.TypeJSON, Nullable: true},
 		{Name: "last_seen", Type: field.TypeTime},
+		{Name: "last_heartbeat", Type: field.TypeTime, Nullable: true},
 	}
 	// AgentsTable holds the schema information for the "agents" table.
 	AgentsTable = &schema.Table{
@@ -110,7 +111,7 @@ var (
 	PoliciesColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeUUID, Unique: true},
 		{Name: "name", Type: field.TypeString, Unique: true},
-		{Name: "image", Type: field.TypeJSON},
+		{Name: "image", Type: field.TypeJSON, Nullable: true},
 		{Name: "scanner", Type: field.TypeString},
 		{Name: "labels", Type: field.TypeJSON, Nullable: true},
 		{Name: "trigger", Type: field.TypeJSON, Nullable: true},
@@ -193,7 +194,7 @@ var (
 		{Name: "notify", Type: field.TypeJSON, Nullable: true},
 		{Name: "labels", Type: field.TypeJSON, Nullable: true},
 		{Name: "report", Type: field.TypeJSON, Nullable: true},
-		{Name: "integration_id", Type: field.TypeUUID},
+		{Name: "integration_id", Type: field.TypeUUID, Nullable: true},
 		{Name: "policy_id", Type: field.TypeUUID},
 	}
 	// ScansTable holds the schema information for the "scans" table.
@@ -206,7 +207,7 @@ var (
 				Symbol:     "scans_integrations_scans",
 				Columns:    []*schema.Column{ScansColumns[7]},
 				RefColumns: []*schema.Column{IntegrationsColumns[0]},
-				OnDelete:   schema.NoAction,
+				OnDelete:   schema.SetNull,
 			},
 			{
 				Symbol:     "scans_policies_scans",

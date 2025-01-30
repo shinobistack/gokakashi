@@ -1161,6 +1161,7 @@ type AgentsMutation struct {
 	server              *string
 	labels              *schema.CommonLabels
 	last_seen           *time.Time
+	last_heartbeat      *time.Time
 	clearedFields       map[string]struct{}
 	agent_tasks         map[uuid.UUID]struct{}
 	removedagent_tasks  map[uuid.UUID]struct{}
@@ -1545,6 +1546,55 @@ func (m *AgentsMutation) ResetLastSeen() {
 	m.last_seen = nil
 }
 
+// SetLastHeartbeat sets the "last_heartbeat" field.
+func (m *AgentsMutation) SetLastHeartbeat(t time.Time) {
+	m.last_heartbeat = &t
+}
+
+// LastHeartbeat returns the value of the "last_heartbeat" field in the mutation.
+func (m *AgentsMutation) LastHeartbeat() (r time.Time, exists bool) {
+	v := m.last_heartbeat
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldLastHeartbeat returns the old "last_heartbeat" field's value of the Agents entity.
+// If the Agents object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *AgentsMutation) OldLastHeartbeat(ctx context.Context) (v time.Time, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldLastHeartbeat is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldLastHeartbeat requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldLastHeartbeat: %w", err)
+	}
+	return oldValue.LastHeartbeat, nil
+}
+
+// ClearLastHeartbeat clears the value of the "last_heartbeat" field.
+func (m *AgentsMutation) ClearLastHeartbeat() {
+	m.last_heartbeat = nil
+	m.clearedFields[agents.FieldLastHeartbeat] = struct{}{}
+}
+
+// LastHeartbeatCleared returns if the "last_heartbeat" field was cleared in this mutation.
+func (m *AgentsMutation) LastHeartbeatCleared() bool {
+	_, ok := m.clearedFields[agents.FieldLastHeartbeat]
+	return ok
+}
+
+// ResetLastHeartbeat resets all changes to the "last_heartbeat" field.
+func (m *AgentsMutation) ResetLastHeartbeat() {
+	m.last_heartbeat = nil
+	delete(m.clearedFields, agents.FieldLastHeartbeat)
+}
+
 // AddAgentTaskIDs adds the "agent_tasks" edge to the AgentTasks entity by ids.
 func (m *AgentsMutation) AddAgentTaskIDs(ids ...uuid.UUID) {
 	if m.agent_tasks == nil {
@@ -1687,7 +1737,7 @@ func (m *AgentsMutation) Type() string {
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
 func (m *AgentsMutation) Fields() []string {
-	fields := make([]string, 0, 6)
+	fields := make([]string, 0, 7)
 	if m.name != nil {
 		fields = append(fields, agents.FieldName)
 	}
@@ -1705,6 +1755,9 @@ func (m *AgentsMutation) Fields() []string {
 	}
 	if m.last_seen != nil {
 		fields = append(fields, agents.FieldLastSeen)
+	}
+	if m.last_heartbeat != nil {
+		fields = append(fields, agents.FieldLastHeartbeat)
 	}
 	return fields
 }
@@ -1726,6 +1779,8 @@ func (m *AgentsMutation) Field(name string) (ent.Value, bool) {
 		return m.Labels()
 	case agents.FieldLastSeen:
 		return m.LastSeen()
+	case agents.FieldLastHeartbeat:
+		return m.LastHeartbeat()
 	}
 	return nil, false
 }
@@ -1747,6 +1802,8 @@ func (m *AgentsMutation) OldField(ctx context.Context, name string) (ent.Value, 
 		return m.OldLabels(ctx)
 	case agents.FieldLastSeen:
 		return m.OldLastSeen(ctx)
+	case agents.FieldLastHeartbeat:
+		return m.OldLastHeartbeat(ctx)
 	}
 	return nil, fmt.Errorf("unknown Agents field %s", name)
 }
@@ -1798,6 +1855,13 @@ func (m *AgentsMutation) SetField(name string, value ent.Value) error {
 		}
 		m.SetLastSeen(v)
 		return nil
+	case agents.FieldLastHeartbeat:
+		v, ok := value.(time.Time)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetLastHeartbeat(v)
+		return nil
 	}
 	return fmt.Errorf("unknown Agents field %s", name)
 }
@@ -1840,6 +1904,9 @@ func (m *AgentsMutation) ClearedFields() []string {
 	if m.FieldCleared(agents.FieldLabels) {
 		fields = append(fields, agents.FieldLabels)
 	}
+	if m.FieldCleared(agents.FieldLastHeartbeat) {
+		fields = append(fields, agents.FieldLastHeartbeat)
+	}
 	return fields
 }
 
@@ -1866,6 +1933,9 @@ func (m *AgentsMutation) ClearField(name string) error {
 	case agents.FieldLabels:
 		m.ClearLabels()
 		return nil
+	case agents.FieldLastHeartbeat:
+		m.ClearLastHeartbeat()
+		return nil
 	}
 	return fmt.Errorf("unknown Agents nullable field %s", name)
 }
@@ -1891,6 +1961,9 @@ func (m *AgentsMutation) ResetField(name string) error {
 		return nil
 	case agents.FieldLastSeen:
 		m.ResetLastSeen()
+		return nil
+	case agents.FieldLastHeartbeat:
+		m.ResetLastHeartbeat()
 		return nil
 	}
 	return fmt.Errorf("unknown Agents field %s", name)
@@ -3160,9 +3233,22 @@ func (m *PoliciesMutation) OldImage(ctx context.Context) (v schema.Image, err er
 	return oldValue.Image, nil
 }
 
+// ClearImage clears the value of the "image" field.
+func (m *PoliciesMutation) ClearImage() {
+	m.image = nil
+	m.clearedFields[policies.FieldImage] = struct{}{}
+}
+
+// ImageCleared returns if the "image" field was cleared in this mutation.
+func (m *PoliciesMutation) ImageCleared() bool {
+	_, ok := m.clearedFields[policies.FieldImage]
+	return ok
+}
+
 // ResetImage resets all changes to the "image" field.
 func (m *PoliciesMutation) ResetImage() {
 	m.image = nil
+	delete(m.clearedFields, policies.FieldImage)
 }
 
 // SetScanner sets the "scanner" field.
@@ -3647,6 +3733,9 @@ func (m *PoliciesMutation) AddField(name string, value ent.Value) error {
 // mutation.
 func (m *PoliciesMutation) ClearedFields() []string {
 	var fields []string
+	if m.FieldCleared(policies.FieldImage) {
+		fields = append(fields, policies.FieldImage)
+	}
 	if m.FieldCleared(policies.FieldLabels) {
 		fields = append(fields, policies.FieldLabels)
 	}
@@ -3670,6 +3759,9 @@ func (m *PoliciesMutation) FieldCleared(name string) bool {
 // error if the field is not defined in the schema.
 func (m *PoliciesMutation) ClearField(name string) error {
 	switch name {
+	case policies.FieldImage:
+		m.ClearImage()
+		return nil
 	case policies.FieldLabels:
 		m.ClearLabels()
 		return nil
@@ -5497,7 +5589,7 @@ func (m *ScansMutation) IntegrationID() (r uuid.UUID, exists bool) {
 // OldIntegrationID returns the old "integration_id" field's value of the Scans entity.
 // If the Scans object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *ScansMutation) OldIntegrationID(ctx context.Context) (v uuid.UUID, err error) {
+func (m *ScansMutation) OldIntegrationID(ctx context.Context) (v *uuid.UUID, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldIntegrationID is only allowed on UpdateOne operations")
 	}
@@ -5511,9 +5603,22 @@ func (m *ScansMutation) OldIntegrationID(ctx context.Context) (v uuid.UUID, err 
 	return oldValue.IntegrationID, nil
 }
 
+// ClearIntegrationID clears the value of the "integration_id" field.
+func (m *ScansMutation) ClearIntegrationID() {
+	m.integrations = nil
+	m.clearedFields[scans.FieldIntegrationID] = struct{}{}
+}
+
+// IntegrationIDCleared returns if the "integration_id" field was cleared in this mutation.
+func (m *ScansMutation) IntegrationIDCleared() bool {
+	_, ok := m.clearedFields[scans.FieldIntegrationID]
+	return ok
+}
+
 // ResetIntegrationID resets all changes to the "integration_id" field.
 func (m *ScansMutation) ResetIntegrationID() {
 	m.integrations = nil
+	delete(m.clearedFields, scans.FieldIntegrationID)
 }
 
 // SetScanner sets the "scanner" field.
@@ -5771,7 +5876,7 @@ func (m *ScansMutation) ClearIntegrations() {
 
 // IntegrationsCleared reports if the "integrations" edge to the Integrations entity was cleared.
 func (m *ScansMutation) IntegrationsCleared() bool {
-	return m.clearedintegrations
+	return m.IntegrationIDCleared() || m.clearedintegrations
 }
 
 // IntegrationsID returns the "integrations" edge ID in the mutation.
@@ -6163,6 +6268,9 @@ func (m *ScansMutation) AddField(name string, value ent.Value) error {
 // mutation.
 func (m *ScansMutation) ClearedFields() []string {
 	var fields []string
+	if m.FieldCleared(scans.FieldIntegrationID) {
+		fields = append(fields, scans.FieldIntegrationID)
+	}
 	if m.FieldCleared(scans.FieldNotify) {
 		fields = append(fields, scans.FieldNotify)
 	}
@@ -6186,6 +6294,9 @@ func (m *ScansMutation) FieldCleared(name string) bool {
 // error if the field is not defined in the schema.
 func (m *ScansMutation) ClearField(name string) error {
 	switch name {
+	case scans.FieldIntegrationID:
+		m.ClearIntegrationID()
+		return nil
 	case scans.FieldNotify:
 		m.ClearNotify()
 		return nil

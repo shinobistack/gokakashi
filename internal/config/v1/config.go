@@ -46,7 +46,7 @@ type Notify = schema.Notify
 // Policy defines the scanning policies for specific images
 type Policy struct {
 	Name    string            `yaml:"name"`
-	Image   ImagePolicy       `yaml:"image"`
+	Image   ImagePolicy       `yaml:"image,omitempty"`
 	Trigger Trigger           `yaml:"trigger"`
 	Labels  map[string]string `yaml:"labels,omitempty"`
 	Notify  []Notify          `yaml:"notify,omitempty"`

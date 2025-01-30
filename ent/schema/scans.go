@@ -32,7 +32,7 @@ func (Scans) Fields() []ent.Field {
 		field.String("status").
 			Default("scan_pending").
 			Validate(func(s string) error {
-				validStatuses := []string{"scan_pending", "scan_in_progres", "notify_pending", "notify_in_progress", "success", "error"}
+				validStatuses := []string{"scan_pending", "scan_in_progress", "notify_pending", "notify_in_progress", "success", "error"}
 				for _, status := range validStatuses {
 					if s == status {
 						return nil
@@ -40,10 +40,12 @@ func (Scans) Fields() []ent.Field {
 				}
 				return errors.New("invalid status")
 			}).
-			Comment("Enum: { scan_pending, scan_in_progre, notify_pending, notify_in_progress,  success, error }."),
+			Comment("Enum: { scan_pending, scan_in_progress, notify_pending, notify_in_progress,  success, error }."),
 		field.String("image").
 			Comment("Details of the image being scanned."),
 		field.UUID("integration_id", uuid.UUID{}).
+			Nillable().
+			Optional().
 			Comment("Foreign key to Integrations.ID"),
 		field.String("scanner").
 			Comment("Scanners like Trivy."),
@@ -70,7 +72,6 @@ func (Scans) Edges() []ent.Edge {
 		edge.From("integrations", Integrations.Type).
 			Ref("scans").
 			Unique().
-			Required().
 			Field("integration_id"),
 		// A single scan can have multiple labels.
 		edge.To("scan_labels", ScanLabels.Type),

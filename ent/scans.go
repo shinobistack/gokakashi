@@ -24,12 +24,12 @@ type Scans struct {
 	ID uuid.UUID `json:"id,omitempty"`
 	// Foreign key to Policies.ID
 	PolicyID uuid.UUID `json:"policy_id,omitempty"`
-	// Enum: { scan_pending, scan_in_progre, notify_pending, notify_in_progress,  success, error }.
+	// Enum: { scan_pending, scan_in_progress, notify_pending, notify_in_progress,  success, error }.
 	Status string `json:"status,omitempty"`
 	// Details of the image being scanned.
 	Image string `json:"image,omitempty"`
 	// Foreign key to Integrations.ID
-	IntegrationID uuid.UUID `json:"integration_id,omitempty"`
+	IntegrationID *uuid.UUID `json:"integration_id,omitempty"`
 	// Scanners like Trivy.
 	Scanner string `json:"scanner,omitempty"`
 	// Conditions to check and stores notification configuration.
@@ -115,11 +115,13 @@ func (*Scans) scanValues(columns []string) ([]any, error) {
 	values := make([]any, len(columns))
 	for i := range columns {
 		switch columns[i] {
+		case scans.FieldIntegrationID:
+			values[i] = &sql.NullScanner{S: new(uuid.UUID)}
 		case scans.FieldNotify, scans.FieldLabels, scans.FieldReport:
 			values[i] = new([]byte)
 		case scans.FieldStatus, scans.FieldImage, scans.FieldScanner:
 			values[i] = new(sql.NullString)
-		case scans.FieldID, scans.FieldPolicyID, scans.FieldIntegrationID:
+		case scans.FieldID, scans.FieldPolicyID:
 			values[i] = new(uuid.UUID)
 		default:
 			values[i] = new(sql.UnknownType)
@@ -161,10 +163,11 @@ func (s *Scans) assignValues(columns []string, values []any) error {
 				s.Image = value.String
 			}
 		case scans.FieldIntegrationID:
-			if value, ok := values[i].(*uuid.UUID); !ok {
+			if value, ok := values[i].(*sql.NullScanner); !ok {
 				return fmt.Errorf("unexpected type %T for field integration_id", values[i])
-			} else if value != nil {
-				s.IntegrationID = *value
+			} else if value.Valid {
+				s.IntegrationID = new(uuid.UUID)
+				*s.IntegrationID = *value.S.(*uuid.UUID)
 			}
 		case scans.FieldScanner:
 			if value, ok := values[i].(*sql.NullString); !ok {
@@ -266,8 +269,10 @@ func (s *Scans) String() string {
 	builder.WriteString("image=")
 	builder.WriteString(s.Image)
 	builder.WriteString(", ")
-	builder.WriteString("integration_id=")
-	builder.WriteString(fmt.Sprintf("%v", s.IntegrationID))
+	if v := s.IntegrationID; v != nil {
+		builder.WriteString("integration_id=")
+		builder.WriteString(fmt.Sprintf("%v", *v))
+	}
 	builder.WriteString(", ")
 	builder.WriteString("scanner=")
 	builder.WriteString(s.Scanner)
