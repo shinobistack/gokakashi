@@ -10,6 +10,7 @@ import (
 	"github.com/shinobistack/gokakashi/ent"
 	configv1 "github.com/shinobistack/gokakashi/internal/config/v1"
 	"github.com/shinobistack/gokakashi/internal/restapi/server/middleware"
+	agentlabels1 "github.com/shinobistack/gokakashi/internal/restapi/v1/agentlabels"
 	agents1 "github.com/shinobistack/gokakashi/internal/restapi/v1/agents"
 	agenttasks1 "github.com/shinobistack/gokakashi/internal/restapi/v1/agenttasks"
 
@@ -95,7 +96,8 @@ func (srv *Server) Service() *web.Service {
 	apiV1.Get("/agents", usecase.NewInteractor(agents1.PollAgents(srv.DB)))
 	apiV1.Get("/agents/{id}", usecase.NewInteractor(agents1.GetAgent(srv.DB)))
 	apiV1.Put("/agents/{id}", usecase.NewInteractor(agents1.UpdateAgent(srv.DB)))
-	apiV1.Delete("/agents/{id}", usecase.NewInteractor(agents1.DeleteAgent(srv.DB)))
+	apiV1.Put("/agents/{id}/heartbeat", usecase.NewInteractor(agents1.UpdateAgentHeartbeat(srv.DB)))
+	apiV1.Delete("/agents", usecase.NewInteractor(agents1.DeleteAgent(srv.DB)))
 
 	apiV1.Post("/agents/{agent_id}/tasks", usecase.NewInteractor(agenttasks1.CreateAgentTask(srv.DB)))
 	apiV1.Get("/agents/tasks", usecase.NewInteractor(agenttasks1.ListAgentTasks(srv.DB)))
@@ -103,6 +105,12 @@ func (srv *Server) Service() *web.Service {
 	apiV1.Get("/agents/{agent_id}/tasks/{id}", usecase.NewInteractor(agenttasks1.GetAgentTask(srv.DB)))
 	apiV1.Put("/agents/{agent_id}/tasks/{id}", usecase.NewInteractor(agenttasks1.UpdateAgentTask(srv.DB)))
 	apiV1.Delete("/agents/{agent_id}/tasks/{id}", usecase.NewInteractor(agenttasks1.DeleteAgentTask(srv.DB)))
+
+	apiV1.Post("/agents/{agent_id}/labels", usecase.NewInteractor(agentlabels1.CreateAgentLabel(srv.DB)))
+	apiV1.Get("/agents/{agent_id}/labels", usecase.NewInteractor(agentlabels1.ListAgentLabels(srv.DB)))
+	apiV1.Get("/agents/{agent_id}/labels/{key}", usecase.NewInteractor(agentlabels1.GetAgentLabel(srv.DB)))
+	apiV1.Put("/agents/{agent_id}/labels", usecase.NewInteractor(agentlabels1.UpdateAgentLabel(srv.DB)))
+	apiV1.Delete("/agents/{agent_id}/labels/{key}", usecase.NewInteractor(agentlabels1.DeleteAgentLabel(srv.DB)))
 
 	apiV1.Post("/scannotify", usecase.NewInteractor(scannotify1.CreateScanNotify(srv.DB)))
 	apiV1.Get("/scannotify", usecase.NewInteractor(scannotify1.GetScanNotify(srv.DB)))

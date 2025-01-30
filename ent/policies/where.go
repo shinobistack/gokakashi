@@ -129,6 +129,16 @@ func NameContainsFold(v string) predicate.Policies {
 	return predicate.Policies(sql.FieldContainsFold(FieldName, v))
 }
 
+// ImageIsNil applies the IsNil predicate on the "image" field.
+func ImageIsNil() predicate.Policies {
+	return predicate.Policies(sql.FieldIsNull(FieldImage))
+}
+
+// ImageNotNil applies the NotNil predicate on the "image" field.
+func ImageNotNil() predicate.Policies {
+	return predicate.Policies(sql.FieldNotNull(FieldImage))
+}
+
 // ScannerEQ applies the EQ predicate on the "scanner" field.
 func ScannerEQ(v string) predicate.Policies {
 	return predicate.Policies(sql.FieldEQ(FieldScanner, v))

@@ -249,6 +249,16 @@ func IntegrationIDNotIn(vs ...uuid.UUID) predicate.Scans {
 	return predicate.Scans(sql.FieldNotIn(FieldIntegrationID, vs...))
 }
 
+// IntegrationIDIsNil applies the IsNil predicate on the "integration_id" field.
+func IntegrationIDIsNil() predicate.Scans {
+	return predicate.Scans(sql.FieldIsNull(FieldIntegrationID))
+}
+
+// IntegrationIDNotNil applies the NotNil predicate on the "integration_id" field.
+func IntegrationIDNotNil() predicate.Scans {
+	return predicate.Scans(sql.FieldNotNull(FieldIntegrationID))
+}
+
 // ScannerEQ applies the EQ predicate on the "scanner" field.
 func ScannerEQ(v string) predicate.Scans {
 	return predicate.Scans(sql.FieldEQ(FieldScanner, v))
@@ -322,6 +332,16 @@ func NotifyIsNil() predicate.Scans {
 // NotifyNotNil applies the NotNil predicate on the "notify" field.
 func NotifyNotNil() predicate.Scans {
 	return predicate.Scans(sql.FieldNotNull(FieldNotify))
+}
+
+// LabelsIsNil applies the IsNil predicate on the "labels" field.
+func LabelsIsNil() predicate.Scans {
+	return predicate.Scans(sql.FieldIsNull(FieldLabels))
+}
+
+// LabelsNotNil applies the NotNil predicate on the "labels" field.
+func LabelsNotNil() predicate.Scans {
+	return predicate.Scans(sql.FieldNotNull(FieldLabels))
 }
 
 // ReportIsNil applies the IsNil predicate on the "report" field.

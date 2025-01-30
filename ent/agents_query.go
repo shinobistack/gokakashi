@@ -12,6 +12,7 @@ import (
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
+	"github.com/shinobistack/gokakashi/ent/agentlabels"
 	"github.com/shinobistack/gokakashi/ent/agents"
 	"github.com/shinobistack/gokakashi/ent/agenttasks"
 	"github.com/shinobistack/gokakashi/ent/predicate"
@@ -20,11 +21,12 @@ import (
 // AgentsQuery is the builder for querying Agents entities.
 type AgentsQuery struct {
 	config
-	ctx            *QueryContext
-	order          []agents.OrderOption
-	inters         []Interceptor
-	predicates     []predicate.Agents
-	withAgentTasks *AgentTasksQuery
+	ctx             *QueryContext
+	order           []agents.OrderOption
+	inters          []Interceptor
+	predicates      []predicate.Agents
+	withAgentTasks  *AgentTasksQuery
+	withAgentLabels *AgentLabelsQuery
 	// intermediate query (i.e. traversal path).
 	sql  *sql.Selector
 	path func(context.Context) (*sql.Selector, error)
@@ -76,6 +78,28 @@ func (aq *AgentsQuery) QueryAgentTasks() *AgentTasksQuery {
 			sqlgraph.From(agents.Table, agents.FieldID, selector),
 			sqlgraph.To(agenttasks.Table, agenttasks.FieldID),
 			sqlgraph.Edge(sqlgraph.O2M, false, agents.AgentTasksTable, agents.AgentTasksColumn),
+		)
+		fromU = sqlgraph.SetNeighbors(aq.driver.Dialect(), step)
+		return fromU, nil
+	}
+	return query
+}
+
+// QueryAgentLabels chains the current query on the "agent_labels" edge.
+func (aq *AgentsQuery) QueryAgentLabels() *AgentLabelsQuery {
+	query := (&AgentLabelsClient{config: aq.config}).Query()
+	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
+		if err := aq.prepareQuery(ctx); err != nil {
+			return nil, err
+		}
+		selector := aq.sqlQuery(ctx)
+		if err := selector.Err(); err != nil {
+			return nil, err
+		}
+		step := sqlgraph.NewStep(
+			sqlgraph.From(agents.Table, agents.FieldID, selector),
+			sqlgraph.To(agentlabels.Table, agentlabels.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, agents.AgentLabelsTable, agents.AgentLabelsColumn),
 		)
 		fromU = sqlgraph.SetNeighbors(aq.driver.Dialect(), step)
 		return fromU, nil
@@ -270,12 +294,13 @@ func (aq *AgentsQuery) Clone() *AgentsQuery {
 		return nil
 	}
 	return &AgentsQuery{
-		config:         aq.config,
-		ctx:            aq.ctx.Clone(),
-		order:          append([]agents.OrderOption{}, aq.order...),
-		inters:         append([]Interceptor{}, aq.inters...),
-		predicates:     append([]predicate.Agents{}, aq.predicates...),
-		withAgentTasks: aq.withAgentTasks.Clone(),
+		config:          aq.config,
+		ctx:             aq.ctx.Clone(),
+		order:           append([]agents.OrderOption{}, aq.order...),
+		inters:          append([]Interceptor{}, aq.inters...),
+		predicates:      append([]predicate.Agents{}, aq.predicates...),
+		withAgentTasks:  aq.withAgentTasks.Clone(),
+		withAgentLabels: aq.withAgentLabels.Clone(),
 		// clone intermediate query.
 		sql:  aq.sql.Clone(),
 		path: aq.path,
@@ -290,6 +315,17 @@ func (aq *AgentsQuery) WithAgentTasks(opts ...func(*AgentTasksQuery)) *AgentsQue
 		opt(query)
 	}
 	aq.withAgentTasks = query
+	return aq
+}
+
+// WithAgentLabels tells the query-builder to eager-load the nodes that are connected to
+// the "agent_labels" edge. The optional arguments are used to configure the query builder of the edge.
+func (aq *AgentsQuery) WithAgentLabels(opts ...func(*AgentLabelsQuery)) *AgentsQuery {
+	query := (&AgentLabelsClient{config: aq.config}).Query()
+	for _, opt := range opts {
+		opt(query)
+	}
+	aq.withAgentLabels = query
 	return aq
 }
 
@@ -371,8 +407,9 @@ func (aq *AgentsQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Agent
 	var (
 		nodes       = []*Agents{}
 		_spec       = aq.querySpec()
-		loadedTypes = [1]bool{
+		loadedTypes = [2]bool{
 			aq.withAgentTasks != nil,
+			aq.withAgentLabels != nil,
 		}
 	)
 	_spec.ScanValues = func(columns []string) ([]any, error) {
@@ -400,6 +437,13 @@ func (aq *AgentsQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Agent
 			return nil, err
 		}
 	}
+	if query := aq.withAgentLabels; query != nil {
+		if err := aq.loadAgentLabels(ctx, query, nodes,
+			func(n *Agents) { n.Edges.AgentLabels = []*AgentLabels{} },
+			func(n *Agents, e *AgentLabels) { n.Edges.AgentLabels = append(n.Edges.AgentLabels, e) }); err != nil {
+			return nil, err
+		}
+	}
 	return nodes, nil
 }
 
@@ -418,6 +462,36 @@ func (aq *AgentsQuery) loadAgentTasks(ctx context.Context, query *AgentTasksQuer
 	}
 	query.Where(predicate.AgentTasks(func(s *sql.Selector) {
 		s.Where(sql.InValues(s.C(agents.AgentTasksColumn), fks...))
+	}))
+	neighbors, err := query.All(ctx)
+	if err != nil {
+		return err
+	}
+	for _, n := range neighbors {
+		fk := n.AgentID
+		node, ok := nodeids[fk]
+		if !ok {
+			return fmt.Errorf(`unexpected referenced foreign-key "agent_id" returned %v for node %v`, fk, n.ID)
+		}
+		assign(node, n)
+	}
+	return nil
+}
+func (aq *AgentsQuery) loadAgentLabels(ctx context.Context, query *AgentLabelsQuery, nodes []*Agents, init func(*Agents), assign func(*Agents, *AgentLabels)) error {
+	fks := make([]driver.Value, 0, len(nodes))
+	nodeids := make(map[int]*Agents)
+	for i := range nodes {
+		fks = append(fks, nodes[i].ID)
+		nodeids[nodes[i].ID] = nodes[i]
+		if init != nil {
+			init(nodes[i])
+		}
+	}
+	if len(query.ctx.Fields) > 0 {
+		query.ctx.AppendFieldOnce(agentlabels.FieldAgentID)
+	}
+	query.Where(predicate.AgentLabels(func(s *sql.Selector) {
+		s.Where(sql.InValues(s.C(agents.AgentLabelsColumn), fks...))
 	}))
 	neighbors, err := query.All(ctx)
 	if err != nil {

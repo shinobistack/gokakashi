@@ -3,6 +3,7 @@
 package ent
 
 import (
+	"encoding/json"
 	"fmt"
 	"strings"
 	"time"
@@ -10,6 +11,7 @@ import (
 	"entgo.io/ent"
 	"entgo.io/ent/dialect/sql"
 	"github.com/shinobistack/gokakashi/ent/agents"
+	"github.com/shinobistack/gokakashi/ent/schema"
 )
 
 // Agents is the model entity for the Agents schema.
@@ -26,8 +28,12 @@ type Agents struct {
 	Workspace string `json:"workspace,omitempty"`
 	// The server address this agent connects to.
 	Server string `json:"server,omitempty"`
+	// Agent labels key:value
+	Labels schema.CommonLabels `json:"labels,omitempty"`
 	// Timestamp of the agent's last activity.
 	LastSeen time.Time `json:"last_seen,omitempty"`
+	// Timestamp of the agent's liveliness.
+	LastHeartbeat time.Time `json:"last_heartbeat,omitempty"`
 	// Edges holds the relations/edges for other nodes in the graph.
 	// The values are being populated by the AgentsQuery when eager-loading is set.
 	Edges        AgentsEdges `json:"edges"`
@@ -38,9 +44,11 @@ type Agents struct {
 type AgentsEdges struct {
 	// An agent can have multiple tasks.
 	AgentTasks []*AgentTasks `json:"agent_tasks,omitempty"`
+	// AgentLabels holds the value of the agent_labels edge.
+	AgentLabels []*AgentLabels `json:"agent_labels,omitempty"`
 	// loadedTypes holds the information for reporting if a
 	// type was loaded (or requested) in eager-loading or not.
-	loadedTypes [1]bool
+	loadedTypes [2]bool
 }
 
 // AgentTasksOrErr returns the AgentTasks value or an error if the edge
@@ -52,16 +60,27 @@ func (e AgentsEdges) AgentTasksOrErr() ([]*AgentTasks, error) {
 	return nil, &NotLoadedError{edge: "agent_tasks"}
 }
 
+// AgentLabelsOrErr returns the AgentLabels value or an error if the edge
+// was not loaded in eager-loading.
+func (e AgentsEdges) AgentLabelsOrErr() ([]*AgentLabels, error) {
+	if e.loadedTypes[1] {
+		return e.AgentLabels, nil
+	}
+	return nil, &NotLoadedError{edge: "agent_labels"}
+}
+
 // scanValues returns the types for scanning values from sql.Rows.
 func (*Agents) scanValues(columns []string) ([]any, error) {
 	values := make([]any, len(columns))
 	for i := range columns {
 		switch columns[i] {
+		case agents.FieldLabels:
+			values[i] = new([]byte)
 		case agents.FieldID:
 			values[i] = new(sql.NullInt64)
 		case agents.FieldName, agents.FieldStatus, agents.FieldWorkspace, agents.FieldServer:
 			values[i] = new(sql.NullString)
-		case agents.FieldLastSeen:
+		case agents.FieldLastSeen, agents.FieldLastHeartbeat:
 			values[i] = new(sql.NullTime)
 		default:
 			values[i] = new(sql.UnknownType)
@@ -108,11 +127,25 @@ func (a *Agents) assignValues(columns []string, values []any) error {
 			} else if value.Valid {
 				a.Server = value.String
 			}
+		case agents.FieldLabels:
+			if value, ok := values[i].(*[]byte); !ok {
+				return fmt.Errorf("unexpected type %T for field labels", values[i])
+			} else if value != nil && len(*value) > 0 {
+				if err := json.Unmarshal(*value, &a.Labels); err != nil {
+					return fmt.Errorf("unmarshal field labels: %w", err)
+				}
+			}
 		case agents.FieldLastSeen:
 			if value, ok := values[i].(*sql.NullTime); !ok {
 				return fmt.Errorf("unexpected type %T for field last_seen", values[i])
 			} else if value.Valid {
 				a.LastSeen = value.Time
+			}
+		case agents.FieldLastHeartbeat:
+			if value, ok := values[i].(*sql.NullTime); !ok {
+				return fmt.Errorf("unexpected type %T for field last_heartbeat", values[i])
+			} else if value.Valid {
+				a.LastHeartbeat = value.Time
 			}
 		default:
 			a.selectValues.Set(columns[i], values[i])
@@ -130,6 +163,11 @@ func (a *Agents) Value(name string) (ent.Value, error) {
 // QueryAgentTasks queries the "agent_tasks" edge of the Agents entity.
 func (a *Agents) QueryAgentTasks() *AgentTasksQuery {
 	return NewAgentsClient(a.config).QueryAgentTasks(a)
+}
+
+// QueryAgentLabels queries the "agent_labels" edge of the Agents entity.
+func (a *Agents) QueryAgentLabels() *AgentLabelsQuery {
+	return NewAgentsClient(a.config).QueryAgentLabels(a)
 }
 
 // Update returns a builder for updating this Agents.
@@ -167,8 +205,14 @@ func (a *Agents) String() string {
 	builder.WriteString("server=")
 	builder.WriteString(a.Server)
 	builder.WriteString(", ")
+	builder.WriteString("labels=")
+	builder.WriteString(fmt.Sprintf("%v", a.Labels))
+	builder.WriteString(", ")
 	builder.WriteString("last_seen=")
 	builder.WriteString(a.LastSeen.Format(time.ANSIC))
+	builder.WriteString(", ")
+	builder.WriteString("last_heartbeat=")
+	builder.WriteString(a.LastHeartbeat.Format(time.ANSIC))
 	builder.WriteByte(')')
 	return builder.String()
 }

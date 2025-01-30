@@ -59,6 +59,14 @@ func (sc *ScansCreate) SetIntegrationID(u uuid.UUID) *ScansCreate {
 	return sc
 }
 
+// SetNillableIntegrationID sets the "integration_id" field if the given value is not nil.
+func (sc *ScansCreate) SetNillableIntegrationID(u *uuid.UUID) *ScansCreate {
+	if u != nil {
+		sc.SetIntegrationID(*u)
+	}
+	return sc
+}
+
 // SetScanner sets the "scanner" field.
 func (sc *ScansCreate) SetScanner(s string) *ScansCreate {
 	sc.mutation.SetScanner(s)
@@ -68,6 +76,20 @@ func (sc *ScansCreate) SetScanner(s string) *ScansCreate {
 // SetNotify sets the "notify" field.
 func (sc *ScansCreate) SetNotify(s []schema.Notify) *ScansCreate {
 	sc.mutation.SetNotify(s)
+	return sc
+}
+
+// SetLabels sets the "labels" field.
+func (sc *ScansCreate) SetLabels(sl schema.CommonLabels) *ScansCreate {
+	sc.mutation.SetLabels(sl)
+	return sc
+}
+
+// SetNillableLabels sets the "labels" field if the given value is not nil.
+func (sc *ScansCreate) SetNillableLabels(sl *schema.CommonLabels) *ScansCreate {
+	if sl != nil {
+		sc.SetLabels(*sl)
+	}
 	return sc
 }
 
@@ -99,6 +121,14 @@ func (sc *ScansCreate) SetPolicy(p *Policies) *ScansCreate {
 // SetIntegrationsID sets the "integrations" edge to the Integrations entity by ID.
 func (sc *ScansCreate) SetIntegrationsID(id uuid.UUID) *ScansCreate {
 	sc.mutation.SetIntegrationsID(id)
+	return sc
+}
+
+// SetNillableIntegrationsID sets the "integrations" edge to the Integrations entity by ID if the given value is not nil.
+func (sc *ScansCreate) SetNillableIntegrationsID(id *uuid.UUID) *ScansCreate {
+	if id != nil {
+		sc = sc.SetIntegrationsID(*id)
+	}
 	return sc
 }
 
@@ -213,17 +243,11 @@ func (sc *ScansCreate) check() error {
 	if _, ok := sc.mutation.Image(); !ok {
 		return &ValidationError{Name: "image", err: errors.New(`ent: missing required field "Scans.image"`)}
 	}
-	if _, ok := sc.mutation.IntegrationID(); !ok {
-		return &ValidationError{Name: "integration_id", err: errors.New(`ent: missing required field "Scans.integration_id"`)}
-	}
 	if _, ok := sc.mutation.Scanner(); !ok {
 		return &ValidationError{Name: "scanner", err: errors.New(`ent: missing required field "Scans.scanner"`)}
 	}
 	if len(sc.mutation.PolicyIDs()) == 0 {
 		return &ValidationError{Name: "policy", err: errors.New(`ent: missing required edge "Scans.policy"`)}
-	}
-	if len(sc.mutation.IntegrationsIDs()) == 0 {
-		return &ValidationError{Name: "integrations", err: errors.New(`ent: missing required edge "Scans.integrations"`)}
 	}
 	return nil
 }
@@ -276,6 +300,10 @@ func (sc *ScansCreate) createSpec() (*Scans, *sqlgraph.CreateSpec) {
 		_spec.SetField(scans.FieldNotify, field.TypeJSON, value)
 		_node.Notify = value
 	}
+	if value, ok := sc.mutation.Labels(); ok {
+		_spec.SetField(scans.FieldLabels, field.TypeJSON, value)
+		_node.Labels = value
+	}
 	if value, ok := sc.mutation.Report(); ok {
 		_spec.SetField(scans.FieldReport, field.TypeJSON, value)
 		_node.Report = value
@@ -311,7 +339,7 @@ func (sc *ScansCreate) createSpec() (*Scans, *sqlgraph.CreateSpec) {
 		for _, k := range nodes {
 			edge.Target.Nodes = append(edge.Target.Nodes, k)
 		}
-		_node.IntegrationID = nodes[0]
+		_node.IntegrationID = &nodes[0]
 		_spec.Edges = append(_spec.Edges, edge)
 	}
 	if nodes := sc.mutation.ScanLabelsIDs(); len(nodes) > 0 {

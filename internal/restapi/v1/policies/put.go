@@ -80,10 +80,10 @@ func UpdatePolicy(client *ent.Client) func(ctx context.Context, req UpdatePolicy
 
 		res.ID = updatedPolicy.ID
 		res.Name = policy.Name
-		res.Image = policy.Image
+		res.Image = &policy.Image
 		res.Scanner = policy.Scanner
 		res.Trigger = policy.Trigger
-		res.Notify = convertToPointer(updatedPolicy.Notify)
+		res.Notify = &updatedPolicy.Notify
 		return nil
 	}
 }

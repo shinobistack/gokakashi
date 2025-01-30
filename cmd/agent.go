@@ -9,9 +9,13 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"github.com/shinobistack/gokakashi/ent/schema"
+	"io"
 	"log"
 	"net/http"
+	"net/url"
 	"os"
+	"strings"
 	"time"
 
 	"github.com/google/uuid"
@@ -30,15 +34,15 @@ type httpClientKey struct{}
 var agentCmd = &cobra.Command{
 	Use:   "agent",
 	Short: "Manage agents for GoKakashi",
-}
-
-var agentStartCmd = &cobra.Command{
-	Use:   "start",
-	Short: "Register an agent and start polling for tasks",
 	PersistentPreRun: func(cmd *cobra.Command, args []string) {
 		if token == "" {
 			log.Fatalf("Error: missing required flag --token")
 		}
+
+		if server == "" {
+			log.Fatalf("Error: missing required flag --server")
+		}
+
 		headers := make(map[string]string)
 		cfClientID := os.Getenv("CF_ACCESS_CLIENT_ID")
 		cfClientSecret := os.Getenv("CF_ACCESS_CLIENT_SECRET")
@@ -59,74 +63,354 @@ var agentStartCmd = &cobra.Command{
 		ctx := context.WithValue(context.Background(), httpClientKey{}, httpClient)
 		cmd.SetContext(ctx)
 	},
-	Run: agentRegister,
+}
+
+var agentStartCmd = &cobra.Command{
+	Use:   "start",
+	Short: "Register an agent and start polling for tasks",
+	Run:   agentRegister,
+}
+
+var agentStopCmd = &cobra.Command{
+	Use:   "stop",
+	Short: "Deregister an agent gracefully",
+	Run:   agentDeRegister,
 }
 
 var (
-	server    string
-	token     string
-	workspace string
-	name      string
+	server       string
+	token        string
+	workspace    string
+	name         string
+	id           int
+	chidori      bool
+	labels       string
+	singleStrike bool
 )
+
+func agentDeRegister(cmd *cobra.Command, args []string) {
+	if name == "" && id == 0 {
+		log.Fatalf("Error: Either --name or --id must be provided")
+	}
+
+	queryParams := url.Values{}
+	if id != 0 {
+		queryParams.Add("id", fmt.Sprintf("%d", id))
+	}
+	if name != "" {
+		queryParams.Add("name", name)
+	}
+	if chidori {
+		queryParams.Add("chidori", "true")
+	}
+
+	url := fmt.Sprintf("%s/api/v1/agents?%s", server, queryParams.Encode())
+
+	req, err := http.NewRequest("DELETE", url, nil)
+	if err != nil {
+		log.Fatalf("Failed to create deregistration request: %v", err)
+	}
+	req.Header.Set("Content-Type", "application/json")
+
+	httpClient := cmd.Context().Value(httpClientKey{}).(*client.Client)
+	resp, err := httpClient.Do(req)
+	if err != nil {
+		log.Fatalf("Failed to deregister the agent: %v", err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		body, _ := io.ReadAll(resp.Body)
+		log.Fatalf("Failed to deregister the agent. Status: %d, Response: %s", resp.StatusCode, string(body))
+	}
+
+	var response agents.DeleteAgentResponse
+	if err := json.NewDecoder(resp.Body).Decode(&response); err != nil {
+		log.Fatalf("Failed to parse deregistration response: %v", err)
+	}
+
+	log.Printf("Agent successfully deregistered. ID: %d, Status: %s", response.ID, response.Status)
+}
 
 //ToDo: for any table status which results to error should we upload err message or just status error
 
 func agentRegister(cmd *cobra.Command, args []string) {
-	// Validate inputs
-	if server == "" || token == "" || workspace == "" {
-		log.Fatalf("Error: Missing required inputs. Please provide --server, --token, and --workspace.")
+
+	parsedLabels, err := parseLabels(labels)
+	if err != nil {
+		log.Fatalf("Error parsing labels: %v", err)
 	}
 
-	// log.Printf("Server: %s, Token: %s, Workspace: %s", server, token, workspace)
-
 	// Register the agent
-	agentID, err := registerAgent(cmd.Context(), server, token, workspace, name)
+	agent, err := registerAgent(cmd.Context(), server, token, workspace, name, parsedLabels)
 	if err != nil {
 		log.Fatalf("Failed to register the agent: %v", err)
 	}
 
-	log.Printf("Agent registered successfully! Agent ID: %d", agentID)
+	log.Printf("Agent registered successfully! Agent ID: %d, Name: %s, Workspace: %s", agent.ID, agent.Name, agent.Workspace)
 
-	// Start polling for tasks
-	pollTasks(cmd.Context(), server, token, agentID, workspace)
+	if err := sendAgentHeartbeat(cmd.Context(), server, token, agent.ID); err != nil {
+		log.Printf("Failed to send final heartbeat for agent %d: %v", agent.ID, err)
+	}
+
+	//// Start sending heartbeats in a separate goroutine, thinking how to handle stale goroutines then?
+	//go startHeartbeat(cmd.Context(), server, token, agent.ID, 30*time.Second)
+
+	// Update Agent status
+	if err := updateAgentStatus(cmd.Context(), server, token, agent.ID, "scan_in_progress"); err != nil {
+		log.Printf("Failed to update scan status to 'error': %v", err)
+	}
+
+	// Ephemeral agents
+	if singleStrike {
+		log.Printf("Ephemeral agent registered. Starting in sometime...")
+		// Todo: Dynamic Delay: Instead of hardcoding 5 seconds, make it configurable
+		time.Sleep(20 * time.Second)
+		if err := sendAgentHeartbeat(cmd.Context(), server, token, agent.ID); err != nil {
+			log.Printf("Failed to send final heartbeat for agent %d: %v", agent.ID, err)
+		}
+		executeEphemeraTasks(cmd.Context(), server, token, agent.ID, agent.Workspace)
+	} else {
+		// Long-lived agents keep polling
+		pollTasks(cmd.Context(), server, token, agent.ID, agent.Workspace)
+	}
 }
 
-func registerAgent(ctx context.Context, server, token, workspace, name string) (int, error) {
+//func startHeartbeat(ctx context.Context, server, token string, agentID int, interval time.Duration) {
+//	ticker := time.NewTicker(interval)
+//	defer ticker.Stop()
+//
+//	for {
+//		select {
+//		case <-ticker.C:
+//			// Send heartbeat
+//			if err := sendAgentHeartbeat(ctx, server, token, agentID); err != nil {
+//				log.Printf("Failed to send heartbeat for agent %d: %v", agentID, err)
+//			}
+//		case <-ctx.Done():
+//			log.Printf("Stopping heartbeat for agent %d", agentID)
+//			return
+//		}
+//	}
+//}
+
+func sendAgentHeartbeat(ctx context.Context, server, token string, agentID int) error {
+	path := fmt.Sprintf("/api/v1/agents/%d/heartbeat", agentID)
+	url := constructURL(server, path)
+
+	req, err := http.NewRequest("PUT", url, nil)
+	if err != nil {
+		return fmt.Errorf("failed to create heartbeat request: %w", err)
+	}
+
+	req.Header.Set("Content-Type", "application/json")
+
+	resp, err := ctx.Value(httpClientKey{}).(*client.Client).Do(req)
+	if err != nil {
+		return fmt.Errorf("failed to send heartbeat: %w", err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusNoContent {
+		body, _ := io.ReadAll(resp.Body)
+		return fmt.Errorf("server responded with status: %d, response: %s", resp.StatusCode, body)
+	}
+
+	log.Printf("Heartbeat successfully sent for agent ID %d", agentID)
+
+	return nil
+}
+
+func parseLabels(labels string) ([]schema.CommonLabels, error) {
+	if labels == "" {
+		return nil, nil
+	}
+
+	// Split the labels string into key=value pairs
+	pairs := strings.Split(labels, ",")
+	parsedLabels := make([]schema.CommonLabels, len(pairs))
+
+	for i, pair := range pairs {
+		kv := strings.Split(pair, "=")
+		if len(kv) != 2 || kv[0] == "" || kv[1] == "" {
+			return nil, fmt.Errorf("invalid label format: %s (expected key=value)", pair)
+		}
+		parsedLabels[i] = schema.CommonLabels{
+			Key:   strings.TrimSpace(kv[0]),
+			Value: strings.TrimSpace(kv[1]),
+		}
+	}
+
+	return parsedLabels, nil
+}
+
+func registerAgent(ctx context.Context, server, token, workspace, name string, labels []schema.CommonLabels) (agents.RegisterAgentResponse, error) {
+	var response agents.RegisterAgentResponse
 	reqBody := agents.RegisterAgentRequest{
 		Server:    server,
 		Token:     token,
 		Workspace: workspace,
 		Name:      name,
+		Labels:    labels,
 	}
 	reqBodyJSON, _ := json.Marshal(reqBody)
 
-	req, err := http.NewRequest("POST", fmt.Sprintf("%s/api/v1/agents", server), bytes.NewBuffer(reqBodyJSON))
+	url := constructURL(server, "/api/v1/agents")
+	req, err := http.NewRequest("POST", url, bytes.NewBuffer(reqBodyJSON))
 	if err != nil {
-		return 0, fmt.Errorf("failed to create registration request: %w", err)
+		return response, fmt.Errorf("failed to create registration request: %w", err)
 	}
 	req.Header.Set("Content-Type", "application/json")
 
 	resp, err := ctx.Value(httpClientKey{}).(*client.Client).Do(req)
 	if err != nil {
-		return 0, fmt.Errorf("failed to send registration request: %w", err)
+		return response, fmt.Errorf("failed to send registration request: %w", err)
 	}
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
-		return 0, fmt.Errorf("server responded with status: %d", resp.StatusCode)
+		return response, fmt.Errorf("server responded with status: %d", resp.StatusCode)
 	}
 
-	var response agents.RegisterAgentResponse
 	if err := json.NewDecoder(resp.Body).Decode(&response); err != nil {
-		return 0, fmt.Errorf("failed to decode registration response: %w", err)
+		return response, fmt.Errorf("failed to decode registration response: %w", err)
 	}
-	return response.ID, nil
+	return response, nil
+}
+
+func updateAgentStatus(ctx context.Context, server, token string, agentID int, status string) error {
+	reqBody := agents.UpdateAgentRequest{
+		ID:     agentID,
+		Status: status,
+	}
+	reqBodyJSON, _ := json.Marshal(reqBody)
+
+	path := fmt.Sprintf("/api/v1/agents/%d", agentID)
+	url := constructURL(server, path)
+	req, err := http.NewRequest("PUT", url, bytes.NewBuffer(reqBodyJSON))
+
+	if err != nil {
+		return fmt.Errorf("failed to create agent status update request: %w", err)
+	}
+	req.Header.Set("Content-Type", "application/json")
+
+	resp, err := ctx.Value(httpClientKey{}).(*client.Client).Do(req)
+	if err != nil {
+		return fmt.Errorf("failed to update agent status: %w", err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		return fmt.Errorf("server responded with status: %d", resp.StatusCode)
+	}
+
+	return nil
+}
+
+// Todo: Better way to handle polling for some time for ephemeral agent's task
+
+func executeEphemeraTasks(ctx context.Context, server, token string, agentID int, workspace string) {
+	// todo: retry logic for sometime
+
+	if err := sendAgentHeartbeat(ctx, server, token, agentID); err != nil {
+		log.Printf("Failed to send heartbeat for agent %d: %v", agentID, err)
+	}
+
+	tasks, err := fetchTasks(ctx, server, token, agentID, "pending", 1)
+	if err != nil {
+		log.Printf("Error fetching task: %v", err)
+		return
+	}
+
+	if len(tasks) == 0 {
+		log.Println("No pending tasks available for the ephemeral agent.")
+		// Deregister the agent if no tasks are available
+		deregisterEphemeralAgent(ctx, agentID, server, token, true)
+		return
+	}
+
+	task := tasks[0]
+
+	// Mark task as "in_progress"
+	err = updateAgentTaskStatus(ctx, server, token, task.ID, agentID, "in_progress")
+	if err != nil {
+		log.Printf("Failed to update task status to 'in_progress': %v", err)
+		return
+	}
+
+	// Process the task
+	if err := sendAgentHeartbeat(ctx, server, token, agentID); err != nil {
+		log.Printf("Failed to send heartbeat for agent %d: %v", agentID, err)
+	}
+	processTask(ctx, server, token, task, workspace, agentID)
+
+	// Mark task as "complete"
+	err = updateAgentTaskStatus(ctx, server, token, task.ID, agentID, "complete")
+	if err != nil {
+		log.Printf("Failed to update agent_task status to 'in_progress': %v", err)
+		return
+	}
+
+	err = updateAgentStatus(ctx, server, token, agentID, "disconnected")
+	if err != nil {
+		log.Printf("Failed to update scan status to 'disconnected': %v", err)
+	}
+
+	if err := sendAgentHeartbeat(ctx, server, token, agentID); err != nil {
+		log.Printf("Failed to send heartbeat for agent %d: %v", agentID, err)
+	}
+
+	log.Printf("Ephemeral agent %d completed its task and will now exit.", agentID)
+	deregisterEphemeralAgent(ctx, agentID, server, token, true)
+	log.Printf("Ephemeral agent %d shutting down.", agentID)
+	os.Exit(0)
+
+}
+
+func deregisterEphemeralAgent(ctx context.Context, agentID int, server, token string, chidori bool) {
+	cmd := &cobra.Command{}
+	args := []string{}
+	if agentID != 0 {
+		args = append(args, fmt.Sprintf("--id=%d", agentID))
+	}
+	if chidori {
+		args = append(args, "--chidori")
+	}
+
+	cmd.Flags().String("server", server, "")
+	cmd.Flags().String("token", token, "")
+	cmd.Flags().Bool("chidori", chidori, "Trigger hard delete")
+	cmd.Flags().Int("id", agentID, "Agent ID")
+	cmd.SetContext(ctx)
+
+	err := cmd.ParseFlags(args)
+	if err != nil {
+		log.Fatalf("Failed to parse flags: %v", err)
+	}
+	agentDeRegister(cmd, args)
 }
 
 func pollTasks(ctx context.Context, server, token string, agentID int, workspace string) {
+	// Heartbeat frequency
+	heartbeatInterval := 30 * time.Second
+	lastHeartbeatSent := time.Now()
+
 	for {
+
+		now := time.Now()
+
+		// Send heartbeat if due
+		// alive as long as it's polling, so heartbeat is sent when loop restarts.
+		if now.Sub(lastHeartbeatSent) >= heartbeatInterval {
+			if err := sendAgentHeartbeat(ctx, server, token, agentID); err != nil {
+				log.Printf("Failed to send heartbeat for agent %d: %v", agentID, err)
+			} else {
+				lastHeartbeatSent = now
+			}
+		}
+
 		// Process only tasks with status "pending" in the order returned (created_at ASC)
-		tasks, err := fetchTasks(ctx, server, token, agentID, "pending")
+		tasks, err := fetchTasks(ctx, server, token, agentID, "pending", 0)
 		if err != nil {
 			log.Printf("Error fetching tasks: %v", err)
 			time.Sleep(10 * time.Second)
@@ -146,6 +430,11 @@ func pollTasks(ctx context.Context, server, token string, agentID int, workspace
 				log.Printf("Failed to update agent_task status to 'in_progress': %v", err)
 				return
 			}
+			if err := sendAgentHeartbeat(ctx, server, token, agentID); err != nil {
+				log.Printf("Failed to send heartbeat for agent %d: %v", agentID, err)
+			} else {
+				lastHeartbeatSent = time.Now()
+			}
 			processTask(ctx, server, token, task, workspace, agentID)
 			continue
 		}
@@ -155,8 +444,10 @@ func pollTasks(ctx context.Context, server, token string, agentID int, workspace
 	}
 }
 
-func fetchTasks(ctx context.Context, server, token string, agentID int, status string) ([]agenttasks.GetAgentTaskResponse, error) {
-	req, err := http.NewRequest("GET", fmt.Sprintf("%s/api/v1/agents/%d/tasks?status=%s", server, agentID, status), nil)
+func fetchTasks(ctx context.Context, server, token string, agentID int, status string, limit int) ([]agenttasks.GetAgentTaskResponse, error) {
+	url := constructURL(server, fmt.Sprintf("/api/v1/agents/%d/tasks", agentID)) + fmt.Sprintf("?status=%s&limit=%d", status, limit)
+
+	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create task polling request: %w", err)
 	}
@@ -188,7 +479,10 @@ func updateAgentTaskStatus(ctx context.Context, server, token string, taskID uui
 
 	reqBodyJSON, _ := json.Marshal(reqBody)
 
-	req, err := http.NewRequest("PUT", fmt.Sprintf("%s/api/v1/agents/%d/tasks/%s", server, agentID, taskID), bytes.NewBuffer(reqBodyJSON))
+	path := fmt.Sprintf("/api/v1/agents/%d/tasks/%s", agentID, taskID)
+	url := constructURL(server, path)
+	req, err := http.NewRequest("PUT", url, bytes.NewBuffer(reqBodyJSON))
+
 	if err != nil {
 		return fmt.Errorf("failed to create task status update request: %w", err)
 	}
@@ -215,17 +509,20 @@ func processTask(ctx context.Context, server, token string, task agenttasks.GetA
 		return
 	}
 
-	// Step 2: Fetch integration details
-	integration, err := fetchIntegration(ctx, server, token, scan.IntegrationID)
-	if err != nil {
-		log.Printf("Failed to fetch integration details: %v", err)
-		return
-	}
+	// if scan.IntegrationID not empty then execute fetchIntegration and authenticateAndPullImage
+	if scan.IntegrationID != nil {
+		// Step 2: Fetch integration details
+		integration, err := fetchIntegration(ctx, server, token, scan.IntegrationID)
+		if err != nil {
+			log.Printf("Failed to fetch integration details: %v", err)
+			//return
+		}
 
-	// Step 3: Authenticate and pull the image
-	if err := authenticateAndPullImage(scan.Image, integration); err != nil {
-		log.Printf("Failed to authenticate or pull image: %v", err)
-		return
+		// Step 3: Authenticate and pull the image
+		if err := authenticateAndPullImage(scan.Image, integration); err != nil {
+			log.Printf("Failed to authenticate or pull image: %v", err)
+			//return
+		}
 	}
 
 	err = updateScanStatus(ctx, server, token, scan.ID, "scan_in_progress")
@@ -254,7 +551,7 @@ func processTask(ctx context.Context, server, token string, task agenttasks.GetA
 
 	// step 6: Verify scans.Notify field exist
 	// Todo: if exists update the status to notify_pending else complete
-	if scan.Notify == nil || len(*scan.Notify) == 0 {
+	if scan.Notify == nil {
 		log.Printf("No notify specified for scan ID: %s", scan.ID)
 		if err := updateScanStatus(ctx, server, token, scan.ID, "success"); err != nil {
 			log.Printf("Failed to update scan status to 'success': %v", err)
@@ -280,7 +577,10 @@ func updateScanStatus(ctx context.Context, server, token string, scanID uuid.UUI
 	}
 	reqBodyJSON, _ := json.Marshal(reqBody)
 
-	req, err := http.NewRequest("PUT", fmt.Sprintf("%s/api/v1/scans/%s", server, scanID), bytes.NewBuffer(reqBodyJSON))
+	path := fmt.Sprintf("/api/v1/scans/%s", scanID)
+	url := constructURL(server, path)
+	req, err := http.NewRequest("PUT", url, bytes.NewBuffer(reqBodyJSON))
+
 	if err != nil {
 		return fmt.Errorf("failed to create scan status update request: %w", err)
 	}
@@ -300,7 +600,9 @@ func updateScanStatus(ctx context.Context, server, token string, scanID uuid.UUI
 }
 
 func fetchScan(ctx context.Context, server, token string, scanID uuid.UUID) (*scans.GetScanResponse, error) {
-	req, err := http.NewRequest("GET", fmt.Sprintf("%s/api/v1/scans/%s", server, scanID), nil)
+	path := fmt.Sprintf("/api/v1/scans/%s", scanID)
+	url := constructURL(server, path)
+	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create scan request: %w", err)
 	}
@@ -323,8 +625,11 @@ func fetchScan(ctx context.Context, server, token string, scanID uuid.UUID) (*sc
 	return &scan, nil
 }
 
-func fetchIntegration(ctx context.Context, server, token string, integrationID uuid.UUID) (*integrations.GetIntegrationResponse, error) {
-	req, err := http.NewRequest("GET", fmt.Sprintf("%s/api/v1/integrations/%s", server, integrationID), nil)
+func fetchIntegration(ctx context.Context, server, token string, integrationID *uuid.UUID) (*integrations.GetIntegrationResponse, error) {
+	path := fmt.Sprintf("/api/v1/integrations/%s", integrationID)
+	url := constructURL(server, path)
+	req, err := http.NewRequest("GET", url, nil)
+
 	if err != nil {
 		return nil, fmt.Errorf("failed to create integration fetch request: %w", err)
 	}
@@ -400,7 +705,10 @@ func uploadReport(ctx context.Context, server, token string, scanID uuid.UUID, r
 		return fmt.Errorf("failed to marshal request body: %w", err)
 	}
 
-	req, err := http.NewRequest("PUT", fmt.Sprintf("%s/api/v1/scans/%s", server, scanID), bytes.NewBuffer(reqBodyJSON))
+	path := fmt.Sprintf("/api/v1/scans/%s", scanID)
+	url := constructURL(server, path)
+	req, err := http.NewRequest("PUT", url, bytes.NewBuffer(reqBodyJSON))
+
 	if err != nil {
 		return fmt.Errorf("failed to create report upload request: %w", err)
 	}

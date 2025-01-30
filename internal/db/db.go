@@ -62,15 +62,18 @@ func PopulateDatabase(client *ent.Client, cfg *v1.Config) {
 	// Populate policies and associated scans
 	for _, policy := range cfg.Policies {
 		existing, err := client.Policies.Query().Where(policies.Name(policy.Name)).Only(context.Background())
+		// Dynamically populate Type: cron|ci
+		triggerData := map[string]interface{}{"type": policy.Trigger.Type}
+		if policy.Trigger.Type == "cron" {
+			triggerData["schedule"] = policy.Trigger.Schedule
+		}
+
 		if err == nil && existing != nil {
 			// Update existing policy
 			_, err := client.Policies.UpdateOne(existing).
 				SetImage(schema.Image(policy.Image)).
-				SetTrigger(map[string]interface{}{
-					"type":     policy.Trigger.Type,
-					"schedule": policy.Trigger.Schedule,
-				}).
-				// ToDo: to update the scanner field to takein tools and tool's argument
+				SetTrigger(triggerData).
+				// ToDo: to update the scanner field to take in tools and tool's argument
 				SetScanner(policy.Scanner).
 				SetNotify(policy.Notify).
 				Save(context.Background())
@@ -90,10 +93,7 @@ func PopulateDatabase(client *ent.Client, cfg *v1.Config) {
 			Create().
 			SetName(policy.Name).
 			SetImage(schema.Image(policy.Image)).
-			SetTrigger(map[string]interface{}{
-				"type":     policy.Trigger.Type,
-				"schedule": policy.Trigger.Schedule,
-			}).
+			SetTrigger(triggerData).
 			SetScanner(policy.Scanner).
 			SetNotify(policy.Notify).
 			Save(context.Background())
@@ -136,52 +136,57 @@ func PopulateDatabase(client *ent.Client, cfg *v1.Config) {
 			}
 		}
 
-		// Populate scans for each policy image tag
-		for _, tag := range policy.Image.Tags {
-			existingScan, err := client.Scans.Query().
-				Where(scans.PolicyID(policyRecord.ID), scans.Image(policy.Image.Name+":"+tag)).
-				Only(context.Background())
-			if err == nil && existingScan != nil {
-				log.Printf("Scan for policy %s, image:tag %s:%s already exists. Skipping.", policy.Name, policy.Image.Name, tag)
-				continue
-			} else if !ent.IsNotFound(err) {
-				log.Printf("Error querying scan for policy %s, image:tag %s:%s: %v", policy.Name, policy.Image.Name, tag, err)
-				continue
-			}
-
-			existingIntegration, err := client.Integrations.Query().
-				Where(integrations.Name(policy.Image.Registry)).
-				OnlyID(context.Background())
-			if err != nil {
-				log.Printf("Error querying integrationID for policy %s and integrationName %s : %v", policy.Name, policy.Image.Registry, err)
-				continue
-			}
-
-			scanCreate := client.Scans.Create().
-				SetPolicyID(policyRecord.ID).
-				SetImage(policy.Image.Name + ":" + tag).
-				SetScanner(policy.Scanner).
-				SetIntegrationID(existingIntegration)
-
-			// Map notify.to to IntegrationID
-			for _, notify := range policy.Notify {
-				notifyIntegration, err := client.Integrations.Query().
-					Where(integrations.Name(notify.To)).
-					OnlyID(context.Background())
-				if err != nil {
-					log.Printf("Error finding integration for notify.to: %s, policy: %s: %v", notify.To, policy.Name, err)
+		if policy.Trigger.Type == "cron" {
+			// Populate scans for each policy image tag
+			// ToDo: Runs periodic scans on a predefined set of images
+			for _, tag := range policy.Image.Tags {
+				existingScan, err := client.Scans.Query().
+					Where(scans.PolicyID(policyRecord.ID), scans.Image(policy.Image.Name+":"+tag)).
+					Only(context.Background())
+				if err == nil && existingScan != nil {
+					log.Printf("Scan for policy %s, image:tag %s:%s already exists. Skipping.", policy.Name, policy.Image.Name, tag)
+					continue
+				} else if !ent.IsNotFound(err) {
+					log.Printf("Error querying scan for policy %s, image:tag %s:%s: %v", policy.Name, policy.Image.Name, tag, err)
 					continue
 				}
-				scanCreate.SetNotify([]schema.Notify{
-					{To: notifyIntegration.String(), When: notify.When, Format: notify.Format},
-				})
-			}
 
-			_, err = scanCreate.Save(context.Background())
-			if err != nil {
-				log.Printf("Failed to add scan for policy %s, tag %s: %v", policy.Name, tag, err)
-			} else {
-				log.Printf("Scan for policy %s, tag %s added successfully.", policy.Name, tag)
+				existingIntegration, err := client.Integrations.Query().
+					Where(integrations.Name(policy.Image.Registry)).
+					OnlyID(context.Background())
+				if err != nil {
+					log.Printf("Error querying integrationID for policy %s and integrationName %s : %v", policy.Name, policy.Image.Registry, err)
+					continue
+				}
+
+				scanCreate := client.Scans.Create().
+					SetPolicyID(policyRecord.ID).
+					SetImage(policy.Image.Name + ":" + tag).
+					SetScanner(policy.Scanner).
+					SetIntegrationID(existingIntegration)
+
+				// Map notify.to to IntegrationID
+				for _, notify := range policy.Notify {
+					notifyIntegration, err := client.Integrations.Query().
+						Where(integrations.Name(notify.To)).
+						OnlyID(context.Background())
+					//log.Printf("CHECK: notifyIntegration: %s", notifyIntegration)
+					//log.Printf("CHECK: notify:%s", notify)
+					if err != nil {
+						log.Printf("Error finding integration for notify.to: %s, policy: %s: %v", notify.To, policy.Name, err)
+						continue
+					}
+					scanCreate.SetNotify([]schema.Notify{
+						{To: notifyIntegration.String(), When: notify.When, Format: notify.Format},
+					})
+				}
+
+				_, err = scanCreate.Save(context.Background())
+				if err != nil {
+					log.Printf("Failed to add scan for policy %s, tag %s: %v", policy.Name, tag, err)
+				} else {
+					log.Printf("Scan for policy %s, tag %s added successfully.", policy.Name, tag)
+				}
 			}
 		}
 	}

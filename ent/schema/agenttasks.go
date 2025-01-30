@@ -28,7 +28,7 @@ func (AgentTasks) Fields() []ent.Field {
 		field.String("status").
 			Default("pending").
 			Validate(func(s string) error {
-				validStatuses := []string{"pending", "in_progress", "complete"}
+				validStatuses := []string{"pending", "in_progress", "complete", "abandoned"}
 				for _, status := range validStatuses {
 					if s == status {
 						return nil

@@ -43,9 +43,10 @@ func ValidateConfig(config *Config) error {
 		if policy.Name == "" {
 			return fmt.Errorf("Policy name is required")
 		}
-		if policy.Image.Registry == "" || policy.Image.Name == "" {
-			return fmt.Errorf("Policy image registry and name are required")
-		}
+		// Todo: For type CI not required image field
+		//if policy.Image.Registry == "" || policy.Image.Name == "" {
+		//	return fmt.Errorf("Policy image registry and name are required")
+		//}
 		if policy.Trigger.Type == "cron" && policy.Trigger.Schedule == "" {
 			return fmt.Errorf("Policy with cron trigger must define a schedule")
 		}

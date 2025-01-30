@@ -80,6 +80,11 @@ func LastSeen(v time.Time) predicate.Agents {
 	return predicate.Agents(sql.FieldEQ(FieldLastSeen, v))
 }
 
+// LastHeartbeat applies equality check predicate on the "last_heartbeat" field. It's identical to LastHeartbeatEQ.
+func LastHeartbeat(v time.Time) predicate.Agents {
+	return predicate.Agents(sql.FieldEQ(FieldLastHeartbeat, v))
+}
+
 // NameEQ applies the EQ predicate on the "name" field.
 func NameEQ(v string) predicate.Agents {
 	return predicate.Agents(sql.FieldEQ(FieldName, v))
@@ -370,6 +375,16 @@ func ServerContainsFold(v string) predicate.Agents {
 	return predicate.Agents(sql.FieldContainsFold(FieldServer, v))
 }
 
+// LabelsIsNil applies the IsNil predicate on the "labels" field.
+func LabelsIsNil() predicate.Agents {
+	return predicate.Agents(sql.FieldIsNull(FieldLabels))
+}
+
+// LabelsNotNil applies the NotNil predicate on the "labels" field.
+func LabelsNotNil() predicate.Agents {
+	return predicate.Agents(sql.FieldNotNull(FieldLabels))
+}
+
 // LastSeenEQ applies the EQ predicate on the "last_seen" field.
 func LastSeenEQ(v time.Time) predicate.Agents {
 	return predicate.Agents(sql.FieldEQ(FieldLastSeen, v))
@@ -410,6 +425,56 @@ func LastSeenLTE(v time.Time) predicate.Agents {
 	return predicate.Agents(sql.FieldLTE(FieldLastSeen, v))
 }
 
+// LastHeartbeatEQ applies the EQ predicate on the "last_heartbeat" field.
+func LastHeartbeatEQ(v time.Time) predicate.Agents {
+	return predicate.Agents(sql.FieldEQ(FieldLastHeartbeat, v))
+}
+
+// LastHeartbeatNEQ applies the NEQ predicate on the "last_heartbeat" field.
+func LastHeartbeatNEQ(v time.Time) predicate.Agents {
+	return predicate.Agents(sql.FieldNEQ(FieldLastHeartbeat, v))
+}
+
+// LastHeartbeatIn applies the In predicate on the "last_heartbeat" field.
+func LastHeartbeatIn(vs ...time.Time) predicate.Agents {
+	return predicate.Agents(sql.FieldIn(FieldLastHeartbeat, vs...))
+}
+
+// LastHeartbeatNotIn applies the NotIn predicate on the "last_heartbeat" field.
+func LastHeartbeatNotIn(vs ...time.Time) predicate.Agents {
+	return predicate.Agents(sql.FieldNotIn(FieldLastHeartbeat, vs...))
+}
+
+// LastHeartbeatGT applies the GT predicate on the "last_heartbeat" field.
+func LastHeartbeatGT(v time.Time) predicate.Agents {
+	return predicate.Agents(sql.FieldGT(FieldLastHeartbeat, v))
+}
+
+// LastHeartbeatGTE applies the GTE predicate on the "last_heartbeat" field.
+func LastHeartbeatGTE(v time.Time) predicate.Agents {
+	return predicate.Agents(sql.FieldGTE(FieldLastHeartbeat, v))
+}
+
+// LastHeartbeatLT applies the LT predicate on the "last_heartbeat" field.
+func LastHeartbeatLT(v time.Time) predicate.Agents {
+	return predicate.Agents(sql.FieldLT(FieldLastHeartbeat, v))
+}
+
+// LastHeartbeatLTE applies the LTE predicate on the "last_heartbeat" field.
+func LastHeartbeatLTE(v time.Time) predicate.Agents {
+	return predicate.Agents(sql.FieldLTE(FieldLastHeartbeat, v))
+}
+
+// LastHeartbeatIsNil applies the IsNil predicate on the "last_heartbeat" field.
+func LastHeartbeatIsNil() predicate.Agents {
+	return predicate.Agents(sql.FieldIsNull(FieldLastHeartbeat))
+}
+
+// LastHeartbeatNotNil applies the NotNil predicate on the "last_heartbeat" field.
+func LastHeartbeatNotNil() predicate.Agents {
+	return predicate.Agents(sql.FieldNotNull(FieldLastHeartbeat))
+}
+
 // HasAgentTasks applies the HasEdge predicate on the "agent_tasks" edge.
 func HasAgentTasks() predicate.Agents {
 	return predicate.Agents(func(s *sql.Selector) {
@@ -425,6 +490,29 @@ func HasAgentTasks() predicate.Agents {
 func HasAgentTasksWith(preds ...predicate.AgentTasks) predicate.Agents {
 	return predicate.Agents(func(s *sql.Selector) {
 		step := newAgentTasksStep()
+		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
+			for _, p := range preds {
+				p(s)
+			}
+		})
+	})
+}
+
+// HasAgentLabels applies the HasEdge predicate on the "agent_labels" edge.
+func HasAgentLabels() predicate.Agents {
+	return predicate.Agents(func(s *sql.Selector) {
+		step := sqlgraph.NewStep(
+			sqlgraph.From(Table, FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, AgentLabelsTable, AgentLabelsColumn),
+		)
+		sqlgraph.HasNeighbors(s, step)
+	})
+}
+
+// HasAgentLabelsWith applies the HasEdge predicate on the "agent_labels" edge with a given conditions (other predicates).
+func HasAgentLabelsWith(preds ...predicate.AgentLabels) predicate.Agents {
+	return predicate.Agents(func(s *sql.Selector) {
+		step := newAgentLabelsStep()
 		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
 			for _, p := range preds {
 				p(s)

@@ -37,14 +37,23 @@ func (Agents) Fields() []ent.Field {
 			Comment("Enum: { connected, scan_in_progress, disconnected }."),
 		field.String("workspace").
 			Optional().
+			Unique().
 			Comment("Optional workspace path for the agent."),
 		field.String("server").
 			Optional().
 			Comment("The server address this agent connects to."),
+		field.JSON("labels", CommonLabels{}).
+			Optional().
+			Comment("Agent labels key:value"),
 		field.Time("last_seen").
 			Default(time.Now).
 			UpdateDefault(time.Now).
 			Comment("Timestamp of the agent's last activity."),
+		field.Time("last_heartbeat").
+			Default(time.Now).
+			UpdateDefault(time.Now).
+			Optional(). // To be non nullable
+			Comment("Timestamp of the agent's liveliness."),
 	}
 }
 
@@ -53,5 +62,6 @@ func (Agents) Edges() []ent.Edge {
 	return []ent.Edge{
 		edge.To("agent_tasks", AgentTasks.Type).
 			Comment("An agent can have multiple tasks."),
+		edge.To("agent_labels", AgentLabels.Type),
 	}
 }

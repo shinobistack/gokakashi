@@ -26,12 +26,14 @@ type ListAgentTasksRequest struct {
 	AgentID *int       `path:"agent_id"`
 	ScanID  *uuid.UUID `query:"scan_id"`
 	Status  string     `query:"status"`
+	Limit   int        `query:"limit"`
 }
 
 type ListAgentTasksQueryRequest struct {
 	AgentID *int       `query:"agent_id"`
 	ScanID  *uuid.UUID `query:"scan_id"`
 	Status  string     `query:"status"`
+	Limit   int        `query:"limit"`
 }
 
 type ListAgentTasksByScanIDRequest struct {
@@ -77,6 +79,10 @@ func ListAgentTasksByAgentID(client *ent.Client) func(ctx context.Context, req L
 			query = query.Where(agenttasks.Status((req.Status)))
 		}
 
+		if req.Limit > 0 {
+			query = query.Limit(req.Limit)
+		}
+
 		tasks, err := query.All(ctx)
 		if err != nil {
 			return status.Wrap(err, status.Internal)
@@ -113,6 +119,10 @@ func ListAgentTasks(client *ent.Client) func(ctx context.Context, req ListAgentT
 		// Filter by status if provided
 		if req.Status != "" {
 			query = query.Where(agenttasks.Status(req.Status))
+		}
+
+		if req.Limit > 0 {
+			query = query.Limit(req.Limit)
 		}
 
 		// Execute query

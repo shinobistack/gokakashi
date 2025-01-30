@@ -20,10 +20,10 @@ type GetPolicyResponse struct {
 	ID      uuid.UUID              `json:"id"`
 	Name    string                 `json:"name"`
 	Scanner string                 `json:"scanner"`
-	Image   schema.Image           `json:"image"`
-	Labels  []schema.PolicyLabel   `json:"labels"`
-	Trigger map[string]interface{} `json:"trigger,omitempty"`
-	Notify  *[]schema.Notify       `json:"notify"`
+	Image   *schema.Image          `json:"image,omitempty"`
+	Labels  []schema.PolicyLabel   `json:"labels,omitempty"`
+	Trigger map[string]interface{} `json:"trigger"`
+	Notify  *[]schema.Notify       `json:"notify,omitempty"`
 }
 
 type ListPoliciesRequest struct {
@@ -58,11 +58,11 @@ func ListPolicies(client *ent.Client) func(ctx context.Context, req ListPolicies
 			(*res)[i] = GetPolicyResponse{
 				ID:      policy.ID,
 				Name:    policy.Name,
-				Image:   policy.Image,
+				Image:   &policy.Image,
 				Scanner: policy.Scanner,
 				Labels:  labels,
 				Trigger: policy.Trigger,
-				Notify:  convertToPointer(policy.Notify),
+				Notify:  &policy.Notify,
 			}
 		}
 		return nil
@@ -97,17 +97,12 @@ func GetPolicy(client *ent.Client) func(ctx context.Context, req GetPolicyReques
 		// Build the response
 		res.ID = policy.ID
 		res.Name = policy.Name
-		res.Image = policy.Image
+		res.Image = &policy.Image
 		res.Scanner = policy.Scanner
 		res.Labels = labels
 		res.Trigger = policy.Trigger
-		res.Notify = convertToPointer(policy.Notify)
+		res.Notify = &policy.Notify
 
 		return nil
 	}
-}
-
-// Utility function to convert nullable fields to pointers
-func convertToPointer(data []schema.Notify) *[]schema.Notify {
-	return &data
 }

@@ -25,6 +25,8 @@ const (
 	FieldScanner = "scanner"
 	// FieldNotify holds the string denoting the notify field in the database.
 	FieldNotify = "notify"
+	// FieldLabels holds the string denoting the labels field in the database.
+	FieldLabels = "labels"
 	// FieldReport holds the string denoting the report field in the database.
 	FieldReport = "report"
 	// EdgePolicy holds the string denoting the policy edge name in mutations.
@@ -85,6 +87,7 @@ var Columns = []string{
 	FieldIntegrationID,
 	FieldScanner,
 	FieldNotify,
+	FieldLabels,
 	FieldReport,
 }
 

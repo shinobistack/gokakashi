@@ -11,8 +11,10 @@ import (
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
 	"github.com/google/uuid"
+	"github.com/shinobistack/gokakashi/ent/agentlabels"
 	"github.com/shinobistack/gokakashi/ent/agents"
 	"github.com/shinobistack/gokakashi/ent/agenttasks"
+	"github.com/shinobistack/gokakashi/ent/schema"
 )
 
 // AgentsCreate is the builder for creating a Agents entity.
@@ -78,6 +80,20 @@ func (ac *AgentsCreate) SetNillableServer(s *string) *AgentsCreate {
 	return ac
 }
 
+// SetLabels sets the "labels" field.
+func (ac *AgentsCreate) SetLabels(sl schema.CommonLabels) *AgentsCreate {
+	ac.mutation.SetLabels(sl)
+	return ac
+}
+
+// SetNillableLabels sets the "labels" field if the given value is not nil.
+func (ac *AgentsCreate) SetNillableLabels(sl *schema.CommonLabels) *AgentsCreate {
+	if sl != nil {
+		ac.SetLabels(*sl)
+	}
+	return ac
+}
+
 // SetLastSeen sets the "last_seen" field.
 func (ac *AgentsCreate) SetLastSeen(t time.Time) *AgentsCreate {
 	ac.mutation.SetLastSeen(t)
@@ -88,6 +104,20 @@ func (ac *AgentsCreate) SetLastSeen(t time.Time) *AgentsCreate {
 func (ac *AgentsCreate) SetNillableLastSeen(t *time.Time) *AgentsCreate {
 	if t != nil {
 		ac.SetLastSeen(*t)
+	}
+	return ac
+}
+
+// SetLastHeartbeat sets the "last_heartbeat" field.
+func (ac *AgentsCreate) SetLastHeartbeat(t time.Time) *AgentsCreate {
+	ac.mutation.SetLastHeartbeat(t)
+	return ac
+}
+
+// SetNillableLastHeartbeat sets the "last_heartbeat" field if the given value is not nil.
+func (ac *AgentsCreate) SetNillableLastHeartbeat(t *time.Time) *AgentsCreate {
+	if t != nil {
+		ac.SetLastHeartbeat(*t)
 	}
 	return ac
 }
@@ -111,6 +141,21 @@ func (ac *AgentsCreate) AddAgentTasks(a ...*AgentTasks) *AgentsCreate {
 		ids[i] = a[i].ID
 	}
 	return ac.AddAgentTaskIDs(ids...)
+}
+
+// AddAgentLabelIDs adds the "agent_labels" edge to the AgentLabels entity by IDs.
+func (ac *AgentsCreate) AddAgentLabelIDs(ids ...int) *AgentsCreate {
+	ac.mutation.AddAgentLabelIDs(ids...)
+	return ac
+}
+
+// AddAgentLabels adds the "agent_labels" edges to the AgentLabels entity.
+func (ac *AgentsCreate) AddAgentLabels(a ...*AgentLabels) *AgentsCreate {
+	ids := make([]int, len(a))
+	for i := range a {
+		ids[i] = a[i].ID
+	}
+	return ac.AddAgentLabelIDs(ids...)
 }
 
 // Mutation returns the AgentsMutation object of the builder.
@@ -155,6 +200,10 @@ func (ac *AgentsCreate) defaults() {
 	if _, ok := ac.mutation.LastSeen(); !ok {
 		v := agents.DefaultLastSeen()
 		ac.mutation.SetLastSeen(v)
+	}
+	if _, ok := ac.mutation.LastHeartbeat(); !ok {
+		v := agents.DefaultLastHeartbeat()
+		ac.mutation.SetLastHeartbeat(v)
 	}
 }
 
@@ -219,9 +268,17 @@ func (ac *AgentsCreate) createSpec() (*Agents, *sqlgraph.CreateSpec) {
 		_spec.SetField(agents.FieldServer, field.TypeString, value)
 		_node.Server = value
 	}
+	if value, ok := ac.mutation.Labels(); ok {
+		_spec.SetField(agents.FieldLabels, field.TypeJSON, value)
+		_node.Labels = value
+	}
 	if value, ok := ac.mutation.LastSeen(); ok {
 		_spec.SetField(agents.FieldLastSeen, field.TypeTime, value)
 		_node.LastSeen = value
+	}
+	if value, ok := ac.mutation.LastHeartbeat(); ok {
+		_spec.SetField(agents.FieldLastHeartbeat, field.TypeTime, value)
+		_node.LastHeartbeat = value
 	}
 	if nodes := ac.mutation.AgentTasksIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
@@ -232,6 +289,22 @@ func (ac *AgentsCreate) createSpec() (*Agents, *sqlgraph.CreateSpec) {
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(agenttasks.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges = append(_spec.Edges, edge)
+	}
+	if nodes := ac.mutation.AgentLabelsIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   agents.AgentLabelsTable,
+			Columns: []string{agents.AgentLabelsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(agentlabels.FieldID, field.TypeInt),
 			},
 		}
 		for _, k := range nodes {

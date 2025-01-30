@@ -22,10 +22,16 @@ const (
 	FieldWorkspace = "workspace"
 	// FieldServer holds the string denoting the server field in the database.
 	FieldServer = "server"
+	// FieldLabels holds the string denoting the labels field in the database.
+	FieldLabels = "labels"
 	// FieldLastSeen holds the string denoting the last_seen field in the database.
 	FieldLastSeen = "last_seen"
+	// FieldLastHeartbeat holds the string denoting the last_heartbeat field in the database.
+	FieldLastHeartbeat = "last_heartbeat"
 	// EdgeAgentTasks holds the string denoting the agent_tasks edge name in mutations.
 	EdgeAgentTasks = "agent_tasks"
+	// EdgeAgentLabels holds the string denoting the agent_labels edge name in mutations.
+	EdgeAgentLabels = "agent_labels"
 	// Table holds the table name of the agents in the database.
 	Table = "agents"
 	// AgentTasksTable is the table that holds the agent_tasks relation/edge.
@@ -35,6 +41,13 @@ const (
 	AgentTasksInverseTable = "agent_tasks"
 	// AgentTasksColumn is the table column denoting the agent_tasks relation/edge.
 	AgentTasksColumn = "agent_id"
+	// AgentLabelsTable is the table that holds the agent_labels relation/edge.
+	AgentLabelsTable = "agent_labels"
+	// AgentLabelsInverseTable is the table name for the AgentLabels entity.
+	// It exists in this package in order to avoid circular dependency with the "agentlabels" package.
+	AgentLabelsInverseTable = "agent_labels"
+	// AgentLabelsColumn is the table column denoting the agent_labels relation/edge.
+	AgentLabelsColumn = "agent_id"
 )
 
 // Columns holds all SQL columns for agents fields.
@@ -44,7 +57,9 @@ var Columns = []string{
 	FieldStatus,
 	FieldWorkspace,
 	FieldServer,
+	FieldLabels,
 	FieldLastSeen,
+	FieldLastHeartbeat,
 }
 
 // ValidColumn reports if the column name is valid (part of the table columns).
@@ -66,6 +81,10 @@ var (
 	DefaultLastSeen func() time.Time
 	// UpdateDefaultLastSeen holds the default value on update for the "last_seen" field.
 	UpdateDefaultLastSeen func() time.Time
+	// DefaultLastHeartbeat holds the default value on creation for the "last_heartbeat" field.
+	DefaultLastHeartbeat func() time.Time
+	// UpdateDefaultLastHeartbeat holds the default value on update for the "last_heartbeat" field.
+	UpdateDefaultLastHeartbeat func() time.Time
 )
 
 // OrderOption defines the ordering options for the Agents queries.
@@ -101,6 +120,11 @@ func ByLastSeen(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldLastSeen, opts...).ToFunc()
 }
 
+// ByLastHeartbeat orders the results by the last_heartbeat field.
+func ByLastHeartbeat(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldLastHeartbeat, opts...).ToFunc()
+}
+
 // ByAgentTasksCount orders the results by agent_tasks count.
 func ByAgentTasksCount(opts ...sql.OrderTermOption) OrderOption {
 	return func(s *sql.Selector) {
@@ -114,10 +138,31 @@ func ByAgentTasks(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
 		sqlgraph.OrderByNeighborTerms(s, newAgentTasksStep(), append([]sql.OrderTerm{term}, terms...)...)
 	}
 }
+
+// ByAgentLabelsCount orders the results by agent_labels count.
+func ByAgentLabelsCount(opts ...sql.OrderTermOption) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborsCount(s, newAgentLabelsStep(), opts...)
+	}
+}
+
+// ByAgentLabels orders the results by agent_labels terms.
+func ByAgentLabels(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborTerms(s, newAgentLabelsStep(), append([]sql.OrderTerm{term}, terms...)...)
+	}
+}
 func newAgentTasksStep() *sqlgraph.Step {
 	return sqlgraph.NewStep(
 		sqlgraph.From(Table, FieldID),
 		sqlgraph.To(AgentTasksInverseTable, FieldID),
 		sqlgraph.Edge(sqlgraph.O2M, false, AgentTasksTable, AgentTasksColumn),
+	)
+}
+func newAgentLabelsStep() *sqlgraph.Step {
+	return sqlgraph.NewStep(
+		sqlgraph.From(Table, FieldID),
+		sqlgraph.To(AgentLabelsInverseTable, FieldID),
+		sqlgraph.Edge(sqlgraph.O2M, false, AgentLabelsTable, AgentLabelsColumn),
 	)
 }

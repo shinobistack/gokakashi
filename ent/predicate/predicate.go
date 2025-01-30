@@ -6,6 +6,9 @@ import (
 	"entgo.io/ent/dialect/sql"
 )
 
+// AgentLabels is the predicate function for agentlabels builders.
+type AgentLabels func(*sql.Selector)
+
 // AgentTasks is the predicate function for agenttasks builders.
 type AgentTasks func(*sql.Selector)
 

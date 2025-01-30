@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/shinobistack/gokakashi/ent/agentlabels"
 	"github.com/shinobistack/gokakashi/ent/agents"
 	"github.com/shinobistack/gokakashi/ent/agenttasks"
 	"github.com/shinobistack/gokakashi/ent/integrations"
@@ -22,6 +23,16 @@ import (
 // (default values, validators, hooks and policies) and stitches it
 // to their package variables.
 func init() {
+	agentlabelsFields := schema.AgentLabels{}.Fields()
+	_ = agentlabelsFields
+	// agentlabelsDescKey is the schema descriptor for key field.
+	agentlabelsDescKey := agentlabelsFields[1].Descriptor()
+	// agentlabels.KeyValidator is a validator for the "key" field. It is called by the builders before save.
+	agentlabels.KeyValidator = agentlabelsDescKey.Validators[0].(func(string) error)
+	// agentlabelsDescValue is the schema descriptor for value field.
+	agentlabelsDescValue := agentlabelsFields[2].Descriptor()
+	// agentlabels.ValueValidator is a validator for the "value" field. It is called by the builders before save.
+	agentlabels.ValueValidator = agentlabelsDescValue.Validators[0].(func(string) error)
 	agenttasksFields := schema.AgentTasks{}.Fields()
 	_ = agenttasksFields
 	// agenttasksDescStatus is the schema descriptor for status field.
@@ -47,11 +58,17 @@ func init() {
 	// agents.StatusValidator is a validator for the "status" field. It is called by the builders before save.
 	agents.StatusValidator = agentsDescStatus.Validators[0].(func(string) error)
 	// agentsDescLastSeen is the schema descriptor for last_seen field.
-	agentsDescLastSeen := agentsFields[5].Descriptor()
+	agentsDescLastSeen := agentsFields[6].Descriptor()
 	// agents.DefaultLastSeen holds the default value on creation for the last_seen field.
 	agents.DefaultLastSeen = agentsDescLastSeen.Default.(func() time.Time)
 	// agents.UpdateDefaultLastSeen holds the default value on update for the last_seen field.
 	agents.UpdateDefaultLastSeen = agentsDescLastSeen.UpdateDefault.(func() time.Time)
+	// agentsDescLastHeartbeat is the schema descriptor for last_heartbeat field.
+	agentsDescLastHeartbeat := agentsFields[7].Descriptor()
+	// agents.DefaultLastHeartbeat holds the default value on creation for the last_heartbeat field.
+	agents.DefaultLastHeartbeat = agentsDescLastHeartbeat.Default.(func() time.Time)
+	// agents.UpdateDefaultLastHeartbeat holds the default value on update for the last_heartbeat field.
+	agents.UpdateDefaultLastHeartbeat = agentsDescLastHeartbeat.UpdateDefault.(func() time.Time)
 	integrationtypeFields := schema.IntegrationType{}.Fields()
 	_ = integrationtypeFields
 	// integrationtypeDescDisplayName is the schema descriptor for display_name field.

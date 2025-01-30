@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"github.com/shinobistack/gokakashi/ent/schema"
 	"log"
 	"net/http"
 	"net/url"
@@ -48,12 +49,15 @@ func Start(server string, port int, token string, interval time.Duration) {
 	}
 }
 
+// Global agent index for round-robin
+var globalAgentIndex int
+
 func AssignTasks(server string, port int, token string) {
 	log.Println("Assigner now begins assigning your scans")
 	// Step 1: Fetch scans needing assignment
 	pendingScans, err := fetchPendingScans(server, port, token, "scan_pending")
 	if err != nil {
-		log.Printf("Error fetching pending scans: %v", err)
+		log.Printf("Assigner: Error fetching pending scans: %v", err)
 		return
 	}
 
@@ -63,14 +67,15 @@ func AssignTasks(server string, port int, token string) {
 	}
 
 	// Step 2: Fetch available agents
-	availableAgents, err := fetchAvailableAgents(server, port, token, "connected")
+	availableAgents, err := fetchAvailableAgents(server, port, token, "scan_in_progress")
 	if err != nil {
-		log.Printf("Error fetching available agents: %v", err)
+		log.Printf("Assigner: Error fetching available agents: %v", err)
 		return
 	}
 
 	if len(availableAgents) == 0 {
 		log.Println("No agents available for assignment.")
+		log.Printf("Assigner: Unassignable scans: %d scans pending without agents.", len(pendingScans))
 		return
 	}
 
@@ -78,22 +83,132 @@ func AssignTasks(server string, port int, token string) {
 
 	// Step 3: Assign scans to agents
 	// ToDo: to explore task assignment for better efficiency
-	for i, scan := range pendingScans {
+	for _, scan := range pendingScans {
 		// Check if scan is already assigned
 		if isScanAssigned(server, port, token, scan.ID) {
-			log.Printf("Scan ID %s is already assigned. Skipping.", scan.ID)
+			log.Printf("Assigner: Scan ID %s is already assigned. Skipping.", scan.ID)
 			continue
 		}
 
-		// Select agent using round-robin
-		agent := availableAgents[i%len(availableAgents)]
-		if err := createAgentTask(server, port, token, agent.ID, scan.ID); err != nil {
-			log.Printf("Failed to assign scan %s to agent %d: %v", scan.ID, agent.ID, err)
-		} else {
-			log.Printf("Successfully assigned scan %s to agent %d", scan.ID, agent.ID)
+		// Step 3a: Filter agents by matching labels
+		matchingAgents := filterAgentsByLabels(availableAgents, scan.Labels)
+
+		// Step 3b: If no exact matches, assign only to label-less agents
+		if len(matchingAgents) == 0 && len(scan.Labels) > 0 {
+			matchingAgents = filterAgentsWithoutLabels(availableAgents)
+			if len(matchingAgents) == 0 {
+				log.Printf("Assigner: No agents available for labeled scan %s. Skipping.", scan.ID)
+				continue
+			}
+			log.Printf("Assigner: No matching labels for scan %s. Assigning to label-less agents.", scan.ID)
+			//
 		}
 
+		// Step 3c: If scan has no labels, do not assign it to labeled agents
+		if len(scan.Labels) == 0 {
+			matchingAgents = filterAgentsWithoutLabels(availableAgents)
+			if len(matchingAgents) == 0 {
+				log.Printf("Assigner: No unlabeled agents available for scan %s. Skipping.", scan.ID)
+				continue
+			}
+		}
+
+		// Step 4: Select an agent using round-robin
+		selectedAgent := selectAgentRoundRobin(matchingAgents)
+
+		// Step 3b: Assign using round-robin
+		//var agent agents.GetAgentResponse
+		//if len(matchingAgents) > 0 {
+		//	agent = selectAgentRoundRobin(matchingAgents)
+		//} else {
+		//	// Fallback to any connected agent
+		//	agent = selectAgentRoundRobin(availableAgents)
+		//}
+
+		// Assign the scan to the selected agent
+		if assignTaskToAgent(server, port, token, selectedAgent, scan) {
+			log.Printf("Assigner: Successfully assigned scan %s to agent %d", scan.ID, selectedAgent.ID)
+		} else {
+			log.Printf("Assigner: Failed to assign scan %s. It will be retried in the next cycle.", scan.ID)
+		}
+
+		//// Select agent using round-robin
+		//agent := availableAgents[i%len(availableAgents)]
+		//if err := createAgentTask(server, port, token, agent.ID, scan.ID); err != nil {
+		//	log.Printf("Failed to assign scan %s to agent %d: %v", scan.ID, agent.ID, err)
+		//} else {
+		//	log.Printf("Successfully assigned scan %s to agent %d", scan.ID, agent.ID)
+		//}
+
 	}
+}
+
+func filterAgentsWithoutLabels(agentList []agents.GetAgentResponse) []agents.GetAgentResponse {
+	var noLabelAgents []agents.GetAgentResponse
+	for _, agent := range agentList {
+		if len(agent.Labels) == 0 {
+			noLabelAgents = append(noLabelAgents, agent)
+		}
+	}
+	return noLabelAgents
+}
+
+// Selects the next agent in a round-robin fashion
+func selectAgentRoundRobin(agents []agents.GetAgentResponse) agents.GetAgentResponse {
+	// Select the agent at the current global index
+	agent := agents[globalAgentIndex%len(agents)]
+
+	// Update the index for the next assignment
+	globalAgentIndex = (globalAgentIndex + 1) % len(agents)
+	return agent
+}
+
+func filterAgentsByLabels(agentList []agents.GetAgentResponse, scanLabels []schema.CommonLabels) []agents.GetAgentResponse {
+	var matchingAgents []agents.GetAgentResponse
+	for _, agent := range agentList {
+		if labelsMatch(agent.Labels, scanLabels) {
+			matchingAgents = append(matchingAgents, agent)
+		}
+	}
+	return matchingAgents
+}
+
+// Matches atleast one label? Todo: Maybe having maritial labels would benefit? Because a scan have many labels for filtering?
+//func partialLabelsMatch(agentLabels, scanLabels []schema.CommonLabels) bool {
+//	for _, scanLabel := range scanLabels {
+//		for _, agentLabel := range agentLabels {
+//			if scanLabel.Key == agentLabel.Key && scanLabel.Value == agentLabel.Value {
+//				return true // Return true as soon as one label matches
+//			}
+//		}
+//	}
+//	return false // Return false if no labels match
+//}
+
+// Matches all labels?
+func labelsMatch(agentLabels, scanLabels []schema.CommonLabels) bool {
+	for _, scanLabel := range scanLabels {
+		matchFound := false
+		for _, agentLabel := range agentLabels {
+			if scanLabel.Key == agentLabel.Key && scanLabel.Value == agentLabel.Value {
+				matchFound = true
+				break
+			}
+		}
+		if !matchFound {
+			return false // If any scan label doesn’t match, return false
+		}
+	}
+	return true
+}
+
+func assignTaskToAgent(server string, port int, token string, agent agents.GetAgentResponse, scan scans.GetScanResponse) bool {
+	if err := createAgentTask(server, port, token, agent.ID, scan.ID); err != nil {
+		log.Printf("Assigner: Failed to assign scan %s to agent %d: %v", scan.ID, agent.ID, err)
+		return false
+	}
+	log.Printf("Assigner: Successfully assigned scan %s to agent %d", scan.ID, agent.ID)
+	return true
 }
 
 func fetchPendingScans(server string, port int, token, status string) ([]scans.GetScanResponse, error) {
