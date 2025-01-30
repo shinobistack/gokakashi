@@ -76,7 +76,7 @@ func startAPIServer(cfg *configv1.Config) {
 }
 
 func startWebServer(cfg *configv1.Config) {
-	webServer, err := webapp.New(fmt.Sprintf("%s:%d", cfg.WebServer.Host, cfg.WebServer.Port))
+	webServer, err := webapp.New(cfg.WebServerServingAddress(), cfg.APIServerURL())
 	if err != nil {
 		log.Fatalln("Error creating web server", err)
 	}

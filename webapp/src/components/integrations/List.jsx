@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import axios from "axios";
+import { ApiUrl } from "../../feature/meta";
 
 const IntegrationsList = () => {
   const [itemsPerPage, setItemsPerPage] = useState(10);
@@ -11,7 +12,7 @@ const IntegrationsList = () => {
     const fetchIntegrations = async () => {
       try {
         const response = await axios.get(
-          "http://localhost:5556/api/v1/integrations",
+          `${await ApiUrl()}/api/v1/integrations`,
           {
             headers: {
               Authorization: `Bearer ${localStorage.getItem("adminSecret")}`,

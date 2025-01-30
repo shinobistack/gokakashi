@@ -90,6 +90,10 @@ func (c *Config) APIServerURL() string {
 	return fmt.Sprintf("http://%s:%d", host, c.Site.Port)
 }
 
+func (c *Config) WebServerServingAddress() string {
+	return fmt.Sprintf("%s:%d", c.WebServer.Host, c.WebServer.Port)
+}
+
 func (cfg *Config) String() string {
 	var s strings.Builder
 
