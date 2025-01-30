@@ -31,7 +31,9 @@ jobs:
         run: go mod tidy
 
       - name: Install Dependencies (webapp)
-        run: npm install
+        run: |
+          npm install
+          npm run build
         working-directory: ./webapp
 
       - name: Build Binaries
