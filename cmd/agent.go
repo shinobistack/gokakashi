@@ -176,23 +176,23 @@ func agentRegister(cmd *cobra.Command, args []string) {
 	}
 }
 
-func startHeartbeat(ctx context.Context, server, token string, agentID int, interval time.Duration) {
-	ticker := time.NewTicker(interval)
-	defer ticker.Stop()
-
-	for {
-		select {
-		case <-ticker.C:
-			// Send heartbeat
-			if err := sendAgentHeartbeat(ctx, server, token, agentID); err != nil {
-				log.Printf("Failed to send heartbeat for agent %d: %v", agentID, err)
-			}
-		case <-ctx.Done():
-			log.Printf("Stopping heartbeat for agent %d", agentID)
-			return
-		}
-	}
-}
+//func startHeartbeat(ctx context.Context, server, token string, agentID int, interval time.Duration) {
+//	ticker := time.NewTicker(interval)
+//	defer ticker.Stop()
+//
+//	for {
+//		select {
+//		case <-ticker.C:
+//			// Send heartbeat
+//			if err := sendAgentHeartbeat(ctx, server, token, agentID); err != nil {
+//				log.Printf("Failed to send heartbeat for agent %d: %v", agentID, err)
+//			}
+//		case <-ctx.Done():
+//			log.Printf("Stopping heartbeat for agent %d", agentID)
+//			return
+//		}
+//	}
+//}
 
 func sendAgentHeartbeat(ctx context.Context, server, token string, agentID int) error {
 	path := fmt.Sprintf("/api/v1/agents/%d/heartbeat", agentID)
