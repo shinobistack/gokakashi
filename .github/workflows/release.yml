@@ -8,6 +8,9 @@ on:
       tag:
         description: "Tag for the release (e.g., v0.1.0)"
         required: true
+      header:
+        description: "One line description (e.g., v0.1.0 Chidori)"
+        required: false
 
 jobs:
   build-and-release-binaries:
@@ -45,4 +48,4 @@ jobs:
         with:
           tag_name: ${{ github.event.inputs.tag }}
           files: dist/*
-          body: "🚀 GoKakashi Agent Release - See Changelog for Details!"
+          body: "🚀 gokakashi - **${{ github.event.inputs.header }}**"
