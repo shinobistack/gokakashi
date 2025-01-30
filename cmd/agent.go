@@ -89,6 +89,10 @@ var (
 )
 
 func agentDeRegister(cmd *cobra.Command, args []string) {
+	id, _ := cmd.Flags().GetInt("id")
+	name, _ := cmd.Flags().GetString("name")
+	chidori, _ := cmd.Flags().GetBool("chidori")
+
 	if name == "" && id == 0 {
 		log.Fatalf("Error: Either --name or --id must be provided")
 	}
@@ -369,6 +373,13 @@ func executeEphemeraTasks(ctx context.Context, server, token string, agentID int
 
 func deregisterEphemeralAgent(ctx context.Context, agentID int, server, token string, chidori bool) {
 	cmd := &cobra.Command{}
+	cmd.SetContext(ctx)
+
+	cmd.Flags().Int("id", agentID, "Agent ID")
+	cmd.Flags().String("server", server, "Server URL")
+	cmd.Flags().String("token", token, "API Token")
+	cmd.Flags().Bool("chidori", chidori, "Trigger hard delete")
+
 	args := []string{}
 	if agentID != 0 {
 		args = append(args, fmt.Sprintf("--id=%d", agentID))
@@ -376,12 +387,6 @@ func deregisterEphemeralAgent(ctx context.Context, agentID int, server, token st
 	if chidori {
 		args = append(args, "--chidori")
 	}
-
-	cmd.Flags().String("server", server, "")
-	cmd.Flags().String("token", token, "")
-	cmd.Flags().Bool("chidori", chidori, "Trigger hard delete")
-	cmd.Flags().Int("id", agentID, "Agent ID")
-	cmd.SetContext(ctx)
 
 	err := cmd.ParseFlags(args)
 	if err != nil {
