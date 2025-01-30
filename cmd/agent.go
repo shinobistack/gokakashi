@@ -10,6 +10,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/shinobistack/gokakashi/ent/schema"
+	"github.com/shinobistack/gokakashi/internal/helper"
 	"io"
 	"log"
 	"net/http"
@@ -87,23 +88,6 @@ var (
 	labels       string
 	singleStrike bool
 )
-
-func normalizeServer(server string) string {
-	if !strings.HasPrefix(server, "http://") && !strings.HasPrefix(server, "https://") {
-		server = "http://" + server
-	}
-	return server
-}
-
-func constructURL(server string, path string) string {
-	base := normalizeServer(server)
-	u, err := url.Parse(base)
-	if err != nil {
-		log.Fatalf("Invalid server URL: %s", base)
-	}
-	u.Path = path
-	return u.String()
-}
 
 func agentDeRegister(cmd *cobra.Command, args []string) {
 	id, _ := cmd.Flags().GetInt("id")
@@ -217,7 +201,7 @@ func agentRegister(cmd *cobra.Command, args []string) {
 
 func sendAgentHeartbeat(ctx context.Context, server, token string, agentID int) error {
 	path := fmt.Sprintf("/api/v1/agents/%d/heartbeat", agentID)
-	url := constructURL(server, path)
+	url := helper.ConstructURL(server, path)
 
 	req, err := http.NewRequest("PUT", url, nil)
 	if err != nil {
@@ -276,7 +260,7 @@ func registerAgent(ctx context.Context, server, token, workspace, name string, l
 	}
 	reqBodyJSON, _ := json.Marshal(reqBody)
 
-	url := constructURL(server, "/api/v1/agents")
+	url := helper.ConstructURL(server, "/api/v1/agents")
 	req, err := http.NewRequest("POST", url, bytes.NewBuffer(reqBodyJSON))
 	if err != nil {
 		return response, fmt.Errorf("failed to create registration request: %w", err)
@@ -307,7 +291,7 @@ func updateAgentStatus(ctx context.Context, server, token string, agentID int, s
 	reqBodyJSON, _ := json.Marshal(reqBody)
 
 	path := fmt.Sprintf("/api/v1/agents/%d", agentID)
-	url := constructURL(server, path)
+	url := helper.ConstructURL(server, path)
 	req, err := http.NewRequest("PUT", url, bytes.NewBuffer(reqBodyJSON))
 
 	if err != nil {
@@ -467,7 +451,7 @@ func pollTasks(ctx context.Context, server, token string, agentID int, workspace
 }
 
 func fetchTasks(ctx context.Context, server, token string, agentID int, status string, limit int) ([]agenttasks.GetAgentTaskResponse, error) {
-	url := constructURL(server, fmt.Sprintf("/api/v1/agents/%d/tasks", agentID)) + fmt.Sprintf("?status=%s&limit=%d", status, limit)
+	url := helper.ConstructURL(server, fmt.Sprintf("/api/v1/agents/%d/tasks", agentID)) + fmt.Sprintf("?status=%s&limit=%d", status, limit)
 
 	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {
@@ -502,7 +486,7 @@ func updateAgentTaskStatus(ctx context.Context, server, token string, taskID uui
 	reqBodyJSON, _ := json.Marshal(reqBody)
 
 	path := fmt.Sprintf("/api/v1/agents/%d/tasks/%s", agentID, taskID)
-	url := constructURL(server, path)
+	url := helper.ConstructURL(server, path)
 	req, err := http.NewRequest("PUT", url, bytes.NewBuffer(reqBodyJSON))
 
 	if err != nil {
@@ -600,7 +584,7 @@ func updateScanStatus(ctx context.Context, server, token string, scanID uuid.UUI
 	reqBodyJSON, _ := json.Marshal(reqBody)
 
 	path := fmt.Sprintf("/api/v1/scans/%s", scanID)
-	url := constructURL(server, path)
+	url := helper.ConstructURL(server, path)
 	req, err := http.NewRequest("PUT", url, bytes.NewBuffer(reqBodyJSON))
 
 	if err != nil {
@@ -623,7 +607,7 @@ func updateScanStatus(ctx context.Context, server, token string, scanID uuid.UUI
 
 func fetchScan(ctx context.Context, server, token string, scanID uuid.UUID) (*scans.GetScanResponse, error) {
 	path := fmt.Sprintf("/api/v1/scans/%s", scanID)
-	url := constructURL(server, path)
+	url := helper.ConstructURL(server, path)
 	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create scan request: %w", err)
@@ -649,7 +633,7 @@ func fetchScan(ctx context.Context, server, token string, scanID uuid.UUID) (*sc
 
 func fetchIntegration(ctx context.Context, server, token string, integrationID *uuid.UUID) (*integrations.GetIntegrationResponse, error) {
 	path := fmt.Sprintf("/api/v1/integrations/%s", integrationID)
-	url := constructURL(server, path)
+	url := helper.ConstructURL(server, path)
 	req, err := http.NewRequest("GET", url, nil)
 
 	if err != nil {
@@ -728,7 +712,7 @@ func uploadReport(ctx context.Context, server, token string, scanID uuid.UUID, r
 	}
 
 	path := fmt.Sprintf("/api/v1/scans/%s", scanID)
-	url := constructURL(server, path)
+	url := helper.ConstructURL(server, path)
 	req, err := http.NewRequest("PUT", url, bytes.NewBuffer(reqBodyJSON))
 
 	if err != nil {
