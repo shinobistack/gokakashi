@@ -92,6 +92,12 @@ func (su *ScansUpdate) SetNillableIntegrationID(u *uuid.UUID) *ScansUpdate {
 	return su
 }
 
+// ClearIntegrationID clears the value of the "integration_id" field.
+func (su *ScansUpdate) ClearIntegrationID() *ScansUpdate {
+	su.mutation.ClearIntegrationID()
+	return su
+}
+
 // SetScanner sets the "scanner" field.
 func (su *ScansUpdate) SetScanner(s string) *ScansUpdate {
 	su.mutation.SetScanner(s)
@@ -170,6 +176,14 @@ func (su *ScansUpdate) SetPolicy(p *Policies) *ScansUpdate {
 // SetIntegrationsID sets the "integrations" edge to the Integrations entity by ID.
 func (su *ScansUpdate) SetIntegrationsID(id uuid.UUID) *ScansUpdate {
 	su.mutation.SetIntegrationsID(id)
+	return su
+}
+
+// SetNillableIntegrationsID sets the "integrations" edge to the Integrations entity by ID if the given value is not nil.
+func (su *ScansUpdate) SetNillableIntegrationsID(id *uuid.UUID) *ScansUpdate {
+	if id != nil {
+		su = su.SetIntegrationsID(*id)
+	}
 	return su
 }
 
@@ -339,9 +353,6 @@ func (su *ScansUpdate) check() error {
 	}
 	if su.mutation.PolicyCleared() && len(su.mutation.PolicyIDs()) > 0 {
 		return errors.New(`ent: clearing a required unique edge "Scans.policy"`)
-	}
-	if su.mutation.IntegrationsCleared() && len(su.mutation.IntegrationsIDs()) > 0 {
-		return errors.New(`ent: clearing a required unique edge "Scans.integrations"`)
 	}
 	return nil
 }
@@ -664,6 +675,12 @@ func (suo *ScansUpdateOne) SetNillableIntegrationID(u *uuid.UUID) *ScansUpdateOn
 	return suo
 }
 
+// ClearIntegrationID clears the value of the "integration_id" field.
+func (suo *ScansUpdateOne) ClearIntegrationID() *ScansUpdateOne {
+	suo.mutation.ClearIntegrationID()
+	return suo
+}
+
 // SetScanner sets the "scanner" field.
 func (suo *ScansUpdateOne) SetScanner(s string) *ScansUpdateOne {
 	suo.mutation.SetScanner(s)
@@ -742,6 +759,14 @@ func (suo *ScansUpdateOne) SetPolicy(p *Policies) *ScansUpdateOne {
 // SetIntegrationsID sets the "integrations" edge to the Integrations entity by ID.
 func (suo *ScansUpdateOne) SetIntegrationsID(id uuid.UUID) *ScansUpdateOne {
 	suo.mutation.SetIntegrationsID(id)
+	return suo
+}
+
+// SetNillableIntegrationsID sets the "integrations" edge to the Integrations entity by ID if the given value is not nil.
+func (suo *ScansUpdateOne) SetNillableIntegrationsID(id *uuid.UUID) *ScansUpdateOne {
+	if id != nil {
+		suo = suo.SetIntegrationsID(*id)
+	}
 	return suo
 }
 
@@ -924,9 +949,6 @@ func (suo *ScansUpdateOne) check() error {
 	}
 	if suo.mutation.PolicyCleared() && len(suo.mutation.PolicyIDs()) > 0 {
 		return errors.New(`ent: clearing a required unique edge "Scans.policy"`)
-	}
-	if suo.mutation.IntegrationsCleared() && len(suo.mutation.IntegrationsIDs()) > 0 {
-		return errors.New(`ent: clearing a required unique edge "Scans.integrations"`)
 	}
 	return nil
 }

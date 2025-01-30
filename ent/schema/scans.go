@@ -44,6 +44,8 @@ func (Scans) Fields() []ent.Field {
 		field.String("image").
 			Comment("Details of the image being scanned."),
 		field.UUID("integration_id", uuid.UUID{}).
+			Nillable().
+			Optional().
 			Comment("Foreign key to Integrations.ID"),
 		field.String("scanner").
 			Comment("Scanners like Trivy."),
@@ -70,7 +72,6 @@ func (Scans) Edges() []ent.Edge {
 		edge.From("integrations", Integrations.Type).
 			Ref("scans").
 			Unique().
-			Required().
 			Field("integration_id"),
 		// A single scan can have multiple labels.
 		edge.To("scan_labels", ScanLabels.Type),

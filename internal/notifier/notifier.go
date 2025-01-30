@@ -66,11 +66,11 @@ func Start(server string, port int, token string, interval time.Duration) {
 func NotifyProcess(server string, port int, token string) {
 	scans, err := fetchPendingScans(server, port, token, "notify_pending")
 	if err != nil {
-		log.Printf("Error fetching pending notify: %v", err)
+		log.Printf("Notifier: Error fetching pending notify: %v", err)
 	}
 
 	if len(scans) == 0 {
-		log.Println("No pending notify to execute.")
+		log.Println("Notifier: No pending notify to execute.")
 		return
 	}
 
@@ -88,7 +88,7 @@ func NotifyProcess(server string, port int, token string) {
 				// Todo: To define separate schema for scans table to take notify.to as UUID and update all dependent APIs
 				parsedNotifyToUUID, err := uuid.Parse(notify.To)
 				if err != nil {
-					log.Printf("invalid UUID string: %v", err)
+					log.Printf("Notifier: invalid UUID string: %v", err)
 				}
 				log.Println(parsedNotifyToUUID)
 
@@ -100,28 +100,28 @@ func NotifyProcess(server string, port int, token string) {
 
 				notifier, err := notifier.NewNotifier(integration.Type)
 				if err != nil {
-					log.Printf("Error creating notifier: %v", err)
+					log.Printf("Notifier: Error creating notifier: %v", err)
 					continue
 				}
 
 				// Todo: Better way to deal handle.
 				notifierConfig, err := MapToNotificationConfig(integration.Config)
 				if err != nil {
-					log.Printf("Error parsing notification config: %v", err)
+					log.Printf("Notifier: Error parsing notification config: %v", err)
 					continue
 				}
 
 				filteredVulnerabilities, err := formatReportForNotify(scan.Report, severities, scan.Image)
 				if err != nil {
-					log.Printf("Error formatting report for notify: %v", err)
+					log.Printf("Notifier: Error formatting report for notify: %v", err)
 					continue
 				}
 
 				if len(filteredVulnerabilities) == 0 {
-					log.Printf("no vulnerabilities found for scanID: %s and image: %s. Skipping creation of issues", scan.ID, scan.Image)
+					log.Printf("Notifier: no vulnerabilities found for scanID: %s and image: %s. Skipping creation of issues", scan.ID, scan.Image)
 					err = updateScanStatus(server, port, token, scan.ID, "success")
 					if err != nil {
-						log.Printf("Error updating scan status: %v", err)
+						log.Printf("Notifier: Error updating scan status: %v", err)
 					}
 					return
 				}
@@ -132,33 +132,32 @@ func NotifyProcess(server string, port int, token string) {
 				hash := GenerateHash(scan.Image, vulnerabilityEntries)
 				saved, err := CheckAndSaveHash(server, port, token, scan.ID, hash)
 				if err != nil {
-					log.Printf("Error checking or saving hash: %v", err)
+					log.Printf("Notifier: Error checking or saving hash: %v", err)
 					continue
 				}
 
 				if saved {
 					err = notifier.CreateIssue(scan.Image, filteredVulnerabilities, notifierConfig)
 					if err != nil {
-						log.Printf("Error sending notification: %v", err)
+						log.Printf("Notifier: Error sending notification: %v", err)
 					} else {
 						// Update scan status
 						log.Println("to do")
 						err = updateScanStatus(server, port, token, scan.ID, "success")
 						if err != nil {
-							log.Printf("Error updating scan status: %v", err)
+							log.Printf("Notifier: Error updating scan status: %v", err)
 						}
 					}
 				}
 			}
 			if !matched {
-				log.Printf("Condition not matched for scanID: %s and image: %s. Updating status to success.", scan.ID, scan.Image)
+				log.Printf("Notifier: Condition not matched for scanID: %s and image: %s. Updating status to success.", scan.ID, scan.Image)
 				err = updateScanStatus(server, port, token, scan.ID, "success")
 				if err != nil {
-					log.Printf("Failed to update status for scanID: %s: %v", scan.ID, err)
+					log.Printf("Notifier: Failed to update status for scanID: %s: %v", scan.ID, err)
 				}
 				continue
 			}
-
 		}
 	}
 }

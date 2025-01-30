@@ -431,9 +431,12 @@ func (iq *IntegrationsQuery) loadScans(ctx context.Context, query *ScansQuery, n
 	}
 	for _, n := range neighbors {
 		fk := n.IntegrationID
-		node, ok := nodeids[fk]
+		if fk == nil {
+			return fmt.Errorf(`foreign-key "integration_id" is nil for node %v`, n.ID)
+		}
+		node, ok := nodeids[*fk]
 		if !ok {
-			return fmt.Errorf(`unexpected referenced foreign-key "integration_id" returned %v for node %v`, fk, n.ID)
+			return fmt.Errorf(`unexpected referenced foreign-key "integration_id" returned %v for node %v`, *fk, n.ID)
 		}
 		assign(node, n)
 	}

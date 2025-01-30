@@ -611,7 +611,10 @@ func (sq *ScansQuery) loadIntegrations(ctx context.Context, query *IntegrationsQ
 	ids := make([]uuid.UUID, 0, len(nodes))
 	nodeids := make(map[uuid.UUID][]*Scans)
 	for i := range nodes {
-		fk := nodes[i].IntegrationID
+		if nodes[i].IntegrationID == nil {
+			continue
+		}
+		fk := *nodes[i].IntegrationID
 		if _, ok := nodeids[fk]; !ok {
 			ids = append(ids, fk)
 		}

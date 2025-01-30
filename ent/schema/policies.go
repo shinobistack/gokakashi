@@ -42,6 +42,7 @@ func (Policies) Fields() []ent.Field {
 			NotEmpty().
 			Comment("Policy name."),
 		field.JSON("image", Image{}).
+			Optional().
 			Comment("Stores image details like registry, tags."),
 		// ToDo: To predefine the the scanners
 		field.String("scanner").

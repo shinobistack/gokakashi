@@ -8,7 +8,6 @@ import (
 	"github.com/shinobistack/gokakashi/ent"
 	"github.com/shinobistack/gokakashi/ent/integrations"
 	"github.com/shinobistack/gokakashi/ent/policies"
-	"github.com/shinobistack/gokakashi/ent/scans"
 	"github.com/shinobistack/gokakashi/ent/schema"
 	"github.com/swaggest/usecase/status"
 	"log"
@@ -19,7 +18,7 @@ type CreateScanRequest struct {
 	// ToDo: To think if the image stored would be single registery/image:tag.
 	Image         string                `json:"image"`
 	Scanner       string                `json:"scanner"`
-	IntegrationID uuid.UUID             `json:"integration_id"`
+	IntegrationID *uuid.UUID            `json:"integration_id,omitempty"`
 	Notify        []schema.Notify       `json:"notify"`
 	Status        string                `json:"status"`
 	Report        json.RawMessage       `json:"report,omitempty"`
@@ -61,40 +60,46 @@ func CreateScan(client *ent.Client) func(ctx context.Context, req CreateScanRequ
 			return status.Wrap(errors.New("policy not found"), status.NotFound)
 		}
 		// Check if IntegrationID exist
-		integrationExists, err := client.Integrations.Query().
-			Where(integrations.ID(req.IntegrationID)).
-			Exist(ctx)
-		if err != nil {
-			return status.Wrap(err, status.Internal)
-		}
-		if !integrationExists {
-			return status.Wrap(errors.New("integration not found"), status.NotFound)
+		if req.IntegrationID != nil {
+			integrationExists, err := client.Integrations.Query().
+				Where(integrations.ID(*req.IntegrationID)).
+				Exist(ctx)
+			if err != nil {
+				return status.Wrap(err, status.Internal)
+			}
+			if !integrationExists {
+				return status.Wrap(errors.New("integration not found"), status.NotFound)
+			}
 		}
 		// Check for duplicate scans for the same image under a policy
-		duplicate, err := client.Scans.Query().
-			Where(scans.PolicyID(req.PolicyID), scans.Image(req.Image)).
-			Exist(ctx)
-		if err != nil {
-			return status.Wrap(err, status.Internal)
-		}
-		if duplicate {
-			return status.Wrap(errors.New("scan already scheduled for this image"), status.AlreadyExists)
-		}
+		//duplicate, err := client.Scans.Query().
+		//	Where(scans.PolicyID(req.PolicyID), scans.Image(req.Image)).
+		//	Exist(ctx)
+		//if err != nil {
+		//	return status.Wrap(err, status.Internal)
+		//}
+		//if duplicate {
+		//	return status.Wrap(errors.New("scan already scheduled for this image"), status.AlreadyExists)
+		//}
 
 		tx, err := client.Tx(ctx)
 		if err != nil {
 			return status.Wrap(err, status.Internal)
 		}
 		// Create the scan
-		scan, err := client.Scans.Create().
+		scanCreate := client.Scans.Create().
 			SetPolicyID(req.PolicyID).
 			SetImage(req.Image).
 			SetScanner(req.Scanner).
 			SetNotify(req.Notify).
 			SetStatus(req.Status).
-			SetIntegrationID(req.IntegrationID).
-			SetReport(req.Report).
-			Save(ctx)
+			SetReport(req.Report)
+		// Set IntegrationID only if not nil
+		if req.IntegrationID != nil {
+			scanCreate.SetIntegrationID(*req.IntegrationID)
+		}
+
+		scan, err := scanCreate.Save(ctx)
 		if err != nil {
 			if rollbackErr := tx.Rollback(); rollbackErr != nil {
 				log.Printf("rollback failed: %v\n", rollbackErr)

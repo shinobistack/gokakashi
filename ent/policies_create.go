@@ -35,6 +35,14 @@ func (pc *PoliciesCreate) SetImage(s schema.Image) *PoliciesCreate {
 	return pc
 }
 
+// SetNillableImage sets the "image" field if the given value is not nil.
+func (pc *PoliciesCreate) SetNillableImage(s *schema.Image) *PoliciesCreate {
+	if s != nil {
+		pc.SetImage(*s)
+	}
+	return pc
+}
+
 // SetScanner sets the "scanner" field.
 func (pc *PoliciesCreate) SetScanner(s string) *PoliciesCreate {
 	pc.mutation.SetScanner(s)
@@ -161,9 +169,6 @@ func (pc *PoliciesCreate) check() error {
 		if err := policies.NameValidator(v); err != nil {
 			return &ValidationError{Name: "name", err: fmt.Errorf(`ent: validator failed for field "Policies.name": %w`, err)}
 		}
-	}
-	if _, ok := pc.mutation.Image(); !ok {
-		return &ValidationError{Name: "image", err: errors.New(`ent: missing required field "Policies.image"`)}
 	}
 	if _, ok := pc.mutation.Scanner(); !ok {
 		return &ValidationError{Name: "scanner", err: errors.New(`ent: missing required field "Policies.scanner"`)}

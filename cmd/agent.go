@@ -156,11 +156,16 @@ func agentRegister(cmd *cobra.Command, args []string) {
 	//// Start sending heartbeats in a separate goroutine, thinking how to handle stale goroutines then?
 	//go startHeartbeat(cmd.Context(), server, token, agent.ID, 30*time.Second)
 
+	// Update Agent status
+	if err := updateAgentStatus(cmd.Context(), server, token, agent.ID, "scan_in_progress"); err != nil {
+		log.Printf("Failed to update scan status to 'error': %v", err)
+	}
+
 	// Ephemeral agents
 	if singleStrike {
 		log.Printf("Ephemeral agent registered. Starting in sometime...")
 		// Todo: Dynamic Delay: Instead of hardcoding 5 seconds, make it configurable
-		time.Sleep(10 * time.Second)
+		time.Sleep(20 * time.Second)
 		if err := sendAgentHeartbeat(cmd.Context(), server, token, agent.ID); err != nil {
 			log.Printf("Failed to send final heartbeat for agent %d: %v", agent.ID, err)
 		}
@@ -305,6 +310,8 @@ func updateAgentStatus(ctx context.Context, server, token string, agentID int, s
 // Todo: Better way to handle polling for some time for ephemeral agent's task
 
 func executeEphemeraTasks(ctx context.Context, server, token string, agentID int, workspace string) {
+	// todo: retry logic for sometime
+
 	if err := sendAgentHeartbeat(ctx, server, token, agentID); err != nil {
 		log.Printf("Failed to send heartbeat for agent %d: %v", agentID, err)
 	}
@@ -416,11 +423,6 @@ func pollTasks(ctx context.Context, server, token string, agentID int, workspace
 			continue
 		}
 
-		// Update Agent status
-		if err := updateAgentStatus(ctx, server, token, agentID, "scan_in_progress"); err != nil {
-			log.Printf("Failed to update scan status to 'error': %v", err)
-		}
-
 		for _, task := range tasks {
 			// Update task status to "in_progress"
 			err := updateAgentTaskStatus(ctx, server, token, task.ID, agentID, "in_progress")
@@ -507,17 +509,20 @@ func processTask(ctx context.Context, server, token string, task agenttasks.GetA
 		return
 	}
 
-	// Step 2: Fetch integration details
-	integration, err := fetchIntegration(ctx, server, token, scan.IntegrationID)
-	if err != nil {
-		log.Printf("Failed to fetch integration details: %v", err)
-		return
-	}
+	// if scan.IntegrationID not empty then execute fetchIntegration and authenticateAndPullImage
+	if scan.IntegrationID != nil {
+		// Step 2: Fetch integration details
+		integration, err := fetchIntegration(ctx, server, token, scan.IntegrationID)
+		if err != nil {
+			log.Printf("Failed to fetch integration details: %v", err)
+			//return
+		}
 
-	// Step 3: Authenticate and pull the image
-	if err := authenticateAndPullImage(scan.Image, integration); err != nil {
-		log.Printf("Failed to authenticate or pull image: %v", err)
-		return
+		// Step 3: Authenticate and pull the image
+		if err := authenticateAndPullImage(scan.Image, integration); err != nil {
+			log.Printf("Failed to authenticate or pull image: %v", err)
+			//return
+		}
 	}
 
 	err = updateScanStatus(ctx, server, token, scan.ID, "scan_in_progress")
@@ -546,7 +551,7 @@ func processTask(ctx context.Context, server, token string, task agenttasks.GetA
 
 	// step 6: Verify scans.Notify field exist
 	// Todo: if exists update the status to notify_pending else complete
-	if scan.Notify == nil || len(*scan.Notify) == 0 {
+	if scan.Notify == nil {
 		log.Printf("No notify specified for scan ID: %s", scan.ID)
 		if err := updateScanStatus(ctx, server, token, scan.ID, "success"); err != nil {
 			log.Printf("Failed to update scan status to 'success': %v", err)
@@ -620,7 +625,7 @@ func fetchScan(ctx context.Context, server, token string, scanID uuid.UUID) (*sc
 	return &scan, nil
 }
 
-func fetchIntegration(ctx context.Context, server, token string, integrationID uuid.UUID) (*integrations.GetIntegrationResponse, error) {
+func fetchIntegration(ctx context.Context, server, token string, integrationID *uuid.UUID) (*integrations.GetIntegrationResponse, error) {
 	path := fmt.Sprintf("/api/v1/integrations/%s", integrationID)
 	url := constructURL(server, path)
 	req, err := http.NewRequest("GET", url, nil)

@@ -249,6 +249,16 @@ func IntegrationIDNotIn(vs ...uuid.UUID) predicate.Scans {
 	return predicate.Scans(sql.FieldNotIn(FieldIntegrationID, vs...))
 }
 
+// IntegrationIDIsNil applies the IsNil predicate on the "integration_id" field.
+func IntegrationIDIsNil() predicate.Scans {
+	return predicate.Scans(sql.FieldIsNull(FieldIntegrationID))
+}
+
+// IntegrationIDNotNil applies the NotNil predicate on the "integration_id" field.
+func IntegrationIDNotNil() predicate.Scans {
+	return predicate.Scans(sql.FieldNotNull(FieldIntegrationID))
+}
+
 // ScannerEQ applies the EQ predicate on the "scanner" field.
 func ScannerEQ(v string) predicate.Scans {
 	return predicate.Scans(sql.FieldEQ(FieldScanner, v))

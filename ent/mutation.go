@@ -3233,9 +3233,22 @@ func (m *PoliciesMutation) OldImage(ctx context.Context) (v schema.Image, err er
 	return oldValue.Image, nil
 }
 
+// ClearImage clears the value of the "image" field.
+func (m *PoliciesMutation) ClearImage() {
+	m.image = nil
+	m.clearedFields[policies.FieldImage] = struct{}{}
+}
+
+// ImageCleared returns if the "image" field was cleared in this mutation.
+func (m *PoliciesMutation) ImageCleared() bool {
+	_, ok := m.clearedFields[policies.FieldImage]
+	return ok
+}
+
 // ResetImage resets all changes to the "image" field.
 func (m *PoliciesMutation) ResetImage() {
 	m.image = nil
+	delete(m.clearedFields, policies.FieldImage)
 }
 
 // SetScanner sets the "scanner" field.
@@ -3720,6 +3733,9 @@ func (m *PoliciesMutation) AddField(name string, value ent.Value) error {
 // mutation.
 func (m *PoliciesMutation) ClearedFields() []string {
 	var fields []string
+	if m.FieldCleared(policies.FieldImage) {
+		fields = append(fields, policies.FieldImage)
+	}
 	if m.FieldCleared(policies.FieldLabels) {
 		fields = append(fields, policies.FieldLabels)
 	}
@@ -3743,6 +3759,9 @@ func (m *PoliciesMutation) FieldCleared(name string) bool {
 // error if the field is not defined in the schema.
 func (m *PoliciesMutation) ClearField(name string) error {
 	switch name {
+	case policies.FieldImage:
+		m.ClearImage()
+		return nil
 	case policies.FieldLabels:
 		m.ClearLabels()
 		return nil
@@ -5570,7 +5589,7 @@ func (m *ScansMutation) IntegrationID() (r uuid.UUID, exists bool) {
 // OldIntegrationID returns the old "integration_id" field's value of the Scans entity.
 // If the Scans object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *ScansMutation) OldIntegrationID(ctx context.Context) (v uuid.UUID, err error) {
+func (m *ScansMutation) OldIntegrationID(ctx context.Context) (v *uuid.UUID, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldIntegrationID is only allowed on UpdateOne operations")
 	}
@@ -5584,9 +5603,22 @@ func (m *ScansMutation) OldIntegrationID(ctx context.Context) (v uuid.UUID, err 
 	return oldValue.IntegrationID, nil
 }
 
+// ClearIntegrationID clears the value of the "integration_id" field.
+func (m *ScansMutation) ClearIntegrationID() {
+	m.integrations = nil
+	m.clearedFields[scans.FieldIntegrationID] = struct{}{}
+}
+
+// IntegrationIDCleared returns if the "integration_id" field was cleared in this mutation.
+func (m *ScansMutation) IntegrationIDCleared() bool {
+	_, ok := m.clearedFields[scans.FieldIntegrationID]
+	return ok
+}
+
 // ResetIntegrationID resets all changes to the "integration_id" field.
 func (m *ScansMutation) ResetIntegrationID() {
 	m.integrations = nil
+	delete(m.clearedFields, scans.FieldIntegrationID)
 }
 
 // SetScanner sets the "scanner" field.
@@ -5844,7 +5876,7 @@ func (m *ScansMutation) ClearIntegrations() {
 
 // IntegrationsCleared reports if the "integrations" edge to the Integrations entity was cleared.
 func (m *ScansMutation) IntegrationsCleared() bool {
-	return m.clearedintegrations
+	return m.IntegrationIDCleared() || m.clearedintegrations
 }
 
 // IntegrationsID returns the "integrations" edge ID in the mutation.
@@ -6236,6 +6268,9 @@ func (m *ScansMutation) AddField(name string, value ent.Value) error {
 // mutation.
 func (m *ScansMutation) ClearedFields() []string {
 	var fields []string
+	if m.FieldCleared(scans.FieldIntegrationID) {
+		fields = append(fields, scans.FieldIntegrationID)
+	}
 	if m.FieldCleared(scans.FieldNotify) {
 		fields = append(fields, scans.FieldNotify)
 	}
@@ -6259,6 +6294,9 @@ func (m *ScansMutation) FieldCleared(name string) bool {
 // error if the field is not defined in the schema.
 func (m *ScansMutation) ClearField(name string) error {
 	switch name {
+	case scans.FieldIntegrationID:
+		m.ClearIntegrationID()
+		return nil
 	case scans.FieldNotify:
 		m.ClearNotify()
 		return nil

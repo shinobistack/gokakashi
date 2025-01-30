@@ -17,10 +17,10 @@ type GetScanResponse struct {
 	PolicyID      uuid.UUID             `json:"policy_id"`
 	Image         string                `json:"image"`
 	Scanner       string                `json:"scanner"`
-	IntegrationID uuid.UUID             `json:"integration_id"`
+	IntegrationID *uuid.UUID            `json:"integration_id"`
 	Status        string                `json:"status"`
 	Labels        []schema.CommonLabels `json:"labels,omitempty"`
-	Notify        *[]schema.Notify      `json:"notify"`
+	Notify        *[]schema.Notify      `json:"notify,omitempty"`
 	Report        json.RawMessage       `json:"report,omitempty"`
 }
 
