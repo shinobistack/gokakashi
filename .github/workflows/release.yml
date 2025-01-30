@@ -28,3 +28,8 @@ jobs:
           GOOS=darwin GOARCH=arm64 go build -o dist/gokakashi-agent-mac-arm64 ./cmd/agent.go
           GOOS=windows GOARCH=amd64 go build -o dist/gokakashi-agent-windows-amd64.exe ./cmd/agent.go
 
+      - name: Upload Release Binaries
+        uses: softprops/action-gh-release@v1
+        with:
+          files: dist/*
+          body: "🚀 GoKakashi Agent Release - See Changelog for Details!"
