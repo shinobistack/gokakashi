@@ -1,4 +1,4 @@
-name: Release GoKakashi Agent
+name: Release GoKakashi Binaries
 
 on:
   release:
