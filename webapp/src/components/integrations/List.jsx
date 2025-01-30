@@ -19,7 +19,6 @@ const IntegrationsList = () => {
             },
           }
         );
-        console.log(response.data);
         setIntegrationsData(response.data);
       } catch (error) {
         console.error("Error fetching integrations:", error);
