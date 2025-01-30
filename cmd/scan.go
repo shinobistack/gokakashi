@@ -7,17 +7,14 @@ import (
 	"fmt"
 	"github.com/google/uuid"
 	"github.com/shinobistack/gokakashi/ent/schema"
-	"log"
-	"net/http"
-	"net/url"
-	"os"
-	"strings"
-
 	"github.com/shinobistack/gokakashi/internal/http/client"
 	"github.com/shinobistack/gokakashi/internal/restapi/v1/integrations"
 	"github.com/shinobistack/gokakashi/internal/restapi/v1/policies"
 	"github.com/shinobistack/gokakashi/internal/restapi/v1/scans"
 	"github.com/spf13/cobra"
+	"log"
+	"net/http"
+	"os"
 )
 
 var scanCmd = &cobra.Command{
@@ -71,23 +68,6 @@ var (
 	policyName string
 	scanID     string
 )
-
-func normalizeServer(server string) string {
-	if !strings.HasPrefix(server, "http://") && !strings.HasPrefix(server, "https://") {
-		server = "http://" + server
-	}
-	return server
-}
-
-func constructURL(server string, path string) string {
-	base := normalizeServer(server)
-	u, err := url.Parse(base)
-	if err != nil {
-		log.Fatalf("Invalid server URL: %s", base)
-	}
-	u.Path = path
-	return u.String()
-}
 
 func scanImage(cmd *cobra.Command, args []string) {
 

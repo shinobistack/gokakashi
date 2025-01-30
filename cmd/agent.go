@@ -88,6 +88,23 @@ var (
 	singleStrike bool
 )
 
+func normalizeServer(server string) string {
+	if !strings.HasPrefix(server, "http://") && !strings.HasPrefix(server, "https://") {
+		server = "http://" + server
+	}
+	return server
+}
+
+func constructURL(server string, path string) string {
+	base := normalizeServer(server)
+	u, err := url.Parse(base)
+	if err != nil {
+		log.Fatalf("Invalid server URL: %s", base)
+	}
+	u.Path = path
+	return u.String()
+}
+
 func agentDeRegister(cmd *cobra.Command, args []string) {
 	id, _ := cmd.Flags().GetInt("id")
 	name, _ := cmd.Flags().GetString("name")
