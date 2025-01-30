@@ -9,7 +9,7 @@ on:
         description: "Tag for the release (e.g., v0.1.0)"
         required: true
       title:
-        description: "Title for the release made (e.g., v0.1.0 Chidori)"
+        description: "Title for the release (e.g., v0.1.0 Chidori)"
         required: false
 
 jobs:
@@ -48,4 +48,5 @@ jobs:
         with:
           tag_name: ${{ github.event.inputs.tag }}
           files: dist/*
-          title: "🚀 ${{ github.event.inputs.title }}"
+          title: ${{ github.event.inputs.title }}
+          body: "🚀"
