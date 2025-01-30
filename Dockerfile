@@ -21,6 +21,8 @@ RUN CGO_ENABLED=0 GOARCH=amd64 go build -o gokakashi
 FROM alpine:3.20
 WORKDIR /app
 COPY --from=builder /app/gokakashi /app/gokakashi
+RUN apk add --no-cache libc6-compat libseccomp gcompat
+RUN wget -qO- https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/install.sh |sh -s -- -b /usr/local/bin v0.58.1
 RUN chmod +x /app/gokakashi
 CMD ["/app/gokakashi"]
 ENTRYPOINT ["/app/gokakashi"]
