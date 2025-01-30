@@ -25,6 +25,7 @@ jobs:
 
       - name: Install Dependencies (webapp)
         run: npm install
+        working-directory: ./webapp
 
       - name: Build Binaries
         run: |
