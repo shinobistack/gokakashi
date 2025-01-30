@@ -8,8 +8,8 @@ on:
       tag:
         description: "Tag for the release (e.g., v0.1.0)"
         required: true
-      title:
-        description: "Title for the release (e.g., v0.1.0 Chidori)"
+      name:
+        description: "Name the release (e.g., v0.1.0 Chidori)"
         required: false
 
 jobs:
@@ -42,11 +42,17 @@ jobs:
           GOOS=darwin GOARCH=amd64 go build -o dist/gokakashi-agent-mac-amd64 ./cmd/agent.go
           GOOS=darwin GOARCH=arm64 go build -o dist/gokakashi-agent-mac-arm64 ./cmd/agent.go
           GOOS=windows GOARCH=amd64 go build -o dist/gokakashi-agent-windows-amd64.exe ./cmd/agent.go
+          
+          GOOS=linux GOARCH=amd64 go build -o dist/gokakashi-agent-linux-amd64 ./cmd/scan.go
+          GOOS=linux GOARCH=arm64 go build -o dist/gokakashi-agent-linux-arm64 ./cmd/scan.go
+          GOOS=darwin GOARCH=amd64 go build -o dist/gokakashi-agent-mac-amd64 ./cmd/scan.go
+          GOOS=darwin GOARCH=arm64 go build -o dist/gokakashi-agent-mac-arm64 ./cmd/scan.go
+          GOOS=windows GOARCH=amd64 go build -o dist/gokakashi-agent-windows-amd64.exe ./cmd/scan.go
 
       - name: Upload Release Binaries
         uses: softprops/action-gh-release@v1
         with:
           tag_name: ${{ github.event.inputs.tag }}
           files: dist/*
-          title: ${{ github.event.inputs.title }}
+          name: ${{ github.event.inputs.name }}
           body: "🚀"
