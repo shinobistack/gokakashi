@@ -168,7 +168,11 @@ func handleNotifyAndScan(ctx context.Context, policy *policies.GetPolicyResponse
 
 			fmt.Printf("Fetched integration details for: %s\n", notify.To)
 		}
-		postScanDetails(ctx, policy.ID, policy.Scanner, integrationID, labels, formattedNotifies)
+
+		_, err := postScanDetails(ctx, policy.ID, policy.Scanner, integrationID, labels, formattedNotifies)
+		if err != nil {
+			log.Fatalf("Failed to post scan requests")
+		}
 	} else {
 		log.Println("No notify found in policy. Skipping...")
 	}
