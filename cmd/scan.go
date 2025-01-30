@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"github.com/google/uuid"
 	"github.com/shinobistack/gokakashi/ent/schema"
+	"github.com/shinobistack/gokakashi/internal/helper"
 	"github.com/shinobistack/gokakashi/internal/http/client"
 	"github.com/shinobistack/gokakashi/internal/restapi/v1/integrations"
 	"github.com/shinobistack/gokakashi/internal/restapi/v1/policies"
@@ -169,7 +170,7 @@ func postScanDetails(ctx context.Context, policyID uuid.UUID, scanner string, in
 		Labels:        labels,
 	}
 	reqBodyJSON, _ := json.Marshal(reqBody)
-	url := constructURL(server, "/api/v1/scans")
+	url := helper.ConstructURL(server, "/api/v1/scans")
 
 	req, err := http.NewRequest("POST", url, bytes.NewBuffer(reqBodyJSON))
 	if err != nil {
@@ -207,7 +208,7 @@ func getScanStatus(cmd *cobra.Command, args []string) {
 		log.Fatalf("Error: Missing required inputs. Please provide --server, --token, and --scanID.")
 	}
 
-	url := constructURL(server, fmt.Sprintf("/api/v1/scans/%s", scanID))
+	url := helper.ConstructURL(server, fmt.Sprintf("/api/v1/scans/%s", scanID))
 
 	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {
@@ -235,7 +236,7 @@ func getScanStatus(cmd *cobra.Command, args []string) {
 }
 
 func fetchPolicyByName(ctx context.Context) (*policies.GetPolicyResponse, error) {
-	url := constructURL(server, "/api/v1/policies") + fmt.Sprintf("?name=%s", policyName)
+	url := helper.ConstructURL(server, "/api/v1/policies") + fmt.Sprintf("?name=%s", policyName)
 
 	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {
@@ -262,7 +263,7 @@ func fetchPolicyByName(ctx context.Context) (*policies.GetPolicyResponse, error)
 }
 
 func fetchIntegrationByName(ctx context.Context, integrationName string) (*uuid.UUID, error) {
-	url := constructURL(server, "/api/v1/integrations") + fmt.Sprintf("?name=%s", integrationName)
+	url := helper.ConstructURL(server, "/api/v1/integrations") + fmt.Sprintf("?name=%s", integrationName)
 
 	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {
