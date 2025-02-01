@@ -2,6 +2,7 @@ package notifier
 
 import (
 	"bytes"
+	"context"
 	"crypto/sha256"
 	"encoding/hex"
 	"encoding/json"
@@ -13,10 +14,10 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/shinobistack/gokakashi/internal/integration/notification"
 	"github.com/shinobistack/gokakashi/internal/parser"
 	"github.com/shinobistack/gokakashi/internal/restapi/v1/integrations"
 	"github.com/shinobistack/gokakashi/internal/restapi/v1/scans"
-	"github.com/shinobistack/gokakashi/pkg/notifier/v1"
 )
 
 type HashEntry struct {
@@ -98,19 +99,6 @@ func NotifyProcess(server string, port int, token string) {
 					continue
 				}
 
-				notifier, err := notifier.NewNotifier(integration.Type)
-				if err != nil {
-					log.Printf("Notifier: Error creating notifier: %v", err)
-					continue
-				}
-
-				// Todo: Better way to deal handle.
-				notifierConfig, err := MapToNotificationConfig(integration.Config)
-				if err != nil {
-					log.Printf("Notifier: Error parsing notification config: %v", err)
-					continue
-				}
-
 				filteredVulnerabilities, err := formatReportForNotify(scan.Report, severities, scan.Image)
 				if err != nil {
 					log.Printf("Notifier: Error formatting report for notify: %v", err)
@@ -137,7 +125,22 @@ func NotifyProcess(server string, port int, token string) {
 				}
 
 				if saved {
-					err = notifier.CreateIssue(scan.Image, filteredVulnerabilities, notifierConfig)
+					var n notification.Notifier
+					switch notification.IntegrationType(integration.Type) {
+					case notification.Linear:
+						linearIssue, err := constructLinearIssue(integration.Config)
+						if err != nil {
+							log.Printf("Notifier: Error constructing linear issue: %v", err)
+							continue
+						}
+						linearIssue.Title = fmt.Sprintf("%s - %s", scan.Image, linearIssue.Title)
+						linearIssue.Description = FormatVulnerabilityReport(scan.Image, filteredVulnerabilities)
+						n = linearIssue
+					default:
+						log.Printf("Notifier: Error creating notifier: unknown notifier %s", integration.Type)
+						continue
+					}
+					err = n.Notify(context.TODO())
 					if err != nil {
 						log.Printf("Notifier: Error sending notification: %v", err)
 					} else {
@@ -160,6 +163,30 @@ func NotifyProcess(server string, port int, token string) {
 			}
 		}
 	}
+}
+
+func FormatVulnerabilityReport(image string, vulnerabilities []Vulnerability) string {
+	var buffer bytes.Buffer
+
+	// Add image information
+	buffer.WriteString(fmt.Sprintf("Image: %s\n\n", image))
+
+	// Iterate over vulnerabilities and format them in the simplified format
+	for _, vuln := range vulnerabilities {
+		buffer.WriteString(fmt.Sprintf("Library: %s\n", vuln.PkgName))
+		buffer.WriteString(fmt.Sprintf("Vulnerability: %s\n", vuln.VulnerabilityID))
+		buffer.WriteString(fmt.Sprintf("Severity: %s\n", vuln.Severity))
+		buffer.WriteString(fmt.Sprintf("Status: %s\n", vuln.Status))
+		buffer.WriteString(fmt.Sprintf("Installed Version: %s\n", vuln.InstalledVersion))
+		buffer.WriteString(fmt.Sprintf("Fixed Version: %s\n", vuln.FixedVersion))
+		buffer.WriteString(fmt.Sprintf("Title: %s\n", vuln.Title))
+		if vuln.PrimaryURL != "" {
+			buffer.WriteString(fmt.Sprintf("More details: %s\n", vuln.PrimaryURL))
+		}
+		buffer.WriteString("\n") // Add a line break between vulnerabilities
+	}
+
+	return buffer.String()
 }
 
 func fetchPendingScans(server string, port int, token, status string) ([]scans.GetScanResponse, error) {
@@ -216,15 +243,41 @@ func fetchIntegrationDetails(server string, port int, token string, integrationI
 	return &integration, nil
 }
 
-func formatReportForNotify(scanReport json.RawMessage, severities []string, scanImage string) ([]notifier.Vulnerability, error) {
-	var report notifier.Report
+// TrivyReport represents the overall Trivy scan report
+type Report struct {
+	ArtifactName string   `json:"ArtifactName"`
+	Results      []Result `json:"Results"`
+}
+
+// Result represents the result field in Trivy output
+type Result struct {
+	Target          string          `json:"Target"`
+	Type            string          `json:"Type"`
+	Vulnerabilities []Vulnerability `json:"Vulnerabilities"`
+}
+
+// Vulnerability represents a vulnerability in the scan results
+type Vulnerability struct {
+	VulnerabilityID  string `json:"VulnerabilityID"`
+	PkgName          string `json:"PkgName"`
+	Severity         string `json:"Severity"`
+	InstalledVersion string `json:"InstalledVersion"`
+	FixedVersion     string `json:"FixedVersion"`
+	Title            string `json:"Title"`
+	Description      string `json:"Description"`
+	PrimaryURL       string `json:"PrimaryURL"`
+	Status           string `json:"Status"`
+}
+
+func formatReportForNotify(scanReport json.RawMessage, severities []string, scanImage string) ([]Vulnerability, error) {
+	var report Report
 	err := json.Unmarshal(scanReport, &report)
 	if err != nil {
 		log.Printf("Error failed to parse scan report: %v", err)
 	}
 
 	// Load the vulnerabilities from scans.report
-	var vulnerabilities []notifier.Vulnerability
+	var vulnerabilities []Vulnerability
 	for _, result := range report.Results {
 		vulnerabilities = append(vulnerabilities, result.Vulnerabilities...)
 	}
@@ -234,8 +287,8 @@ func formatReportForNotify(scanReport json.RawMessage, severities []string, scan
 	return filteredVulnerabilities, nil
 }
 
-func FilterVulnerabilitiesBySeverity(vulnerabilities []notifier.Vulnerability, severityLevels []string) []notifier.Vulnerability {
-	var filtered []notifier.Vulnerability
+func FilterVulnerabilitiesBySeverity(vulnerabilities []Vulnerability, severityLevels []string) []Vulnerability {
+	var filtered []Vulnerability
 	for _, v := range vulnerabilities {
 		for _, level := range severityLevels {
 			if v.Severity == level {
@@ -246,7 +299,7 @@ func FilterVulnerabilitiesBySeverity(vulnerabilities []notifier.Vulnerability, s
 	return filtered
 }
 
-func ConvertVulnerabilities(filteredVulnerabilities []notifier.Vulnerability) []string {
+func ConvertVulnerabilities(filteredVulnerabilities []Vulnerability) []string {
 	var vulnerabilityEntries []string
 	for _, v := range filteredVulnerabilities {
 		data := VulnerabilityData{
@@ -309,30 +362,32 @@ func CheckAndSaveHash(server string, port int, token string, scanID uuid.UUID, h
 	}
 }
 
-func MapToNotificationConfig(config map[string]interface{}) (notifier.NotificationConfig, error) {
+func constructLinearIssue(config map[string]interface{}) (*notification.LinearIssue, error) {
 	// Ensure all fields are present and valid
 	apiKey, ok := config["api_key"].(string)
 	if !ok {
-		return notifier.NotificationConfig{}, fmt.Errorf("missing or invalid api_key")
+		return nil, fmt.Errorf("missing or invalid api_key")
 	}
-
 	projectID, _ := config["project_id"].(string)
 	teamID, _ := config["team_id"].(string)
+
 	title, _ := config["issue_title"].(string)
 	priority, _ := config["issue_priority"].(int)
 	assignee, _ := config["issue_assignee_id"].(string)
 	stateID, _ := config["issue_state_id"].(string)
 	dueDate, _ := config["issue_due_date"].(string)
 
-	return notifier.NotificationConfig{
-		APIKey:    apiKey,
-		ProjectID: projectID,
-		TeamID:    teamID,
-		Title:     title,
-		Priority:  priority,
-		Assignee:  assignee,
-		StateID:   stateID,
-		DueDate:   dueDate,
+	return &notification.LinearIssue{
+		Config: &notification.LinearIntegration{
+			APIKey:    apiKey,
+			ProjectID: projectID,
+			TeamID:    teamID,
+		},
+		Title:    title,
+		Priority: priority,
+		Assignee: assignee,
+		StateID:  stateID,
+		DueDate:  dueDate,
 	}, nil
 }
 
