@@ -16,8 +16,8 @@ type LinearIntegration struct {
 	TeamID    string `json:"team_id"`
 }
 
-func (l *LinearIntegration) Type() string {
-	return string(Linear)
+func (l *LinearIntegration) Type() IntegrationType {
+	return Linear
 }
 
 type LinearIssue struct {
