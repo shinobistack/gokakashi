@@ -7,8 +7,6 @@ import (
 	"os"
 	"path/filepath"
 	"text/template"
-
-	"github.com/shinobistack/gokakashi/internal/config/v0"
 )
 
 const ReportsRootDir = "reports/"
@@ -23,53 +21,6 @@ func NewWebServer() *WebServer {
 	return &WebServer{
 		Servers: make(map[string]*http.Server),
 	}
-}
-
-// StartWebServers starts web servers based on the configuration
-func (ws *WebServer) StartWebServers(cfg *config.Config) error {
-	for websiteID, website := range cfg.Websites {
-		if err := ws.validateConfig(website); err != nil {
-			log.Printf("Invalid config for website %s: %v", websiteID, err)
-			continue
-		}
-
-		// Ensure report directories are created
-		reportDir := filepath.Join(ReportsRootDir, website.ReportSubDir)
-		if err := os.MkdirAll(reportDir, os.ModePerm); err != nil {
-			log.Printf("Failed to create directory %s: %v", reportDir, err)
-			continue
-		}
-		log.Printf("Created directory for %s: %s", websiteID, reportDir)
-
-		// Create handlers and servers for each website
-		handler := ws.createWebsiteHandler(websiteID, website)
-		server := &http.Server{
-			Addr:    fmt.Sprintf("%s:%d", website.Hostname, website.Port),
-			Handler: handler,
-		}
-		ws.Servers[websiteID] = server
-
-		// Start server in a goroutine
-		go func(id string, s *http.Server) {
-			log.Printf("Starting web server for %s on %s", id, s.Addr)
-			if err := s.ListenAndServe(); err != nil && err != http.ErrServerClosed {
-				log.Printf("Web server for %s stopped: %v", id, err)
-			}
-		}(websiteID, server)
-	}
-
-	return nil
-}
-
-// createWebsiteHandler sets up the routes and handlers for a website
-func (ws *WebServer) createWebsiteHandler(websiteID string, websiteConfig config.Website) http.Handler {
-	mux := http.NewServeMux()
-	// Set up routes for listing directories and viewing reports
-	mux.HandleFunc("/reports/", ws.handleListDirectoriesAndFiles(websiteID, websiteConfig.ReportSubDir))
-	mux.HandleFunc("/reports/view", ws.handleListReports(websiteConfig.ReportSubDir))
-	mux.HandleFunc("/reports/view/file", ws.handleViewReportFile(websiteConfig.ReportSubDir))
-
-	return mux
 }
 
 // handleListDirectoriesAndFiles lists both directories and files inside the report_sub_dir
@@ -179,14 +130,6 @@ func (ws *WebServer) listDirectoriesAndFiles(rootPath string) ([]string, error) 
 	}
 
 	return entries, nil
-}
-
-// validateConfig validates the configuration for each website
-func (ws *WebServer) validateConfig(website config.Website) error {
-	if website.Hostname == "" || website.Port == 0 || website.ReportSubDir == "" {
-		return fmt.Errorf("hostname, port, or report_sub_dir is missing")
-	}
-	return nil
 }
 
 // HTML templates for directory and report listing
