@@ -67,11 +67,11 @@ jobs:
           body: "🚀"
 
       - name: Upload Release Binaries (Latest Main)
-          if: github.ref == 'refs/heads/main'
-          uses: softprops/action-gh-release@v1
-          with:
-            tag_name: latest
-            files: dist/*
-            name: "Latest Main Build"
-            body: "🚀 Always up-to-date with main"
-            prerelease: true
+        if: github.ref == 'refs/heads/main'
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: latest
+          files: dist/*
+          name: "Latest Main Build"
+          body: "🚀 Always up-to-date with main"
+          prerelease: true
