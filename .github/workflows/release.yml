@@ -39,16 +39,39 @@ jobs:
       - name: Build Binaries
         run: |
           mkdir -p dist
-          GOOS=linux GOARCH=amd64 go build -o dist/gokakashi-${{ github.event.inputs.tag }}-linux-amd64 .
-          GOOS=linux GOARCH=arm64 go build -o dist/gokakashi-${{ github.event.inputs.tag }}-linux-arm64 .
-          GOOS=darwin GOARCH=amd64 go build -o dist/gokakashi-${{ github.event.inputs.tag }}-mac-amd64 .
-          GOOS=darwin GOARCH=arm64 go build -o dist/gokakashi-${{ github.event.inputs.tag }}-mac-arm64 .
-          GOOS=windows GOARCH=amd64 go build -o dist/gokakashi-${{ github.event.inputs.tag }}-windows-amd64.exe .
+          SHORT_SHA=${GITHUB_SHA::7}
+          
+          # Tagged releases
+          GOOS=linux GOARCH=amd64 go build -ldflags "-X 'github.com/shinobistack/gokakashi/cmd.version=${{ github.event.inputs.tag }}'" -o dist/gokakashi-${{ github.event.inputs.tag }}-linux-amd64 .
+          GOOS=linux GOARCH=amd64 go build -ldflags "-X 'github.com/shinobistack/gokakashi/cmd.version=${{ github.event.inputs.tag }}'" -o dist/gokakashi-${{ github.event.inputs.tag }}-linux-amd64 .
+          GOOS=linux GOARCH=arm64 go build -ldflags "-X 'github.com/shinobistack/gokakashi/cmd.version=${{ github.event.inputs.tag }}'" -o dist/gokakashi-${{ github.event.inputs.tag }}-linux-arm64 .
+          GOOS=darwin GOARCH=amd64 go build -ldflags "-X 'github.com/shinobistack/gokakashi/cmd.version=${{ github.event.inputs.tag }}'" -o dist/gokakashi-${{ github.event.inputs.tag }}-mac-amd64 .
+          GOOS=darwin GOARCH=arm64 go build -ldflags "-X 'github.com/shinobistack/gokakashi/cmd.version=${{ github.event.inputs.tag }}'" -o dist/gokakashi-${{ github.event.inputs.tag }}-mac-arm64 .
+          GOOS=windows GOARCH=amd64 go build -ldflags "-X 'github.com/shinobistack/gokakashi/cmd.version=${{ github.event.inputs.tag }}'" -o dist/gokakashi-${{ github.event.inputs.tag }}-windows-amd64.exe .
+          
+          # Always-latest main build
+          GOOS=linux GOARCH=amd64 go build -ldflags "-X 'github.com/shinobistack/gokakashi/cmd.version=main-${SHORT_SHA}'" -o dist/gokakashi-main-linux-amd64 .
+          GOOS=linux GOARCH=amd64 go build -ldflags "-X 'github.com/shinobistack/gokakashi/cmd.version=main-${SHORT_SHA}'" -o dist/gokakashi-main-linux-amd64 .
+          GOOS=linux GOARCH=arm64 go build -ldflags "-X 'github.com/shinobistack/gokakashi/cmd.version=main-${SHORT_SHA}'" -o dist/gokakashi-main-linux-arm64 .
+          GOOS=darwin GOARCH=amd64 go build -ldflags "-X 'github.com/shinobistack/gokakashi/cmd.version=main-${SHORT_SHA}'" -o dist/gokakashi-main-mac-amd64 .
+          GOOS=darwin GOARCH=arm64 go build -ldflags "-X 'github.com/shinobistack/gokakashi/cmd.version=main-${SHORT_SHA}'" -o dist/gokakashi-main-mac-arm64 .
+          GOOS=windows GOARCH=amd64 go build -ldflags "-X 'github.com/shinobistack/gokakashi/cmd.version=main-${SHORT_SHA}'" -o dist/gokakashi-main-windows-amd64.exe .
+          
 
-      - name: Upload Release Binaries
+      - name: Upload Release Binaries (Versioned)
         uses: softprops/action-gh-release@v1
         with:
           tag_name: ${{ github.event.inputs.tag }}
           files: dist/*
           name: ${{ github.event.inputs.name }}
           body: "🚀"
+
+      - name: Upload Release Binaries (Latest Main)
+          if: github.ref == 'refs/heads/main'
+          uses: softprops/action-gh-release@v1
+          with:
+            tag_name: latest
+            files: dist/*
+            name: "Latest Main Build"
+            body: "🚀 Always up-to-date with main"
+            prerelease: true
