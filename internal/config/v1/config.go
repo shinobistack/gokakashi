@@ -113,6 +113,7 @@ func (cfg *Config) String() string {
 	if cfg.Site.LogAPITokenOnStartup {
 		s.WriteString(fmt.Sprintf("  API Token: %s\n", cfg.Site.APIToken))
 	}
+	s.WriteString(fmt.Sprintf("  API Server CORS Allowed Origins: %s\n", strings.Join(cfg.Site.CorsAllowedOrigins, " ")))
 	s.WriteString("\n")
 	s.WriteString(fmt.Sprintf("  Web Server URL: %s\n", cfg.WebServerURL()))
 	s.WriteString("\n")
