@@ -25,6 +25,12 @@ type SiteConfig struct {
 type WebServerConfig struct {
 	Host string `yaml:"host"`
 	Port int    `yaml:"port"`
+
+	// APIHostURL denotes the API URL that will be used by
+	// the client side web app to call the API.
+	//
+	// This is often a friendly URL such as a custom domain name: https://api.gokakashi.example.com
+	APIHostURL string `yaml:"api_host_url"`
 }
 
 // Trigger specifies the action schedule (cron or CI-based)
