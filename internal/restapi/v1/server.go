@@ -34,11 +34,12 @@ import (
 )
 
 type Server struct {
-	AuthToken string
-	Websites  string
-	Port      int
-	DB        *ent.Client
-	DBConfig  configv1.DbConnection
+	AuthToken          string
+	Websites           string
+	Port               int
+	DB                 *ent.Client
+	DBConfig           configv1.DbConnection
+	CorsAllowedOrigins []string
 }
 
 func (srv *Server) Service() *web.Service {
@@ -118,7 +119,7 @@ func (srv *Server) Service() *web.Service {
 	apiV1.Delete("/scannotify/{scan_id}", usecase.NewInteractor(scannotify1.DeleteScanNotify(srv.DB)))
 
 	s.Use(cors.New(cors.Options{
-		AllowedOrigins: []string{"http://localhost:5555"},
+		AllowedOrigins: srv.CorsAllowedOrigins,
 		AllowedMethods: []string{http.MethodOptions, http.MethodGet},
 		AllowedHeaders: []string{"Content-Type", "Authorization"},
 	}).Handler)

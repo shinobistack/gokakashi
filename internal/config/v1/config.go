@@ -20,6 +20,8 @@ type SiteConfig struct {
 	LogAPITokenOnStartup bool   `yaml:"log_api_token_on_startup"`
 	Host                 string `yaml:"host"`
 	Port                 int    `yaml:"port"`
+
+	CorsAllowedOrigins []string `yaml:"cors_allowed_origins`
 }
 
 type WebServerConfig struct {

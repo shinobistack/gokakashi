@@ -67,10 +67,11 @@ func runServer(cmd *cobra.Command, args []string) {
 
 func startAPIServer(cfg *configv1.Config) {
 	s := &restapiv1.Server{
-		AuthToken: cfg.Site.APIToken,
-		Websites:  cfg.Site.Host,
-		Port:      cfg.Site.Port,
-		DBConfig:  cfg.Database,
+		AuthToken:          cfg.Site.APIToken,
+		Websites:           cfg.Site.Host,
+		Port:               cfg.Site.Port,
+		DBConfig:           cfg.Database,
+		CorsAllowedOrigins: append(cfg.Site.CorsAllowedOrigins, cfg.WebServerURL()),
 	}
 	go s.Serve()
 }
