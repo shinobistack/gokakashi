@@ -119,9 +119,10 @@ func (srv *Server) Service() *web.Service {
 	apiV1.Delete("/scannotify/{scan_id}", usecase.NewInteractor(scannotify1.DeleteScanNotify(srv.DB)))
 
 	s.Use(cors.New(cors.Options{
-		AllowedOrigins: srv.CorsAllowedOrigins,
-		AllowedMethods: []string{http.MethodOptions, http.MethodGet},
-		AllowedHeaders: []string{"Content-Type", "Authorization"},
+		AllowedOrigins:   srv.CorsAllowedOrigins,
+		AllowedMethods:   []string{http.MethodOptions, http.MethodGet},
+		AllowCredentials: true,
+		AllowedHeaders:   []string{"Content-Type", "Authorization"},
 	}).Handler)
 	s.Mount("/api/v1/openapi.json", specHandler(apiV1.OpenAPICollector.SpecSchema().(*openapi31.Spec)))
 	s.Mount("/api/v1", apiV1)
