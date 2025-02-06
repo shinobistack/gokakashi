@@ -99,14 +99,14 @@ func scanImage(cmd *cobra.Command, args []string) {
 
 		// No image field (local images)
 		if policy.Image.Registry == "" && policy.Image.Name == "" && policy.Image.Tags == nil {
-			log.Println("Policy type is CI with no image field, directly feeding into scans table.")
+			// log.Println("Policy type is CI with no image field, directly feeding into scans table.")
 			handleNotifyAndScan(cmd.Context(), policy, nil, parsedLabels)
 			return
 		}
 
 		// Only registry specified
 		if policy.Image.Registry != "" && policy.Image.Name == "" && policy.Image.Tags == nil {
-			log.Printf("Policy type is CI with registry %s.", policy.Image.Registry)
+			// log.Printf("Policy type is CI with registry %s.", policy.Image.Registry)
 
 			integrationID, err := fetchIntegrationByName(cmd.Context(), policy.Image.Registry)
 			if err != nil {
