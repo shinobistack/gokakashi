@@ -20,16 +20,10 @@ func DefaultConfig() (*Config, error) {
 		logAPITokenOnStartup = true
 	}
 
-	apiHost := os.Getenv("GOKAKASHI_API_SERVER_HOST")
-	apiPort, _ := strconv.Atoi(os.Getenv("GOKAKASHI_API_SERVER_PORT"))
+	apiHost := os.Getenv("GOKAKASHI_SERVER_HOST")
+	apiPort, _ := strconv.Atoi(os.Getenv("GOKAKASHI_SERVER_PORT"))
 	if apiPort == 0 {
 		apiPort = 5556
-	}
-
-	webHost := os.Getenv("GOKAKASHI_WEB_SERVER_HOST")
-	webPort, _ := strconv.Atoi(os.Getenv("GOKAKASHI_WEB_SERVER_PORT"))
-	if webPort == 0 {
-		webPort = 5555
 	}
 
 	dbHost := os.Getenv("DB_HOST")
@@ -59,10 +53,6 @@ func DefaultConfig() (*Config, error) {
 			LogAPITokenOnStartup: logAPITokenOnStartup,
 			Host:                 apiHost,
 			Port:                 apiPort,
-		},
-		WebServer: WebServerConfig{
-			Host: webHost,
-			Port: webPort,
 		},
 		Database: DbConnection{
 			Host:     dbHost,

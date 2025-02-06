@@ -22,11 +22,6 @@ type SiteConfig struct {
 	Port                 int    `yaml:"port"`
 }
 
-type WebServerConfig struct {
-	Host string `yaml:"host"`
-	Port int    `yaml:"port"`
-}
-
 // Trigger specifies the action schedule (cron or CI-based)
 type Trigger struct {
 	Type     string `yaml:"type"`
@@ -63,23 +58,14 @@ type DbConnection struct {
 
 // Config represents the complete configuration for GoKakashi
 type Config struct {
-	Integrations []Integration   `yaml:"integrations"`
-	Site         SiteConfig      `yaml:"site"`
-	Policies     []Policy        `yaml:"policies"`
-	Database     DbConnection    `yaml:"database"`
-	WebServer    WebServerConfig `yaml:"web_server"`
+	Integrations []Integration `yaml:"integrations"`
+	Site         SiteConfig    `yaml:"site"`
+	Policies     []Policy      `yaml:"policies"`
+	Database     DbConnection  `yaml:"database"`
 }
 
 type Scanner struct {
 	Tool string `yaml:"tool"` // Example: Trivy, Synk, etc.
-}
-
-func (c *Config) WebServerURL() string {
-	host := c.WebServer.Host
-	if host == "" {
-		host = "localhost"
-	}
-	return fmt.Sprintf("http://%s:%d", host, c.WebServer.Port)
 }
 
 func (c *Config) APIServerURL() string {
@@ -90,10 +76,6 @@ func (c *Config) APIServerURL() string {
 	return fmt.Sprintf("http://%s:%d", host, c.Site.Port)
 }
 
-func (c *Config) WebServerServingAddress() string {
-	return fmt.Sprintf("%s:%d", c.WebServer.Host, c.WebServer.Port)
-}
-
 func (cfg *Config) String() string {
 	var s strings.Builder
 
@@ -101,12 +83,10 @@ func (cfg *Config) String() string {
 	s.WriteString("- - - - Configuration - - - - -")
 	s.WriteString("\n")
 
-	s.WriteString(fmt.Sprintf("  API Server URL: %s\n", cfg.APIServerURL()))
+	s.WriteString(fmt.Sprintf("  Server URL: %s\n", cfg.APIServerURL()))
 	if cfg.Site.LogAPITokenOnStartup {
 		s.WriteString(fmt.Sprintf("  API Token: %s\n", cfg.Site.APIToken))
 	}
-	s.WriteString("\n")
-	s.WriteString(fmt.Sprintf("  Web Server URL: %s\n", cfg.WebServerURL()))
 	s.WriteString("\n")
 	s.WriteString(fmt.Sprintf("  Database Host: %s\n", cfg.Database.Host))
 	s.WriteString(fmt.Sprintf("  Database Port: %d\n", cfg.Database.Port))
