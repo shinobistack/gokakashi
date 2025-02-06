@@ -39,11 +39,11 @@ jobs:
       - name: Build Binaries
         run: |
           mkdir -p dist
-          GOOS=linux GOARCH=amd64 go build -o dist/gokakashi-agent-linux-amd64 .
-          GOOS=linux GOARCH=arm64 go build -o dist/gokakashi-agent-linux-arm64 .
-          GOOS=darwin GOARCH=amd64 go build -o dist/gokakashi-agent-mac-amd64 .
-          GOOS=darwin GOARCH=arm64 go build -o dist/gokakashi-agent-mac-arm64 .
-          GOOS=windows GOARCH=amd64 go build -o dist/gokakashi-agent-windows-amd64.exe .
+          GOOS=linux GOARCH=amd64 go build -o dist/gokakashi-linux-amd64 .
+          GOOS=linux GOARCH=arm64 go build -o dist/gokakashi-linux-arm64 .
+          GOOS=darwin GOARCH=amd64 go build -o dist/gokakashi-mac-amd64 .
+          GOOS=darwin GOARCH=arm64 go build -o dist/gokakashi-mac-arm64 .
+          GOOS=windows GOARCH=amd64 go build -o dist/gokakashi-windows-amd64.exe .
 
       - name: Upload Release Binaries
         uses: softprops/action-gh-release@v1
