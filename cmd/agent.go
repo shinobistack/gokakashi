@@ -317,7 +317,7 @@ func updateAgentStatus(ctx context.Context, server, token string, agentID int, s
 func executeEphemeraTasks(ctx context.Context, server, token string, agentID int, workspace string) {
 	// todo: retry logic for sometime
 	maxRetries := 6
-	retryInterval := 30 * time.Second
+	retryInterval := 50 * time.Second
 	log.Printf("Ephemeral agent %d waiting for tasks...", agentID)
 
 	for attempt := 1; attempt <= maxRetries; attempt++ {
