@@ -146,8 +146,6 @@ func handleNotifyAndScan(ctx context.Context, policy *policies.GetPolicyResponse
 				When:   notify.When,
 				Format: notify.Format,
 			})
-
-			fmt.Printf("Fetched integration details for: %s\n", notify.To)
 		}
 
 		_, err := postScanDetails(ctx, policy.ID, policy.Scanner, integrationID, labels, formattedNotifies)
