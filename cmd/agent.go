@@ -170,7 +170,7 @@ func agentRegister(cmd *cobra.Command, args []string) {
 	if singleStrike {
 		log.Printf("Ephemeral agent registered. Starting in sometime...")
 		// Todo: Dynamic Delay: Instead of hardcoding 5 seconds, make it configurable
-		time.Sleep(60 * time.Second)
+		time.Sleep(45 * time.Second)
 		if err := sendAgentHeartbeat(cmd.Context(), server, token, agent.ID); err != nil {
 			log.Printf("Failed to send final heartbeat for agent %d: %v", agent.ID, err)
 		}
