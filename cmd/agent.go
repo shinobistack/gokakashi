@@ -272,8 +272,6 @@ func registerAgent(ctx context.Context, server, token, workspace, name string, l
 		return response, fmt.Errorf("failed to send registration request: %w", err)
 	}
 	defer resp.Body.Close()
-	body, _ := io.ReadAll(resp.Body)
-	log.Printf("Raw response body: %s", string(body))
 
 	if resp.StatusCode != http.StatusOK {
 		return response, fmt.Errorf("server responded with status: %d", resp.StatusCode)
