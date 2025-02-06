@@ -13,6 +13,7 @@ import (
 	agentlabels1 "github.com/shinobistack/gokakashi/internal/restapi/v1/agentlabels"
 	agents1 "github.com/shinobistack/gokakashi/internal/restapi/v1/agents"
 	agenttasks1 "github.com/shinobistack/gokakashi/internal/restapi/v1/agenttasks"
+	"github.com/shinobistack/gokakashi/webapp"
 
 	integrations1 "github.com/shinobistack/gokakashi/internal/restapi/v1/integrations"
 	integrationtype1 "github.com/shinobistack/gokakashi/internal/restapi/v1/integrationtype"
@@ -124,6 +125,12 @@ func (srv *Server) Service() *web.Service {
 	}).Handler)
 	s.Mount("/api/v1/openapi.json", specHandler(apiV1.OpenAPICollector.SpecSchema().(*openapi31.Spec)))
 	s.Mount("/api/v1", apiV1)
+
+	frontend, err := webapp.ReactApp()
+	if err != nil {
+		return nil
+	}
+	s.Mount("/", frontend)
 
 	s.Docs("/docs", swgui.NewWithConfig(swg.Config{
 		ShowTopBar: true,
