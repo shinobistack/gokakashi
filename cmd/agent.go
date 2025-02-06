@@ -316,56 +316,61 @@ func updateAgentStatus(ctx context.Context, server, token string, agentID int, s
 
 func executeEphemeraTasks(ctx context.Context, server, token string, agentID int, workspace string) {
 	// todo: retry logic for sometime
+	maxRetries := 6
+	retryInterval := 30 * time.Second
+	log.Printf("Ephemeral agent %d waiting for tasks...", agentID)
 
-	if err := sendAgentHeartbeat(ctx, server, token, agentID); err != nil {
-		log.Printf("Failed to send heartbeat for agent %d: %v", agentID, err)
-	}
+	for attempt := 1; attempt <= maxRetries; attempt++ {
+		if err := sendAgentHeartbeat(ctx, server, token, agentID); err != nil {
+			log.Printf("Failed to send heartbeat for agent %d: %v", agentID, err)
+		}
 
-	tasks, err := fetchTasks(ctx, server, token, agentID, "pending", 1)
-	if err != nil {
-		log.Printf("Error fetching task: %v", err)
-		return
-	}
+		tasks, err := fetchTasks(ctx, server, token, agentID, "pending", 1)
+		if err != nil {
+			log.Printf("Error fetching task: %v", err)
+			return
+		}
 
-	if len(tasks) == 0 {
-		log.Println("No pending tasks available for the ephemeral agent.")
-		// Deregister the agent if no tasks are available
+		if len(tasks) == 0 {
+			log.Println("No pending tasks available for the ephemeral agent.")
+			time.Sleep(retryInterval)
+			continue
+		}
+		task := tasks[0]
+
+		// Mark task as "in_progress"
+		err = updateAgentTaskStatus(ctx, server, token, task.ID, agentID, "in_progress")
+		if err != nil {
+			log.Printf("Failed to update task status to 'in_progress': %v", err)
+			return
+		}
+
+		// Process the task
+		if err := sendAgentHeartbeat(ctx, server, token, agentID); err != nil {
+			log.Printf("Failed to send heartbeat for agent %d: %v", agentID, err)
+		}
+		processTask(ctx, server, token, task, workspace, agentID)
+
+		// Mark task as "complete"
+		err = updateAgentTaskStatus(ctx, server, token, task.ID, agentID, "complete")
+		if err != nil {
+			log.Printf("Failed to update agent_task status to 'complete': %v", err)
+			return
+		}
+
+		err = updateAgentStatus(ctx, server, token, agentID, "disconnected")
+		if err != nil {
+			log.Printf("Failed to update scan status to 'disconnected': %v", err)
+		}
+
+		log.Printf("Ephemeral agent %d completed its task and will now exit.", agentID)
 		deregisterEphemeralAgent(ctx, agentID, server, token, true)
-		return
+		log.Printf("Ephemeral agent %d shutting down.", agentID)
+		os.Exit(0)
+
 	}
 
-	task := tasks[0]
-
-	// Mark task as "in_progress"
-	err = updateAgentTaskStatus(ctx, server, token, task.ID, agentID, "in_progress")
-	if err != nil {
-		log.Printf("Failed to update task status to 'in_progress': %v", err)
-		return
-	}
-
-	// Process the task
-	if err := sendAgentHeartbeat(ctx, server, token, agentID); err != nil {
-		log.Printf("Failed to send heartbeat for agent %d: %v", agentID, err)
-	}
-	processTask(ctx, server, token, task, workspace, agentID)
-
-	// Mark task as "complete"
-	err = updateAgentTaskStatus(ctx, server, token, task.ID, agentID, "complete")
-	if err != nil {
-		log.Printf("Failed to update agent_task status to 'in_progress': %v", err)
-		return
-	}
-
-	err = updateAgentStatus(ctx, server, token, agentID, "disconnected")
-	if err != nil {
-		log.Printf("Failed to update scan status to 'disconnected': %v", err)
-	}
-
-	if err := sendAgentHeartbeat(ctx, server, token, agentID); err != nil {
-		log.Printf("Failed to send heartbeat for agent %d: %v", agentID, err)
-	}
-
-	log.Printf("Ephemeral agent %d completed its task and will now exit.", agentID)
+	log.Printf("Ephemeral agent %d: No tasks assigned after %d retries. Exiting.", agentID, maxRetries)
 	deregisterEphemeralAgent(ctx, agentID, server, token, true)
 	log.Printf("Ephemeral agent %d shutting down.", agentID)
 	os.Exit(0)
