@@ -178,8 +178,6 @@ func postScanDetails(ctx context.Context, policyID uuid.UUID, scanner string, in
 	}
 	req.Header.Set("Content-Type", "application/json")
 
-	log.Printf("Scan request body: %s", string(reqBodyJSON))
-
 	resp, err := ctx.Value(httpClientKey{}).(*client.Client).Do(req)
 	if err != nil {
 		log.Fatalf("Failed to send scan request: %v", err)
