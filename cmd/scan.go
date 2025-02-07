@@ -99,14 +99,14 @@ func scanImage(cmd *cobra.Command, args []string) {
 
 		// No image field (local images)
 		if policy.Image.Registry == "" && policy.Image.Name == "" && policy.Image.Tags == nil {
-			log.Println("Policy type is CI with no image field, directly feeding into scans table.")
+			// log.Println("Policy type is CI with no image field, directly feeding into scans table.")
 			handleNotifyAndScan(cmd.Context(), policy, nil, parsedLabels)
 			return
 		}
 
 		// Only registry specified
 		if policy.Image.Registry != "" && policy.Image.Name == "" && policy.Image.Tags == nil {
-			log.Printf("Policy type is CI with registry %s.", policy.Image.Registry)
+			// log.Printf("Policy type is CI with registry %s.", policy.Image.Registry)
 
 			integrationID, err := fetchIntegrationByName(cmd.Context(), policy.Image.Registry)
 			if err != nil {
@@ -146,8 +146,6 @@ func handleNotifyAndScan(ctx context.Context, policy *policies.GetPolicyResponse
 				When:   notify.When,
 				Format: notify.Format,
 			})
-
-			fmt.Printf("Fetched integration details for: %s\n", notify.To)
 		}
 
 		_, err := postScanDetails(ctx, policy.ID, policy.Scanner, integrationID, labels, formattedNotifies)
@@ -177,8 +175,6 @@ func postScanDetails(ctx context.Context, policyID uuid.UUID, scanner string, in
 		log.Fatalf("Failed to create scan request: %v", err)
 	}
 	req.Header.Set("Content-Type", "application/json")
-
-	log.Printf("Scan request body: %s", string(reqBodyJSON))
 
 	resp, err := ctx.Value(httpClientKey{}).(*client.Client).Do(req)
 	if err != nil {
