@@ -14,7 +14,6 @@ import (
 
 	configv1 "github.com/shinobistack/gokakashi/internal/config/v1"
 	restapiv1 "github.com/shinobistack/gokakashi/internal/restapi/v1"
-	"github.com/shinobistack/gokakashi/webapp"
 	"github.com/spf13/cobra"
 )
 
@@ -56,7 +55,6 @@ func runServer(cmd *cobra.Command, args []string) {
 	log.Println("==== Starting gokakashi ====")
 	go initDatabase(cfg)
 	go startAPIServer(cfg)
-	go startWebServer(cfg)
 	go assigner.Start(cfg.Site.Host, cfg.Site.Port, cfg.Site.APIToken, 1*time.Minute)
 	go notifier.Start(cfg.Site.Host, cfg.Site.Port, cfg.Site.APIToken, 1*time.Minute)
 	log.Println(cfg)
@@ -73,16 +71,6 @@ func startAPIServer(cfg *configv1.Config) {
 		DBConfig:  cfg.Database,
 	}
 	go s.Serve()
-}
-
-func startWebServer(cfg *configv1.Config) {
-	webServer, err := webapp.New(cfg.WebServerServingAddress(), cfg.APIServerURL())
-	if err != nil {
-		log.Fatalln("Error creating web server", err)
-	}
-	if err := webServer.ListenAndServe(); err != nil {
-		log.Fatalln("Error starting web server", err)
-	}
 }
 
 func initDatabase(cfg *configv1.Config) {
