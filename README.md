@@ -1,5 +1,5 @@
 <p align="center">
-   <img src="https://github.com/user-attachments/assets/d5a52847-eeac-4cbc-a047-7991a003a523">
+   <img src="https://github.com/user-attachments/assets/ba2b12ef-46fd-4f4b-8dfd-31288ea4ce5c">
   <br><br>
   <span><b>gokakashi</b></span>
   <br><br>
