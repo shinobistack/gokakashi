@@ -1,4 +1,4 @@
-import { Route, Switch } from "wouter";
+import { Route, Switch, Redirect } from "wouter";
 import PropTypes from "prop-types";
 import Sidebar from "./Sidebar";
 import PolicyList from "../policies/List";
@@ -12,6 +12,7 @@ const Page = ({ logout }) => {
       <Sidebar logout={logout} />
       <div className="flex-grow p-4">
         <Switch>
+          <Route path="/" component={() => <Redirect to="/policies" />} />
           <Route path="/policies" component={PolicyList} />
           <Route path="/scans" component={ScanList} />
           <Route path="/integrations" component={IntegrationList} />
