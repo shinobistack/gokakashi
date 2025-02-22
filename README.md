@@ -8,6 +8,7 @@
   <span>🚧 Heavy work in progress 🚧</span>
   <br><br>
   <a href="https://github.com/shinobistack/gokakashi/actions/workflows/build.yml"><image src="https://github.com/shinobistack/gokakashi/actions/workflows/build.yml/badge.svg" /></a>
+  <a href="https://shinobistack.zulipchat.com/#narrow/channel/486791-gokakashi"><img src="https://img.shields.io/badge/zulip-join_chat-brightgreen.svg" /></a>
 </p>
 
 &nbsp;
@@ -67,7 +68,7 @@ docker run --rm -it ghcr.io/shinobistack/gokakashi agent
 
 Thanks for your interest in contributing to the project.
 
-You will need [docker](https://docs.docker.com/) and [docker-compose](https://docs.docker.com/compose/) for building gokakashi. You can follow the below workflow after having those software.
+You will need [docker](https://docs.docker.com/) and [docker-compose](https://docs.docker.com/compose/) for building gokakashi. You can follow the below workflow after having the software.
 
 ```sh
 git clone git@github.com:shinobistack/gokakashi.git
@@ -83,4 +84,9 @@ docker compose -f docker-compose/dev.yaml up --build
 
 We’re excited to share gokakashi early with the community to gather feedback and improve quickly.
 
-Whether you're curious, have suggestions, or if your team is looking for a fast and efficient way to streamline your security workflows (and get back to enjoying that extra ice cream or your favorite anime), we’d love to hear from you. Feel free to open an issue or submit a pull request or request any features that would help on GitHub. Let’s build something awesome together!
+Whether you're curious, have suggestions, or your team is looking for a fast and efficient way to streamline your security workflows (and get back to enjoying that extra ice cream 🍨 or your favorite anime 📺), we’d love to hear from you.
+
+- Chat with us on [Zulip](https://shinobistack.zulipchat.com/#narrow/channel/486791-gokakashi) 🗯️
+- Report bugs and feature requests on [GitHub](https://github.com/shinobistack/gokakashi/issues/new) :octocat:
+
+Let’s build something awesome together!
