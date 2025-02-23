@@ -2,6 +2,8 @@
 sidebar_position: 2
 ---
 
+# Installation
+
 gokakashi has the following software components:
 
 - __Postgres Database__ : For all the data storage.
