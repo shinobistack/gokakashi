@@ -5,6 +5,7 @@ import Layout from '@theme/Layout';
 
 import Heading from '@theme/Heading';
 import styles from './index.module.css';
+import posthog from 'posthog-js';
 
 function HomepageHeader() {
   const {siteConfig} = useDocusaurusContext();
@@ -47,3 +48,10 @@ export default function Home() {
     </Layout>
   );
 }
+
+posthog.init('phc_yZTtQI33sbvCDSU3mUQY0YsZRwfMeAenGG66HNleRgh',
+  {
+      api_host: 'https://us.i.posthog.com',
+      person_profiles: 'identified_only'
+  }
+)
