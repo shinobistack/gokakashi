@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?><?xml-stylesheet type="text/xsl" href="atom.xsl"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+    <id>https://gokakashi.run/blog</id>
+    <title>gokakashi Blog</title>
+    <updated>2025-02-23T00:00:00.000Z</updated>
+    <generator>https://github.com/jpmonette/feed</generator>
+    <link rel="alternate" href="https://gokakashi.run/blog"/>
+    <subtitle>gokakashi Blog</subtitle>
+    <icon>https://gokakashi.run/img/logo/gokakashi.png</icon>
+    <entry>
+        <title type="html"><![CDATA[Hello world]]></title>
+        <id>https://gokakashi.run/blog/hello-world</id>
+        <link href="https://gokakashi.run/blog/hello-world"/>
+        <updated>2025-02-23T00:00:00.000Z</updated>
+        <summary type="html"><![CDATA[Over the past few months, some of our friends and family had been hearing about this weird term "gokakashi".]]></summary>
+        <content type="html"><![CDATA[<p>Over the past few months, some of our friends and family had been hearing about this weird term "gokakashi".</p>
+<p>It is passion project that we <a href="https://github.com/shinobistack/gokakashi/commits" target="_blank" rel="noopener noreferrer">have been hacking</a> recently. We hope to talk more about it here. But for now, we will have to get back to building.</p>
+<p><em>whoosh</em>, into the shadows 🍃🥷🏼</p>
+<p><img decoding="async" loading="lazy" alt="banner" src="https://gokakashi.run/assets/images/banner-dd47cb2c3784318518736e140590af7f.png" width="1202" height="779" class="img_ev3q"></p>]]></content>
+        <author>
+            <name>Ashwini Gaddagi</name>
+            <uri>https://ashwiniag.com</uri>
+        </author>
+        <author>
+            <name>Vishnu Bharathi</name>
+            <uri>https://vishnubharathi.codes</uri>
+        </author>
+        <category label="Maintainer Notes" term="Maintainer Notes"/>
+    </entry>
+</feed>

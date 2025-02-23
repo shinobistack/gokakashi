@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?><?xml-stylesheet type="text/xsl" href="rss.xsl"?>
+<rss version="2.0" xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:content="http://purl.org/rss/1.0/modules/content/">
+    <channel>
+        <title>gokakashi Blog</title>
+        <link>https://gokakashi.run/blog</link>
+        <description>gokakashi Blog</description>
+        <lastBuildDate>Sun, 23 Feb 2025 00:00:00 GMT</lastBuildDate>
+        <docs>https://validator.w3.org/feed/docs/rss2.html</docs>
+        <generator>https://github.com/jpmonette/feed</generator>
+        <language>en</language>
+        <item>
+            <title><![CDATA[Hello world]]></title>
+            <link>https://gokakashi.run/blog/hello-world</link>
+            <guid>https://gokakashi.run/blog/hello-world</guid>
+            <pubDate>Sun, 23 Feb 2025 00:00:00 GMT</pubDate>
+            <description><![CDATA[Over the past few months, some of our friends and family had been hearing about this weird term "gokakashi".]]></description>
+            <content:encoded><![CDATA[<p>Over the past few months, some of our friends and family had been hearing about this weird term "gokakashi".</p>
+<p>It is passion project that we <a href="https://github.com/shinobistack/gokakashi/commits" target="_blank" rel="noopener noreferrer">have been hacking</a> recently. We hope to talk more about it here. But for now, we will have to get back to building.</p>
+<p><em>whoosh</em>, into the shadows 🍃🥷🏼</p>
+<p><img decoding="async" loading="lazy" alt="banner" src="https://gokakashi.run/assets/images/banner-dd47cb2c3784318518736e140590af7f.png" width="1202" height="779" class="img_ev3q"></p>]]></content:encoded>
+            <category>Maintainer Notes</category>
+        </item>
+    </channel>
+</rss>
