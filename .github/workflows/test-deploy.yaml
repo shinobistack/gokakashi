@@ -4,8 +4,6 @@ on:
   pull_request:
     branches:
       - main
-    # Review gh actions docs if you want to further define triggers, paths, etc
-    # https://docs.github.com/en/actions/using-workflows/workflow-syntax-for-github-actions#on
 
 jobs:
   test-deploy:
@@ -17,7 +15,6 @@ jobs:
           fetch-depth: 0
 
       - uses: actions/setup-node@v4
-        working-directory: ./website
         with:
           node-version: 18
           cache: npm
