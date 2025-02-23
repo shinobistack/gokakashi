@@ -15,17 +15,18 @@ jobs:
           fetch-depth: 0
 
       - uses: actions/setup-node@v4
+        working-directory: ./website
         with:
           node-version: 18
-          cache: yarn
+          cache: npm
 
       - name: Install dependencies
         working-directory: ./website
-        run: yarn install --frozen-lockfile
+        run: npm ci
 
       - name: Build website
         working-directory: ./website
-        run: yarn build
+        run: npm run build
 
       - name: Upload Build Artifact
         uses: actions/upload-pages-artifact@v3
