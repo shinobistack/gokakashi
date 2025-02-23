@@ -28,3 +28,8 @@
   --ifm-color-primary-lightest: #4fddbf;
   --docusaurus-highlighted-code-line-bg: rgba(0, 0, 0, 0.3);
 }
+
+.github-button-image {
+  height: 1em; /* Adjust the height to match the font size */
+  vertical-align: middle; /* Align the image vertically with the text */
+}
