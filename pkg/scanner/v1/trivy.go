@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/google/cel-go/cel"
 	"github.com/google/cel-go/checker/decls"
+	"github.com/google/cel-go/ext"
 	"log"
 	"os"
 	"os/exec"
@@ -80,6 +81,8 @@ func (t *TrivyScanner) GenerateFingerprint(image string, reportData []byte, celE
 		cel.Declarations(
 			decls.NewVar("report", decls.NewObjectType("google.protobuf.Struct")),
 		),
+		ext.Strings(), // Enables string functions (split, join)
+		ext.Lists(),   // Enables list functions (map, filter, flatMap)
 	)
 	if err != nil {
 		return "", fmt.Errorf("failed to create CEL environment: %w", err)
