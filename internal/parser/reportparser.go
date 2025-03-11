@@ -61,13 +61,29 @@ func ReportParser(scanCondition string, scanData *scans.GetScanResponse) (bool, 
 	return out == types.True, severities, nil
 }
 
+// ValidateCELExpression checks if the CEL expression references fields that exist in the JSON report
+func ValidateCELExpression(expression string, jsonData map[string]interface{}) error {
+	// Extract fields used in the CEL expression
+	fields := ExtractFieldsFromCEL(expression)
+	availableKeys := FlattenJSONKeys(jsonData, "")
+
+	for _, field := range fields {
+		if _, exists := availableKeys[field]; !exists {
+			return fmt.Errorf("CEL expression references missing field: '%s'. This field may not exist in the scanner's JSON structure. Please use a compatible CEL expression", field)
+		}
+	}
+
+	return nil
+
+}
+
 func ExtractFieldsFromCEL(expression string) []string {
 	// Match words that look like field names (e.g., report.Results, v.Severity)
 	re := regexp.MustCompile(`\b[a-zA-Z_][a-zA-Z0-9_]*\b`)
 	matches := re.FindAllString(expression, -1)
-	fmt.Print(matches, "matches\n")
+	// fmt.Print(matches, "matches\n")
 
-	// Remove CEL operators and keywords (e.g., exists, &&, ||)
+	// Remove CEL operators and keywords (e.g., exists, &&, ||, CRITICAL, HIGH)
 	ignoredWords := map[string]bool{
 		"exists": true, "true": true, "false": true, "in": true, "and": true, "or": true, "CRITICAL": true, "HIGH": true, "MEDIUM": true, "LOW": true, "UNKNOWN": true,
 	}
@@ -77,10 +93,8 @@ func ExtractFieldsFromCEL(expression string) []string {
 		// Ignore CEL keywords, single-letter variables, and "report"
 		if !ignoredWords[match] && match != "report" && len(match) > 1 {
 			fields = append(fields, match)
-			fmt.Print(fields, "extracted\n")
 		}
 	}
-	fmt.Println(fields)
 	return fields
 }
 
