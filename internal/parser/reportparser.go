@@ -1,27 +1,25 @@
 package parser
 
 import (
-	"encoding/json"
 	"fmt"
 	"github.com/google/cel-go/cel"
 	"github.com/google/cel-go/common/types"
 	"github.com/shinobistack/gokakashi/internal/restapi/v1/scans"
+	"github.com/shinobistack/gokakashi/pkg/scanner/v1"
 	"regexp"
 )
 
 // TodO: Need to better this logic.
 
 func ReportParser(scanCondition string, scanData *scans.GetScanResponse) (bool, []string, error) {
-	// byte slice ([]byte), to prepare it for processing in a generic way for now.
-	reportJSON, err := json.Marshal(scanData.Report)
+	scannerInstance, err := scanner.NewScanner(scanData.Scanner)
 	if err != nil {
-		return false, nil, fmt.Errorf("failed to marshal report data: %w", err)
+		return false, nil, fmt.Errorf("unsupported scanner: %s", scanData.Scanner)
 	}
 
-	// Unmarshal the JSON into a map[string]interface{}
-	var reportMap map[string]interface{}
-	if err := json.Unmarshal(reportJSON, &reportMap); err != nil {
-		return false, nil, fmt.Errorf("failed to unmarshal report JSON to map: %w", err)
+	reportMap, err := scannerInstance.ParseReport(scanData.Report)
+	if err != nil {
+		return false, nil, err
 	}
 
 	// Initialize CEL environment
