@@ -84,6 +84,36 @@ func ExtractFieldsFromCEL(expression string) []string {
 	return fields
 }
 
+func FlattenJSONKeys(data interface{}, prefix string) map[string]bool {
+	keys := make(map[string]bool)
+
+	switch v := data.(type) {
+	case map[string]interface{}:
+		for key, value := range v {
+			fullKey := key
+			if prefix != "" {
+				fullKey = prefix + "." + key
+			}
+			keys[key] = true     // Store key as is
+			keys[fullKey] = true // Store key with full path for flexibility
+
+			// Recurse into nested objects
+			for subKey := range FlattenJSONKeys(value, fullKey) {
+				keys[subKey] = true
+			}
+		}
+
+	case []interface{}:
+		for _, item := range v {
+			for subKey := range FlattenJSONKeys(item, prefix) {
+				keys[subKey] = true
+			}
+		}
+	}
+
+	return keys
+}
+
 // extractSeverities parses the CEL condition to find severity levels
 func extractSeverities(condition string) []string {
 	// Regular expression to match severity values (e.g., 'CRITICAL', 'HIGH')
