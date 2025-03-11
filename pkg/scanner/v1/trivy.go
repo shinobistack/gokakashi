@@ -52,6 +52,15 @@ func (t *TrivyScanner) Scan(image string, severityLevels []string) (string, erro
 	return outputFile.Name(), nil
 }
 
+func (t *TrivyScanner) ParseReport(reportData []byte) (map[string]interface{}, error) {
+	var jsonMap map[string]interface{}
+	if err := json.Unmarshal(reportData, &jsonMap); err != nil {
+		return nil, fmt.Errorf("failed to parse Trivy report: %w", err)
+	}
+
+	return jsonMap, nil
+}
+
 // isValidJSON checks if the provided byte slice is valid JSON
 func isValidJSON(s []byte) bool {
 	var js interface{}
