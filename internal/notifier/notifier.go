@@ -125,7 +125,6 @@ func NotifyProcess(server string, port int, token string) {
 				}
 				var hash string
 				if notify.Fingerprint != "" {
-					fmt.Sprintf("notify.Fingerprint:%v", notify.Fingerprint)
 					hash, err = scanner.GenerateFingerprint(scan.Image, scan.Report, notify.Fingerprint)
 					if err != nil {
 						log.Printf("Notifier: Error generating fingerprint using CEL: %v", err)
