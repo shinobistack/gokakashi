@@ -72,7 +72,6 @@ func (t *TrivyScanner) GenerateFingerprint(image string, reportData []byte, celE
 	if err != nil {
 		return "", fmt.Errorf("failed to parse report: %w", err)
 	}
-	// fmt.Printf("[DEBUG] Parsed Report: %+v\n", parsedReport)
 
 	fmt.Printf("[DEBUG] Evaluating CEL: %s\n", celExpression)
 
@@ -110,8 +109,6 @@ func (t *TrivyScanner) GenerateFingerprint(image string, reportData []byte, celE
 	if !ok {
 		return "", fmt.Errorf("unexpected fingerprint type: %T", out.Value())
 	}
-
-	fmt.Printf("[DEBUG] Generated Fingerprint: %v\n", fingerprint)
 
 	return fingerprint, nil
 }
