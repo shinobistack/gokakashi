@@ -61,6 +61,29 @@ func ReportParser(scanCondition string, scanData *scans.GetScanResponse) (bool, 
 	return out == types.True, severities, nil
 }
 
+func ExtractFieldsFromCEL(expression string) []string {
+	// Match words that look like field names (e.g., report.Results, v.Severity)
+	re := regexp.MustCompile(`\b[a-zA-Z_][a-zA-Z0-9_]*\b`)
+	matches := re.FindAllString(expression, -1)
+	fmt.Print(matches, "matches\n")
+
+	// Remove CEL operators and keywords (e.g., exists, &&, ||)
+	ignoredWords := map[string]bool{
+		"exists": true, "true": true, "false": true, "in": true, "and": true, "or": true, "CRITICAL": true, "HIGH": true, "MEDIUM": true, "LOW": true, "UNKNOWN": true,
+	}
+
+	var fields []string
+	for _, match := range matches {
+		// Ignore CEL keywords, single-letter variables, and "report"
+		if !ignoredWords[match] && match != "report" && len(match) > 1 {
+			fields = append(fields, match)
+			fmt.Print(fields, "extracted\n")
+		}
+	}
+	fmt.Println(fields)
+	return fields
+}
+
 // extractSeverities parses the CEL condition to find severity levels
 func extractSeverities(condition string) []string {
 	// Regular expression to match severity values (e.g., 'CRITICAL', 'HIGH')
