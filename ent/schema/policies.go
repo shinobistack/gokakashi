@@ -24,9 +24,10 @@ type Image struct {
 }
 
 type Notify struct {
-	To     string `json:"to"`               // e.g., acme-linear, acme-jira
-	When   string `json:"when"`             // CEL condition
-	Format string `json:"format,omitempty"` // Todo: Custom template for notification descriptions
+	To          string `json:"to"`                    // e.g., acme-linear, acme-jira
+	When        string `json:"when"`                  // CEL condition
+	Format      string `json:"format,omitempty"`      // Todo: Custom template for notification descriptions
+	Fingerprint string `json:"fingerprint,omitempty"` // CEL condition
 }
 
 // Fields of the Policies.
