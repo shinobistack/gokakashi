@@ -91,7 +91,6 @@ func NotifyProcess(server string, port int, token string) {
 				if err != nil {
 					log.Printf("Notifier: invalid UUID string: %v", err)
 				}
-				log.Println(parsedNotifyToUUID)
 
 				integration, err := fetchIntegrationDetails(server, port, token, parsedNotifyToUUID)
 				if err != nil {
