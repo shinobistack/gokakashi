@@ -142,9 +142,10 @@ func handleNotifyAndScan(ctx context.Context, policy *policies.GetPolicyResponse
 			}
 
 			formattedNotifies = append(formattedNotifies, schema.Notify{
-				To:     notifyDetails.String(),
-				When:   notify.When,
-				Format: notify.Format,
+				To:          notifyDetails.String(),
+				When:        notify.When,
+				Format:      notify.Format,
+				Fingerprint: notify.Fingerprint,
 			})
 		}
 
