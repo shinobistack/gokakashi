@@ -3,8 +3,6 @@ package notifier
 import (
 	"bytes"
 	"context"
-	"crypto/sha256"
-	"encoding/hex"
 	"encoding/json"
 	"fmt"
 	"github.com/shinobistack/gokakashi/pkg/scanner/v1"
@@ -20,19 +18,6 @@ import (
 	"github.com/shinobistack/gokakashi/internal/restapi/v1/integrations"
 	"github.com/shinobistack/gokakashi/internal/restapi/v1/scans"
 )
-
-type HashEntry struct {
-	Image           string              `json:"image"`           // Image name
-	Vulnerabilities []VulnerabilityData `json:"vulnerabilities"` // Detailed vulnerability data
-	Hash            string              `json:"hash"`            // Generated hash for the entry
-}
-
-type VulnerabilityData struct {
-	VulnerabilityID  string `json:"vulnerability_id"`  // The CVE or vulnerability ID
-	Severity         string `json:"severity"`          // Severity level (e.g., Critical, High)
-	InstalledVersion string `json:"installed_version"` // Version of the package installed
-	FixedVersion     string `json:"fixed_version"`     // Version where the vulnerability is fixed (if available)
-}
 
 func normalizeServer(server string) string {
 	if !strings.HasPrefix(server, "http://") && !strings.HasPrefix(server, "https://") {
@@ -78,6 +63,11 @@ func NotifyProcess(server string, port int, token string) {
 
 	for _, scan := range scans {
 		for _, notify := range *scan.Notify {
+			scanner, err := scanner.NewScanner(scan.Scanner)
+			if err != nil {
+				log.Printf("Notifier: Unsupported scanner tool: %s", scan.Scanner)
+				continue
+			}
 			// Evaluate the 'when' condition using ReportParser
 			matched, severities, err := parser.ReportParser(notify.When, &scan)
 			if err != nil {
@@ -99,7 +89,7 @@ func NotifyProcess(server string, port int, token string) {
 					continue
 				}
 
-				filteredVulnerabilities, err := formatReportForNotify(scan.Report, severities, scan.Image)
+				filteredVulnerabilities, err := scanner.FormatReportForNotify(scan.Report, severities, scan.Image)
 				if err != nil {
 					log.Printf("Notifier: Error formatting report for notify: %v", err)
 					continue
@@ -115,11 +105,6 @@ func NotifyProcess(server string, port int, token string) {
 				}
 
 				// Generate a hash and check/save
-				scanner, err := scanner.NewScanner(scan.Scanner)
-				if err != nil {
-					log.Printf("Notifier: Unsupported scanner tool: %s", scan.Scanner)
-					continue
-				}
 				var hash string
 				if notify.Fingerprint != "" {
 					hash, err = scanner.GenerateFingerprint(scan.Image, scan.Report, notify.Fingerprint)
@@ -128,8 +113,8 @@ func NotifyProcess(server string, port int, token string) {
 						continue
 					}
 				} else {
-					vulnerabilityEntries := ConvertVulnerabilities(filteredVulnerabilities)
-					hash = GenerateHash(scan.Image, vulnerabilityEntries)
+					vulnerabilityEntries := scanner.ConvertVulnerabilities(filteredVulnerabilities)
+					hash = scanner.GenerateHash(scan.Image, vulnerabilityEntries)
 				}
 
 				saved, err := CheckAndSaveHash(server, port, token, scan.ID, hash)
@@ -148,7 +133,7 @@ func NotifyProcess(server string, port int, token string) {
 							continue
 						}
 						linearIssue.Title = fmt.Sprintf("%s - %s", scan.Image, linearIssue.Title)
-						linearIssue.Description = FormatVulnerabilityReport(scan.Image, filteredVulnerabilities)
+						linearIssue.Description = scanner.FormatVulnerabilityReport(scan.Image, filteredVulnerabilities)
 						n = linearIssue
 					default:
 						log.Printf("Notifier: Error creating notifier: unknown notifier %s", integration.Type)
@@ -177,30 +162,6 @@ func NotifyProcess(server string, port int, token string) {
 			}
 		}
 	}
-}
-
-func FormatVulnerabilityReport(image string, vulnerabilities []Vulnerability) string {
-	var buffer bytes.Buffer
-
-	// Add image information
-	buffer.WriteString(fmt.Sprintf("Image: %s\n\n", image))
-
-	// Iterate over vulnerabilities and format them in the simplified format
-	for _, vuln := range vulnerabilities {
-		buffer.WriteString(fmt.Sprintf("Library: %s\n", vuln.PkgName))
-		buffer.WriteString(fmt.Sprintf("Vulnerability: %s\n", vuln.VulnerabilityID))
-		buffer.WriteString(fmt.Sprintf("Severity: %s\n", vuln.Severity))
-		buffer.WriteString(fmt.Sprintf("Status: %s\n", vuln.Status))
-		buffer.WriteString(fmt.Sprintf("Installed Version: %s\n", vuln.InstalledVersion))
-		buffer.WriteString(fmt.Sprintf("Fixed Version: %s\n", vuln.FixedVersion))
-		buffer.WriteString(fmt.Sprintf("Title: %s\n", vuln.Title))
-		if vuln.PrimaryURL != "" {
-			buffer.WriteString(fmt.Sprintf("More details: %s\n", vuln.PrimaryURL))
-		}
-		buffer.WriteString("\n") // Add a line break between vulnerabilities
-	}
-
-	return buffer.String()
 }
 
 func fetchPendingScans(server string, port int, token, status string) ([]scans.GetScanResponse, error) {
@@ -255,84 +216,6 @@ func fetchIntegrationDetails(server string, port int, token string, integrationI
 	}
 
 	return &integration, nil
-}
-
-// TrivyReport represents the overall Trivy scan report
-type Report struct {
-	ArtifactName string   `json:"ArtifactName"`
-	Results      []Result `json:"Results"`
-}
-
-// Result represents the result field in Trivy output
-type Result struct {
-	Target          string          `json:"Target"`
-	Type            string          `json:"Type"`
-	Vulnerabilities []Vulnerability `json:"Vulnerabilities"`
-}
-
-// Vulnerability represents a vulnerability in the scan results
-type Vulnerability struct {
-	VulnerabilityID  string `json:"VulnerabilityID"`
-	PkgName          string `json:"PkgName"`
-	Severity         string `json:"Severity"`
-	InstalledVersion string `json:"InstalledVersion"`
-	FixedVersion     string `json:"FixedVersion"`
-	Title            string `json:"Title"`
-	Description      string `json:"Description"`
-	PrimaryURL       string `json:"PrimaryURL"`
-	Status           string `json:"Status"`
-}
-
-func formatReportForNotify(scanReport json.RawMessage, severities []string, scanImage string) ([]Vulnerability, error) {
-	var report Report
-	err := json.Unmarshal(scanReport, &report)
-	if err != nil {
-		log.Printf("Error failed to parse scan report: %v", err)
-	}
-
-	// Load the vulnerabilities from scans.report
-	var vulnerabilities []Vulnerability
-	for _, result := range report.Results {
-		vulnerabilities = append(vulnerabilities, result.Vulnerabilities...)
-	}
-
-	filteredVulnerabilities := FilterVulnerabilitiesBySeverity(vulnerabilities, severities)
-
-	return filteredVulnerabilities, nil
-}
-
-func FilterVulnerabilitiesBySeverity(vulnerabilities []Vulnerability, severityLevels []string) []Vulnerability {
-	var filtered []Vulnerability
-	for _, v := range vulnerabilities {
-		for _, level := range severityLevels {
-			if v.Severity == level {
-				filtered = append(filtered, v)
-			}
-		}
-	}
-	return filtered
-}
-
-func ConvertVulnerabilities(filteredVulnerabilities []Vulnerability) []string {
-	var vulnerabilityEntries []string
-	for _, v := range filteredVulnerabilities {
-		data := VulnerabilityData{
-			VulnerabilityID:  v.VulnerabilityID,
-			Severity:         v.Severity,
-			InstalledVersion: v.InstalledVersion,
-			FixedVersion:     v.FixedVersion,
-		}
-		entry := fmt.Sprintf("%s_%s_%s_%s", data.VulnerabilityID, data.Severity, data.InstalledVersion, data.FixedVersion)
-		vulnerabilityEntries = append(vulnerabilityEntries, entry)
-	}
-	return vulnerabilityEntries
-}
-
-func GenerateHash(image string, vulnerabilities []string) string {
-	data := fmt.Sprintf("%s_%s", image, strings.Join(vulnerabilities, "_"))
-	hash := sha256.New()
-	hash.Write([]byte(data))
-	return hex.EncodeToString(hash.Sum(nil))
 }
 
 func CheckAndSaveHash(server string, port int, token string, scanID uuid.UUID, hash string) (bool, error) {
