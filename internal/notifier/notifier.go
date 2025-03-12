@@ -107,14 +107,15 @@ func NotifyProcess(server string, port int, token string) {
 				// Generate a hash and check/save
 				var hash string
 				if notify.Fingerprint != "" {
-					hash, err = scanner.GenerateFingerprint(scan.Image, scan.Report, notify.Fingerprint)
+					fingerprint, err := scanner.GenerateFingerprint(scan.Image, scan.Report, notify.Fingerprint)
 					if err != nil {
 						log.Printf("Notifier: Error generating fingerprint using CEL: %v", err)
 						continue
 					}
+					hash = scanner.GenerateFingerprintHash(fingerprint)
 				} else {
 					vulnerabilityEntries := scanner.ConvertVulnerabilities(filteredVulnerabilities)
-					hash = scanner.GenerateHash(scan.Image, vulnerabilityEntries)
+					hash = scanner.GenerateDefaultHash(scan.Image, vulnerabilityEntries)
 				}
 
 				saved, err := CheckAndSaveHash(server, port, token, scan.ID, hash)
