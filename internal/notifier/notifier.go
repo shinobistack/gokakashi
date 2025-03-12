@@ -64,6 +64,10 @@ func NotifyProcess(server string, port int, token string) {
 	for _, scan := range scans {
 		for _, notify := range *scan.Notify {
 			scanner, err := scanner.NewScanner(scan.Scanner)
+			if err != nil {
+				log.Printf("Notifier: Unsupported scanner tool: %s", scan.Scanner)
+				continue
+			}
 			// Evaluate the 'when' condition using ReportParser
 			matched, severities, err := parser.ReportParser(notify.When, &scan)
 			if err != nil {
@@ -101,10 +105,6 @@ func NotifyProcess(server string, port int, token string) {
 				}
 
 				// Generate a hash and check/save
-				if err != nil {
-					log.Printf("Notifier: Unsupported scanner tool: %s", scan.Scanner)
-					continue
-				}
 				var hash string
 				if notify.Fingerprint != "" {
 					hash, err = scanner.GenerateFingerprint(scan.Image, scan.Report, notify.Fingerprint)
