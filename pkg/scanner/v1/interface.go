@@ -13,4 +13,5 @@ type Scanner interface {
 	FilterVulnerabilitiesBySeverity(vulnerabilities []Vulnerability, severityLevels []string) []Vulnerability
 	ConvertVulnerabilities(filteredVulnerabilities []Vulnerability) []string
 	GenerateDefaultHash(image string, vulnerabilities []string) string
+	GenerateFingerprintHash(vulnerabilities string) string
 }

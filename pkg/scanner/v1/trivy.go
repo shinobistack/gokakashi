@@ -234,6 +234,12 @@ func (t *TrivyScanner) GenerateDefaultHash(image string, vulnerabilities []strin
 	return hex.EncodeToString(hash.Sum(nil))
 }
 
+func (t *TrivyScanner) GenerateFingerprintHash(fingerprint string) string {
+	hash := sha256.New()
+	hash.Write([]byte(fingerprint))
+	return hex.EncodeToString(hash.Sum(nil))
+}
+
 // isValidJSON checks if the provided byte slice is valid JSON
 func isValidJSON(s []byte) bool {
 	var js interface{}
