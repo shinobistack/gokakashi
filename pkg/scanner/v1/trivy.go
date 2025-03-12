@@ -12,6 +12,45 @@ import (
 	"strings"
 )
 
+type HashEntry struct {
+	Image           string              `json:"image"`           // Image name
+	Vulnerabilities []VulnerabilityData `json:"vulnerabilities"` // Detailed vulnerability data
+	Hash            string              `json:"hash"`            // Generated hash for the entry
+}
+
+type VulnerabilityData struct {
+	VulnerabilityID  string `json:"vulnerability_id"`  // The CVE or vulnerability ID
+	Severity         string `json:"severity"`          // Severity level (e.g., Critical, High)
+	InstalledVersion string `json:"installed_version"` // Version of the package installed
+	FixedVersion     string `json:"fixed_version"`     // Version where the vulnerability is fixed (if available)
+}
+
+// TrivyReport represents the overall Trivy scan report
+type Report struct {
+	ArtifactName string   `json:"ArtifactName"`
+	Results      []Result `json:"Results"`
+}
+
+// Result represents the result field in Trivy output
+type Result struct {
+	Target          string          `json:"Target"`
+	Type            string          `json:"Type"`
+	Vulnerabilities []Vulnerability `json:"Vulnerabilities"`
+}
+
+// Vulnerability represents a vulnerability in the scan results
+type Vulnerability struct {
+	VulnerabilityID  string `json:"VulnerabilityID"`
+	PkgName          string `json:"PkgName"`
+	Severity         string `json:"Severity"`
+	InstalledVersion string `json:"InstalledVersion"`
+	FixedVersion     string `json:"FixedVersion"`
+	Title            string `json:"Title"`
+	Description      string `json:"Description"`
+	PrimaryURL       string `json:"PrimaryURL"`
+	Status           string `json:"Status"`
+}
+
 type TrivyScanner struct{}
 
 func (t *TrivyScanner) Scan(image string, severityLevels []string) (string, error) {
