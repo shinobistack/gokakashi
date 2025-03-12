@@ -227,7 +227,7 @@ func (t *TrivyScanner) ConvertVulnerabilities(filteredVulnerabilities []Vulnerab
 	return vulnerabilityEntries
 }
 
-func (t *TrivyScanner) GenerateHash(image string, vulnerabilities []string) string {
+func (t *TrivyScanner) GenerateDefaultHash(image string, vulnerabilities []string) string {
 	data := fmt.Sprintf("%s_%s", image, strings.Join(vulnerabilities, "_"))
 	hash := sha256.New()
 	hash.Write([]byte(data))
