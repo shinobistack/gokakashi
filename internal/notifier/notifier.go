@@ -114,10 +114,7 @@ func NotifyProcess(server string, port int, token string) {
 					return
 				}
 
-				// vulnerabilityEntries := ConvertVulnerabilities(filteredVulnerabilities)
-
 				// Generate a hash and check/save
-				// hash := GenerateHash(scan.Image, vulnerabilityEntries)
 				scanner, err := scanner.NewScanner(scan.Scanner)
 				if err != nil {
 					log.Printf("Notifier: Unsupported scanner tool: %s", scan.Scanner)
