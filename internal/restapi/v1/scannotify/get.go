@@ -5,11 +5,13 @@ import (
 	"errors"
 	"github.com/google/uuid"
 	"github.com/shinobistack/gokakashi/ent"
+	"github.com/shinobistack/gokakashi/ent/scannotify"
 	"github.com/swaggest/usecase/status"
 )
 
 type GetScanNotifyRequest struct {
-	ID *uuid.UUID `query:"id"`
+	ID   *uuid.UUID `query:"id"`
+	Hash *string    `query:"hash"`
 }
 
 type GetScanNotifyResponse struct {
@@ -35,6 +37,30 @@ func GetScanNotify(client *ent.Client) func(ctx context.Context, req GetScanNoti
 					ScanID: notification.ScanID,
 					Hash:   notification.Hash,
 				},
+			}
+			return nil
+		}
+
+		// Query by Hash if provided
+		if req.Hash != nil {
+			notifications, err := client.ScanNotify.Query().
+				Where(scannotify.HashEQ(*req.Hash)).
+				All(ctx)
+
+			if err != nil {
+				return status.Wrap(err, status.Internal)
+			}
+
+			if len(notifications) == 0 {
+				return status.Wrap(errors.New("no notifications found for the given hash"), status.NotFound)
+			}
+
+			for _, notification := range notifications {
+				*res = append(*res, GetScanNotifyResponse{
+					ID:     notification.ID,
+					ScanID: notification.ScanID,
+					Hash:   notification.Hash,
+				})
 			}
 			return nil
 		}
