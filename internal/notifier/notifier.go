@@ -7,6 +7,7 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
+	"github.com/shinobistack/gokakashi/pkg/scanner/v1"
 	"log"
 	"net/http"
 	"net/url"
@@ -91,7 +92,6 @@ func NotifyProcess(server string, port int, token string) {
 				if err != nil {
 					log.Printf("Notifier: invalid UUID string: %v", err)
 				}
-				log.Println(parsedNotifyToUUID)
 
 				integration, err := fetchIntegrationDetails(server, port, token, parsedNotifyToUUID)
 				if err != nil {
@@ -114,10 +114,24 @@ func NotifyProcess(server string, port int, token string) {
 					return
 				}
 
-				vulnerabilityEntries := ConvertVulnerabilities(filteredVulnerabilities)
-
 				// Generate a hash and check/save
-				hash := GenerateHash(scan.Image, vulnerabilityEntries)
+				scanner, err := scanner.NewScanner(scan.Scanner)
+				if err != nil {
+					log.Printf("Notifier: Unsupported scanner tool: %s", scan.Scanner)
+					continue
+				}
+				var hash string
+				if notify.Fingerprint != "" {
+					hash, err = scanner.GenerateFingerprint(scan.Image, scan.Report, notify.Fingerprint)
+					if err != nil {
+						log.Printf("Notifier: Error generating fingerprint using CEL: %v", err)
+						continue
+					}
+				} else {
+					vulnerabilityEntries := ConvertVulnerabilities(filteredVulnerabilities)
+					hash = GenerateHash(scan.Image, vulnerabilityEntries)
+				}
+
 				saved, err := CheckAndSaveHash(server, port, token, scan.ID, hash)
 				if err != nil {
 					log.Printf("Notifier: Error checking or saving hash: %v", err)

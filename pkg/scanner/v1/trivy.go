@@ -3,6 +3,9 @@ package scanner
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/google/cel-go/cel"
+	"github.com/google/cel-go/checker/decls"
+	"github.com/google/cel-go/ext"
 	"log"
 	"os"
 	"os/exec"
@@ -59,6 +62,58 @@ func (t *TrivyScanner) ParseReport(reportData []byte) (map[string]interface{}, e
 	}
 
 	return jsonMap, nil
+}
+
+//func (t *TrivyScanner) GetExpectedFields() []string {
+//	return []string{"Results", "Vulnerabilities", "Severity", "PkgName"}
+//}
+
+func (t *TrivyScanner) GenerateFingerprint(image string, reportData []byte, celExpression string) (string, error) {
+	parsedReport, err := t.ParseReport(reportData)
+	if err != nil {
+		return "", fmt.Errorf("failed to parse report: %w", err)
+	}
+
+	fmt.Printf("[DEBUG] Evaluating CEL: %s\n", celExpression)
+
+	// Use google.protobuf.Struct for CEL compatibility
+	env, err := cel.NewEnv(
+		cel.Declarations(
+			decls.NewVar("report", decls.NewObjectType("google.protobuf.Struct")),
+		),
+		ext.Strings(), // Enables string functions (split, join)
+		ext.Lists(),   // Enables list functions (map, filter, flatMap)
+	)
+	if err != nil {
+		return "", fmt.Errorf("failed to create CEL environment: %w", err)
+	}
+
+	// Compile CEL Expression
+	ast, issues := env.Compile(celExpression)
+	if issues != nil && issues.Err() != nil {
+		return "", fmt.Errorf("CEL compilation error: %w", issues.Err())
+	}
+
+	prg, err := env.Program(ast)
+	if err != nil {
+		return "", fmt.Errorf("failed to create CEL program: %w", err)
+	}
+
+	// Execute CEL Expression
+	out, _, err := prg.Eval(map[string]interface{}{
+		"report": parsedReport,
+	})
+	if err != nil {
+		return "", fmt.Errorf("CEL evaluation error: %w", err)
+	}
+
+	// Ensure output is a string
+	fingerprint, ok := out.Value().(string)
+	if !ok {
+		return "", fmt.Errorf("unexpected fingerprint type: %T", out.Value())
+	}
+
+	return fingerprint, nil
 }
 
 // isValidJSON checks if the provided byte slice is valid JSON

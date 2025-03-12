@@ -17,8 +17,13 @@ func ReportParser(scanCondition string, scanData *scans.GetScanResponse) (bool, 
 		return false, nil, fmt.Errorf("unsupported scanner: %s", scanData.Scanner)
 	}
 
-	reportMap, err := scannerInstance.ParseReport(scanData.Report)
+	jsonMap, err := scannerInstance.ParseReport(scanData.Report)
 	if err != nil {
+		return false, nil, err
+	}
+
+	// Validate that the CEL expression references valid JSON fields
+	if err := ValidateCELExpression(scanCondition, jsonMap); err != nil {
 		return false, nil, err
 	}
 
@@ -46,7 +51,7 @@ func ReportParser(scanCondition string, scanData *scans.GetScanResponse) (bool, 
 
 	// Evaluate the condition
 	out, _, err := prg.Eval(map[string]interface{}{
-		"report": reportMap,
+		"report": jsonMap,
 	})
 	if err != nil {
 		return false, nil, fmt.Errorf("failed to evaluate CEL expression: %w", err)

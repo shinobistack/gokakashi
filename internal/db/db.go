@@ -177,7 +177,7 @@ func PopulateDatabase(client *ent.Client, cfg *v1.Config) {
 						continue
 					}
 					scanCreate.SetNotify([]schema.Notify{
-						{To: notifyIntegration.String(), When: notify.When, Format: notify.Format},
+						{To: notifyIntegration.String(), When: notify.When, Format: notify.Format, Fingerprint: notify.Fingerprint},
 					})
 				}
 
