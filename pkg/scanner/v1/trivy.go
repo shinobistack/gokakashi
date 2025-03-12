@@ -1,6 +1,9 @@
 package scanner
 
 import (
+	"bytes"
+	"crypto/sha256"
+	"encoding/hex"
 	"encoding/json"
 	"fmt"
 	"github.com/google/cel-go/cel"
@@ -153,6 +156,82 @@ func (t *TrivyScanner) GenerateFingerprint(image string, reportData []byte, celE
 	}
 
 	return fingerprint, nil
+}
+
+func (t *TrivyScanner) FormatVulnerabilityReport(image string, vulnerabilities []Vulnerability) string {
+	var buffer bytes.Buffer
+
+	// Add image information
+	buffer.WriteString(fmt.Sprintf("Image: %s\n\n", image))
+
+	// Iterate over vulnerabilities and format them in the simplified format
+	for _, vuln := range vulnerabilities {
+		buffer.WriteString(fmt.Sprintf("Library: %s\n", vuln.PkgName))
+		buffer.WriteString(fmt.Sprintf("Vulnerability: %s\n", vuln.VulnerabilityID))
+		buffer.WriteString(fmt.Sprintf("Severity: %s\n", vuln.Severity))
+		buffer.WriteString(fmt.Sprintf("Status: %s\n", vuln.Status))
+		buffer.WriteString(fmt.Sprintf("Installed Version: %s\n", vuln.InstalledVersion))
+		buffer.WriteString(fmt.Sprintf("Fixed Version: %s\n", vuln.FixedVersion))
+		buffer.WriteString(fmt.Sprintf("Title: %s\n", vuln.Title))
+		if vuln.PrimaryURL != "" {
+			buffer.WriteString(fmt.Sprintf("More details: %s\n", vuln.PrimaryURL))
+		}
+		buffer.WriteString("\n") // Add a line break between vulnerabilities
+	}
+
+	return buffer.String()
+}
+
+func (t *TrivyScanner) FormatReportForNotify(scanReport json.RawMessage, severities []string, scanImage string) ([]Vulnerability, error) {
+	var report Report
+	err := json.Unmarshal(scanReport, &report)
+	if err != nil {
+		log.Printf("Error failed to parse scan report: %v", err)
+	}
+
+	// Load the vulnerabilities from scans.report
+	var vulnerabilities []Vulnerability
+	for _, result := range report.Results {
+		vulnerabilities = append(vulnerabilities, result.Vulnerabilities...)
+	}
+
+	filteredVulnerabilities := t.FilterVulnerabilitiesBySeverity(vulnerabilities, severities)
+
+	return filteredVulnerabilities, nil
+}
+
+func (t *TrivyScanner) FilterVulnerabilitiesBySeverity(vulnerabilities []Vulnerability, severityLevels []string) []Vulnerability {
+	var filtered []Vulnerability
+	for _, v := range vulnerabilities {
+		for _, level := range severityLevels {
+			if v.Severity == level {
+				filtered = append(filtered, v)
+			}
+		}
+	}
+	return filtered
+}
+
+func (t *TrivyScanner) ConvertVulnerabilities(filteredVulnerabilities []Vulnerability) []string {
+	var vulnerabilityEntries []string
+	for _, v := range filteredVulnerabilities {
+		data := VulnerabilityData{
+			VulnerabilityID:  v.VulnerabilityID,
+			Severity:         v.Severity,
+			InstalledVersion: v.InstalledVersion,
+			FixedVersion:     v.FixedVersion,
+		}
+		entry := fmt.Sprintf("%s_%s_%s_%s", data.VulnerabilityID, data.Severity, data.InstalledVersion, data.FixedVersion)
+		vulnerabilityEntries = append(vulnerabilityEntries, entry)
+	}
+	return vulnerabilityEntries
+}
+
+func (t *TrivyScanner) GenerateHash(image string, vulnerabilities []string) string {
+	data := fmt.Sprintf("%s_%s", image, strings.Join(vulnerabilities, "_"))
+	hash := sha256.New()
+	hash.Write([]byte(data))
+	return hex.EncodeToString(hash.Sum(nil))
 }
 
 // isValidJSON checks if the provided byte slice is valid JSON
