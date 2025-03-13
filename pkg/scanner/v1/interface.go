@@ -12,5 +12,6 @@ type Scanner interface {
 	FormatReportForNotify(scanReport json.RawMessage, severities []string, scanImage string) ([]Vulnerability, error)
 	FilterVulnerabilitiesBySeverity(vulnerabilities []Vulnerability, severityLevels []string) []Vulnerability
 	ConvertVulnerabilities(filteredVulnerabilities []Vulnerability) []string
-	GenerateHash(image string, vulnerabilities []string) string
+	GenerateDefaultHash(image string, vulnerabilities []string) string
+	GenerateFingerprintHash(vulnerabilities string) string
 }

@@ -5,6 +5,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"github.com/shinobistack/gokakashi/internal/restapi/v1/scannotify"
 	"github.com/shinobistack/gokakashi/pkg/scanner/v1"
 	"log"
 	"net/http"
@@ -101,29 +102,36 @@ func NotifyProcess(server string, port int, token string) {
 					if err != nil {
 						log.Printf("Notifier: Error updating scan status: %v", err)
 					}
-					return
+					continue
 				}
 
 				// Generate a hash and check/save
 				var hash string
 				if notify.Fingerprint != "" {
-					hash, err = scanner.GenerateFingerprint(scan.Image, scan.Report, notify.Fingerprint)
+					fingerprint, err := scanner.GenerateFingerprint(scan.Image, scan.Report, notify.Fingerprint)
 					if err != nil {
 						log.Printf("Notifier: Error generating fingerprint using CEL: %v", err)
 						continue
 					}
+					hash = scanner.GenerateFingerprintHash(fingerprint)
 				} else {
 					vulnerabilityEntries := scanner.ConvertVulnerabilities(filteredVulnerabilities)
-					hash = scanner.GenerateHash(scan.Image, vulnerabilityEntries)
+					hash = scanner.GenerateDefaultHash(scan.Image, vulnerabilityEntries)
 				}
 
-				saved, err := CheckAndSaveHash(server, port, token, scan.ID, hash)
+				occurrences, err := fetchHashCount(server, port, token, hash)
 				if err != nil {
-					log.Printf("Notifier: Error checking or saving hash: %v", err)
+					log.Printf("Error fetching occurances of hash: %v", err)
 					continue
 				}
 
-				if saved {
+				if occurrences == nil || occurrences.Count == 0 {
+					err := saveHash(server, port, token, scan.ID, hash)
+					if err != nil {
+						log.Printf("Notifier: Error saving hash: %v", err)
+						continue
+					}
+
 					var n notification.Notifier
 					switch notification.IntegrationType(integration.Type) {
 					case notification.Linear:
@@ -144,12 +152,18 @@ func NotifyProcess(server string, port int, token string) {
 						log.Printf("Notifier: Error sending notification: %v", err)
 					} else {
 						// Update scan status
-						log.Println("to do")
 						err = updateScanStatus(server, port, token, scan.ID, "success")
 						if err != nil {
 							log.Printf("Notifier: Error updating scan status: %v", err)
 						}
 					}
+				} else {
+					log.Printf("Notifier: Linear issue exists for image: %s. Updating status to success.", scan.Image)
+					err = updateScanStatus(server, port, token, scan.ID, "success")
+					if err != nil {
+						log.Printf("Notifier: Failed to update status for scanID: %s: %v", scan.ID, err)
+					}
+
 				}
 			}
 			if !matched {
@@ -218,7 +232,35 @@ func fetchIntegrationDetails(server string, port int, token string, integrationI
 	return &integration, nil
 }
 
-func CheckAndSaveHash(server string, port int, token string, scanID uuid.UUID, hash string) (bool, error) {
+func fetchHashCount(server string, port int, token string, hash string) (*scannotify.GetScanNotifyResponse, error) {
+	url := constructURL(server, port, "/api/v1/scannotify") + fmt.Sprintf("?hash=%s", hash)
+
+	req, err := http.NewRequest("GET", url, nil)
+	if err != nil {
+		return nil, fmt.Errorf("failed to fetch hash details: %w", err)
+	}
+	req.Header.Set("Authorization", "Bearer "+token)
+	req.Header.Set("Content-Type", "application/json")
+
+	resp, err := http.DefaultClient.Do(req)
+	if err != nil {
+		return nil, fmt.Errorf("failed to execute request for CheckAndSaveHash: %w", err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("server responded with status: %d", resp.StatusCode)
+	}
+
+	var notifications scannotify.GetScanNotifyResponse
+	if err := json.NewDecoder(resp.Body).Decode(&notifications); err != nil {
+		return nil, fmt.Errorf("failed to decode notifications response: %w", err)
+	}
+
+	return &notifications, nil
+}
+
+func saveHash(server string, port int, token string, scanID uuid.UUID, hash string) error {
 	// Construct the API URL
 	url := constructURL(server, port, "/api/v1/scannotify")
 
@@ -229,13 +271,13 @@ func CheckAndSaveHash(server string, port int, token string, scanID uuid.UUID, h
 	}
 	payloadJSON, err := json.Marshal(payload)
 	if err != nil {
-		return false, fmt.Errorf("failed to marshal hash payload: %w", err)
+		return fmt.Errorf("failed to marshal hash payload: %w", err)
 	}
 
 	// Create the API request
 	req, err := http.NewRequest("POST", url, bytes.NewBuffer(payloadJSON))
 	if err != nil {
-		return false, fmt.Errorf("failed to create request for CheckAndSaveHash: %w", err)
+		return fmt.Errorf("failed to create request for CheckAndSaveHash: %w", err)
 	}
 	req.Header.Set("Authorization", "Bearer "+token)
 	req.Header.Set("Content-Type", "application/json")
@@ -243,19 +285,15 @@ func CheckAndSaveHash(server string, port int, token string, scanID uuid.UUID, h
 	// Execute the request
 	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
-		return false, fmt.Errorf("failed to execute request for CheckAndSaveHash: %w", err)
+		return fmt.Errorf("failed to execute request for CheckAndSaveHash: %w", err)
 	}
 	defer resp.Body.Close()
 
-	// Handle the response
-	if resp.StatusCode == http.StatusConflict {
-		// Hash already exists
-		return false, nil
-	} else if resp.StatusCode == http.StatusCreated || resp.StatusCode == http.StatusOK {
+	if resp.StatusCode == http.StatusCreated || resp.StatusCode == http.StatusOK {
 		// Hash successfully saved
-		return true, nil
+		return nil
 	} else {
-		return false, fmt.Errorf("unexpected server response: %d", resp.StatusCode)
+		return fmt.Errorf("unexpected server response: %d", resp.StatusCode)
 	}
 }
 
