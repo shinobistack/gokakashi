@@ -102,7 +102,7 @@ func NotifyProcess(server string, port int, token string) {
 					if err != nil {
 						log.Printf("Notifier: Error updating scan status: %v", err)
 					}
-					return
+					continue
 				}
 
 				// Generate a hash and check/save
