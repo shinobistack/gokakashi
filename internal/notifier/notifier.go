@@ -152,7 +152,6 @@ func NotifyProcess(server string, port int, token string) {
 						log.Printf("Notifier: Error sending notification: %v", err)
 					} else {
 						// Update scan status
-						log.Println("to do")
 						err = updateScanStatus(server, port, token, scan.ID, "success")
 						if err != nil {
 							log.Printf("Notifier: Error updating scan status: %v", err)
