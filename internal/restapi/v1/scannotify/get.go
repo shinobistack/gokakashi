@@ -67,7 +67,11 @@ func GetScanNotify(client *ent.Client) func(ctx context.Context, req GetScanNoti
 			}
 
 			if len(notifications) == 0 {
-				return status.Wrap(errors.New("no notifications found for the given hash"), status.NotFound)
+				*res = GetScanNotifyResponse{
+					Count: 0,
+					Data:  []GetScanNotifyItem{},
+				}
+				return nil
 			}
 
 			for _, notification := range notifications {
