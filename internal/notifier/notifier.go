@@ -290,11 +290,7 @@ func CheckAndSaveHash(server string, port int, token string, scanID uuid.UUID, h
 	}
 	defer resp.Body.Close()
 
-	// Handle the response
-	if resp.StatusCode == http.StatusConflict {
-		// Hash already exists
-		return false, nil
-	} else if resp.StatusCode == http.StatusCreated || resp.StatusCode == http.StatusOK {
+	if resp.StatusCode == http.StatusCreated || resp.StatusCode == http.StatusOK {
 		// Hash successfully saved
 		return true, nil
 	} else {
