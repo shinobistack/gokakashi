@@ -5,6 +5,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"github.com/shinobistack/gokakashi/internal/restapi/v1/scannotify"
 	"github.com/shinobistack/gokakashi/pkg/scanner/v1"
 	"log"
 	"net/http"
@@ -118,13 +119,19 @@ func NotifyProcess(server string, port int, token string) {
 					hash = scanner.GenerateDefaultHash(scan.Image, vulnerabilityEntries)
 				}
 
-				saved, err := CheckAndSaveHash(server, port, token, scan.ID, hash)
+				occurrences, err := fetchHashCount(server, port, token, hash)
 				if err != nil {
-					log.Printf("Notifier: Error checking or saving hash: %v", err)
+					log.Printf("Error fetching occurances of hash: %v", err)
 					continue
 				}
 
-				if saved {
+				//saved, err := CheckAndSaveHash(server, port, token, scan.ID, hash)
+				//if err != nil {
+				//	log.Printf("Notifier: Error checking or saving hash: %v", err)
+				//	continue
+				//}
+
+				if occurrences.Count == 0 {
 					var n notification.Notifier
 					switch notification.IntegrationType(integration.Type) {
 					case notification.Linear:
@@ -151,6 +158,13 @@ func NotifyProcess(server string, port int, token string) {
 							log.Printf("Notifier: Error updating scan status: %v", err)
 						}
 					}
+				} else {
+					log.Printf("Notifier: Linear issue exists for image: %s. Updating status to success.", scan.Image)
+					err = updateScanStatus(server, port, token, scan.ID, "success")
+					if err != nil {
+						log.Printf("Notifier: Failed to update status for scanID: %s: %v", scan.ID, err)
+					}
+
 				}
 			}
 			if !matched {
@@ -217,6 +231,34 @@ func fetchIntegrationDetails(server string, port int, token string, integrationI
 	}
 
 	return &integration, nil
+}
+
+func fetchHashCount(server string, port int, token string, hash string) (*scannotify.GetScanNotifyResponse, error) {
+	url := constructURL(server, port, "/api/v1/scannotify") + fmt.Sprintf("?hash=%s", hash)
+
+	req, err := http.NewRequest("GET", url, nil)
+	if err != nil {
+		return nil, fmt.Errorf("failed to fetch hash details: %w", err)
+	}
+	req.Header.Set("Authorization", "Bearer "+token)
+	req.Header.Set("Content-Type", "application/json")
+
+	resp, err := http.DefaultClient.Do(req)
+	if err != nil {
+		return nil, fmt.Errorf("failed to execute request for CheckAndSaveHash: %w", err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("server responded with status: %d", resp.StatusCode)
+	}
+
+	var notifications scannotify.GetScanNotifyResponse
+	if err := json.NewDecoder(resp.Body).Decode(&notifications); err != nil {
+		return nil, fmt.Errorf("failed to decode notifications response: %w", err)
+	}
+
+	return &notifications, nil
 }
 
 func CheckAndSaveHash(server string, port int, token string, scanID uuid.UUID, hash string) (bool, error) {
