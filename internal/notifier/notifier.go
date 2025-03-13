@@ -125,13 +125,13 @@ func NotifyProcess(server string, port int, token string) {
 					continue
 				}
 
-				//saved, err := CheckAndSaveHash(server, port, token, scan.ID, hash)
-				//if err != nil {
-				//	log.Printf("Notifier: Error checking or saving hash: %v", err)
-				//	continue
-				//}
-
 				if occurrences.Count == 0 {
+					err := saveHash(server, port, token, scan.ID, hash)
+					if err != nil {
+						log.Printf("Notifier: Error saving hash: %v", err)
+						continue
+					}
+
 					var n notification.Notifier
 					switch notification.IntegrationType(integration.Type) {
 					case notification.Linear:
@@ -261,7 +261,7 @@ func fetchHashCount(server string, port int, token string, hash string) (*scanno
 	return &notifications, nil
 }
 
-func CheckAndSaveHash(server string, port int, token string, scanID uuid.UUID, hash string) (bool, error) {
+func saveHash(server string, port int, token string, scanID uuid.UUID, hash string) error {
 	// Construct the API URL
 	url := constructURL(server, port, "/api/v1/scannotify")
 
@@ -272,13 +272,13 @@ func CheckAndSaveHash(server string, port int, token string, scanID uuid.UUID, h
 	}
 	payloadJSON, err := json.Marshal(payload)
 	if err != nil {
-		return false, fmt.Errorf("failed to marshal hash payload: %w", err)
+		return fmt.Errorf("failed to marshal hash payload: %w", err)
 	}
 
 	// Create the API request
 	req, err := http.NewRequest("POST", url, bytes.NewBuffer(payloadJSON))
 	if err != nil {
-		return false, fmt.Errorf("failed to create request for CheckAndSaveHash: %w", err)
+		return fmt.Errorf("failed to create request for CheckAndSaveHash: %w", err)
 	}
 	req.Header.Set("Authorization", "Bearer "+token)
 	req.Header.Set("Content-Type", "application/json")
@@ -286,15 +286,15 @@ func CheckAndSaveHash(server string, port int, token string, scanID uuid.UUID, h
 	// Execute the request
 	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
-		return false, fmt.Errorf("failed to execute request for CheckAndSaveHash: %w", err)
+		return fmt.Errorf("failed to execute request for CheckAndSaveHash: %w", err)
 	}
 	defer resp.Body.Close()
 
 	if resp.StatusCode == http.StatusCreated || resp.StatusCode == http.StatusOK {
 		// Hash successfully saved
-		return true, nil
+		return nil
 	} else {
-		return false, fmt.Errorf("unexpected server response: %d", resp.StatusCode)
+		return fmt.Errorf("unexpected server response: %d", resp.StatusCode)
 	}
 }
 
