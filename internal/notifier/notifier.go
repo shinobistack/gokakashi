@@ -125,7 +125,7 @@ func NotifyProcess(server string, port int, token string) {
 					continue
 				}
 
-				if occurrences.Count == 0 {
+				if occurrences == nil || occurrences.Count == 0 {
 					err := saveHash(server, port, token, scan.ID, hash)
 					if err != nil {
 						log.Printf("Notifier: Error saving hash: %v", err)
