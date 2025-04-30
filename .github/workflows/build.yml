@@ -57,7 +57,7 @@ jobs:
       - name: Generate artifact attestation for server
         uses: actions/attest-build-provenance@v1
         with:
-          subject-name: ${{ env.REGISTRY }}/${{ env.REPO }}:server
+          subject-name: ${{ env.REGISTRY }}/${{ env.REPO }}
           subject-digest: ${{ steps.push.outputs.digest }}
           push-to-registry: true
 
@@ -107,6 +107,6 @@ jobs:
       - name: Generate artifact attestation for notifier
         uses: actions/attest-build-provenance@v1
         with:
-          subject-name: ${{ env.REGISTRY }}/${{ env.REPO }}:notifier
+          subject-name: ${{ env.REGISTRY }}/${{ env.REPO }}
           subject-digest: ${{ steps.push.outputs.digest }}
           push-to-registry: true
