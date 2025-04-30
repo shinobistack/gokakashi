@@ -11,7 +11,7 @@ env:
   REPO: ${{ github.repository }}
 
 jobs:
-  build-server:
+  server:
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -34,7 +34,16 @@ jobs:
         id: meta
         uses: docker/metadata-action@9ec57ed1fcdbf14dcef7dfbe97b2010124a938b7
         with:
-          images: ${{ env.REGISTRY }}/${{ env.REPO }}:server
+          images: ${{ env.REGISTRY }}/${{ env.REPO }}
+          tags: |
+            type=ref,event=branch,component=notifier
+            type=ref,event=pr,component=notifier
+            type=sha,component=notifier
+          labels: |
+            org.opencontainers.image.source=${{ github.repository }}
+            org.opencontainers.image.revision=${{ github.sha }}
+            org.opencontainers.image.version=${{ github.ref_name }}
+            org.opencontainers.image.component=notifier
 
       - name: Build and push Server Docker image
         id: push
@@ -52,7 +61,7 @@ jobs:
           subject-digest: ${{ steps.push.outputs.digest }}
           push-to-registry: true
 
-  build-notifier:
+  notifier:
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -75,7 +84,16 @@ jobs:
         id: meta
         uses: docker/metadata-action@9ec57ed1fcdbf14dcef7dfbe97b2010124a938b7
         with:
-          images: ${{ env.REGISTRY }}/${{ env.REPO }}:notifier
+          images: ${{ env.REGISTRY }}/${{ env.REPO }}
+          tags: |
+            type=ref,event=branch,component=notifier
+            type=ref,event=pr,component=notifier
+            type=sha,component=notifier
+          labels: |
+            org.opencontainers.image.source=${{ github.repository }}
+            org.opencontainers.image.revision=${{ github.sha }}
+            org.opencontainers.image.version=${{ github.ref_name }}
+            org.opencontainers.image.component=notifier
 
       - name: Build and push Notifier Docker image
         id: push
