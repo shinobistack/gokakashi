@@ -10,7 +10,6 @@ import (
 
 	"github.com/shinobistack/gokakashi/internal/assigner"
 	"github.com/shinobistack/gokakashi/internal/db"
-	"github.com/shinobistack/gokakashi/internal/notifier"
 
 	configv1 "github.com/shinobistack/gokakashi/internal/config/v1"
 	restapiv1 "github.com/shinobistack/gokakashi/internal/restapi/v1"
@@ -56,7 +55,6 @@ func runServer(cmd *cobra.Command, args []string) {
 	go initDatabase(cfg)
 	go startAPIServer(cfg)
 	go assigner.Start(cfg.Site.Host, cfg.Site.Port, cfg.Site.APIToken, 1*time.Minute)
-	go notifier.Start(cfg.Site.Host, cfg.Site.Port, cfg.Site.APIToken, 1*time.Minute)
 	log.Println(cfg)
 
 	<-done

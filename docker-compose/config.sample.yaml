@@ -1,0 +1,18 @@
+site:
+  api_token: "ADD_YOUR_TOKEN_HERE"
+  host: "localhost"
+  port: 5556
+
+database:
+  host: "db"
+  port: 5432
+  user: "postgres"
+  password: "CHANGE_THIS_PASSWORD"
+  name: "gokakashi"
+
+integrations:
+  - name: "GitHub"
+    type: "github"
+    config:
+      url: "https://api.github.com"
+      token: "${GITHUB_TOKEN}"

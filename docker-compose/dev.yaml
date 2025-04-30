@@ -37,6 +37,21 @@ services:
       db:
         condition: service_healthy
 
+  gokakashi-notifier:
+    build:
+      context: ../
+      dockerfile: cmd/notifier/Dockerfile
+    container_name: gokakashi-notifier
+    networks:
+      - gokakashi-network
+    environment:
+      - SERVER=http://gokakashi-server
+      - PORT=5556
+      - TOKEN=${GOKAKASHI_API_TOKEN}
+    depends_on:
+      gokakashi-server:
+        condition: service_started
+
 networks:
   gokakashi-network:
 
