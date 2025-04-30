@@ -36,10 +36,9 @@ jobs:
         with:
           images: ${{ env.REGISTRY }}/${{ env.REPO }}
           tags: |
-            type=ref,event=branch
-            type=ref,event=pr
-            type=sha
-            type=component,value=server
+            type=ref,event=branch,prefix=server-
+            type=ref,event=pr,prefix=server-
+            type=sha,prefix=server-
           labels: |
             org.opencontainers.image.source=${{ github.repository }}
             org.opencontainers.image.revision=${{ github.sha }}
@@ -87,10 +86,9 @@ jobs:
         with:
           images: ${{ env.REGISTRY }}/${{ env.REPO }}
           tags: |
-            type=ref,event=branch
-            type=ref,event=pr
-            type=sha
-            type=component,value=notifier
+            type=ref,event=branch,prefix=notifier-
+            type=ref,event=pr,prefix=notifier-
+            type=sha,prefix=notifier-
           labels: |
             org.opencontainers.image.source=${{ github.repository }}
             org.opencontainers.image.revision=${{ github.sha }}
