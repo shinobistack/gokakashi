@@ -5,19 +5,21 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/shinobistack/gokakashi/internal/restapi/v1/scannotify"
-	"github.com/shinobistack/gokakashi/pkg/scanner/v1"
 	"log"
 	"net/http"
 	"net/url"
 	"strings"
 	"time"
 
+	"github.com/shinobistack/gokakashi/internal/parser"
+	"github.com/shinobistack/gokakashi/internal/restapi/v1/scannotify"
+	"github.com/shinobistack/gokakashi/pkg/scanner/v1"
+
 	"github.com/google/uuid"
 	"github.com/shinobistack/gokakashi/internal/integration/notification"
-	"github.com/shinobistack/gokakashi/internal/parser"
 	"github.com/shinobistack/gokakashi/internal/restapi/v1/integrations"
 	"github.com/shinobistack/gokakashi/internal/restapi/v1/scans"
+	"golang.org/x/sync/singleflight"
 )
 
 func normalizeServer(server string) string {
@@ -40,26 +42,33 @@ func constructURL(server string, port int, path string) string {
 	return u.String()
 }
 
+var notifyGroup = &singleflight.Group{}
+
 func Start(server string, port int, token string, interval time.Duration) {
 	log.Println("Starting the periodic notify execution...")
 	ticker := time.NewTicker(interval)
 	defer ticker.Stop()
 
 	for range ticker.C {
-		NotifyProcess(server, port, token)
+		_, err, _ := notifyGroup.Do("notify", func() (interface{}, error) {
+			return nil, NotifyProcess(server, port, token)
+		})
+		if err != nil {
+			log.Printf("Error in notification process: %v", err)
+		}
 	}
-
 }
 
-func NotifyProcess(server string, port int, token string) {
+func NotifyProcess(server string, port int, token string) error {
 	scans, err := fetchPendingScans(server, port, token, "notify_pending")
 	if err != nil {
 		log.Printf("Notifier: Error fetching pending notify: %v", err)
+		return err
 	}
 
 	if len(scans) == 0 {
 		log.Println("Notifier: No pending notify to execute.")
-		return
+		return nil
 	}
 
 	for _, scan := range scans {
@@ -176,6 +185,7 @@ func NotifyProcess(server string, port int, token string) {
 			}
 		}
 	}
+	return nil
 }
 
 func fetchPendingScans(server string, port int, token, status string) ([]scans.GetScanResponse, error) {
