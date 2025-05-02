@@ -6,9 +6,7 @@ import (
 	"os"
 	"os/signal"
 	"syscall"
-	"time"
 
-	"github.com/shinobistack/gokakashi/internal/assigner"
 	"github.com/shinobistack/gokakashi/internal/db"
 
 	configv1 "github.com/shinobistack/gokakashi/internal/config/v1"
@@ -54,7 +52,6 @@ func runServer(cmd *cobra.Command, args []string) {
 	log.Println("==== Starting gokakashi ====")
 	go initDatabase(cfg)
 	go startAPIServer(cfg)
-	go assigner.Start(cfg.Site.Host, cfg.Site.Port, cfg.Site.APIToken, 1*time.Minute)
 	log.Println(cfg)
 
 	<-done
