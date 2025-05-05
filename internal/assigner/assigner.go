@@ -4,12 +4,13 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"github.com/shinobistack/gokakashi/ent/schema"
 	"log"
 	"net/http"
 	"net/url"
 	"strings"
 	"time"
+
+	"github.com/shinobistack/gokakashi/ent/schema"
 
 	"github.com/google/uuid"
 	"github.com/shinobistack/gokakashi/internal/restapi/v1/agents"
@@ -43,7 +44,6 @@ func Start(server string, port int, token string, interval time.Duration) {
 	log.Println("Starting the periodic task assigner...")
 	ticker := time.NewTicker(interval)
 	defer ticker.Stop()
-	// Todo: Maybe we can do batch processing
 	for range ticker.C {
 		AssignTasks(server, port, token)
 	}
@@ -60,11 +60,11 @@ func AssignTasks(server string, port int, token string) {
 		log.Printf("Assigner: Error fetching pending scans: %v", err)
 		return
 	}
-
 	if len(pendingScans) == 0 {
 		log.Println("No pending scans to assign.")
 		return
 	}
+	log.Println("Assigner: Found", len(pendingScans), "pending scans")
 
 	// Step 2: Fetch available agents
 	availableAgents, err := fetchAvailableAgents(server, port, token, "scan_in_progress")
@@ -72,14 +72,20 @@ func AssignTasks(server string, port int, token string) {
 		log.Printf("Assigner: Error fetching available agents: %v", err)
 		return
 	}
-
 	if len(availableAgents) == 0 {
 		log.Println("No agents available for assignment.")
 		log.Printf("Assigner: Unassignable scans: %d scans pending without agents.", len(pendingScans))
 		return
 	}
+	log.Println("Assigner: Found", len(availableAgents), "available agents")
 
-	// log.Printf("Agents are available: %v", availableAgents)
+	for _, scan := range pendingScans {
+		log.Println("scan labels for ", scan.ID, " are ", scan.Labels)
+	}
+
+	for _, agent := range availableAgents {
+		log.Println("scan labels for ", agent.ID, " are ", agent.Labels)
+	}
 
 	// Step 3: Assign scans to agents
 	// ToDo: to explore task assignment for better efficiency
@@ -101,7 +107,6 @@ func AssignTasks(server string, port int, token string) {
 				continue
 			}
 			log.Printf("Assigner: No matching labels for scan %s. Assigning to label-less agents.", scan.ID)
-			//
 		}
 
 		// Step 3c: If scan has no labels, do not assign it to labeled agents
