@@ -57,6 +57,7 @@ func (srv *Server) Service() *web.Service {
 
 	bearerAuth := &middleware.BearerTokenAuth{AuthToken: srv.AuthToken}
 	apiV1.Wrap(bearerAuth.Middleware)
+	apiV1.Wrap(middleware.NewRequestLogger().Middleware)
 
 	// Define API endpoints
 	apiV1.Get("/integrations", usecase.NewInteractor(integrations1.ListIntegrations(srv.DB)))

@@ -4,20 +4,23 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
-	"github.com/shinobistack/gokakashi/internal/restapi/v1/scannotify"
-	"github.com/shinobistack/gokakashi/pkg/scanner/v1"
 	"log"
 	"net/http"
 	"net/url"
 	"strings"
 	"time"
 
+	"github.com/shinobistack/gokakashi/internal/parser"
+	"github.com/shinobistack/gokakashi/internal/restapi/v1/scannotify"
+	"github.com/shinobistack/gokakashi/pkg/scanner/v1"
+
 	"github.com/google/uuid"
 	"github.com/shinobistack/gokakashi/internal/integration/notification"
-	"github.com/shinobistack/gokakashi/internal/parser"
 	"github.com/shinobistack/gokakashi/internal/restapi/v1/integrations"
 	"github.com/shinobistack/gokakashi/internal/restapi/v1/scans"
+	"golang.org/x/sync/singleflight"
 )
 
 func normalizeServer(server string) string {
@@ -40,142 +43,152 @@ func constructURL(server string, port int, path string) string {
 	return u.String()
 }
 
+var notifyGroup = &singleflight.Group{}
+
 func Start(server string, port int, token string, interval time.Duration) {
 	log.Println("Starting the periodic notify execution...")
 	ticker := time.NewTicker(interval)
 	defer ticker.Stop()
 
 	for range ticker.C {
-		NotifyProcess(server, port, token)
+		_, err, _ := notifyGroup.Do("notify", func() (interface{}, error) {
+			return nil, NotifyProcess(server, port, token)
+		})
+		if err != nil {
+			log.Printf("Error in notification process: %v", err)
+		}
 	}
-
 }
 
-func NotifyProcess(server string, port int, token string) {
+func NotifyProcess(server string, port int, token string) error {
 	scans, err := fetchPendingScans(server, port, token, "notify_pending")
 	if err != nil {
 		log.Printf("Notifier: Error fetching pending notify: %v", err)
+		return err
 	}
 
 	if len(scans) == 0 {
 		log.Println("Notifier: No pending notify to execute.")
-		return
+		return nil
 	}
 
+	log.Println("Notifier: Found", len(scans), "scans to notify.")
 	for _, scan := range scans {
-		for _, notify := range *scan.Notify {
-			scanner, err := scanner.NewScanner(scan.Scanner)
+		log.Println("Notifier: Processing scan ID:", scan.ID)
+		status, err := processScan(server, port, token, scan)
+		if err != nil {
+			log.Printf("Notifier: Error processing scan ID: %s, %v", scan.ID, err)
+		}
+		err = updateScanStatus(server, port, token, scan.ID, status)
+		if err != nil {
+			log.Printf("Notifier: Failed to update status for scanID: %s: %v", scan.ID, err)
+		}
+		log.Println("Notifier: Updated status for scanID:", scan.ID, "to", status)
+	}
+	log.Println("Notifier: Processed", len(scans), "scans.")
+
+	return nil
+}
+
+func processScan(server string, port int, token string, scan scans.GetScanResponse) (string, error) {
+	for _, notify := range *scan.Notify {
+		scanner, err := scanner.NewScanner(scan.Scanner)
+		if err != nil {
+			log.Printf("Notifier: Unsupported scanner tool: %s", scan.Scanner)
+			return "error", err
+		}
+
+		// Evaluate the 'when' condition using ReportParser
+		matched, severities, err := parser.ReportParser(notify.When, &scan)
+		if err != nil {
+			log.Printf("Error evaluating notify.when:%v, %v", notify.When, err)
+			return "error", err
+		}
+
+		if matched {
+			// Fetch integration details
+			// Todo: To define separate schema for scans table to take notify.to as UUID and update all dependent APIs
+			parsedNotifyToUUID, err := uuid.Parse(notify.To)
 			if err != nil {
-				log.Printf("Notifier: Unsupported scanner tool: %s", scan.Scanner)
-				continue
+				log.Printf("Notifier: invalid UUID string: %v", err)
+				return "error", err
 			}
-			// Evaluate the 'when' condition using ReportParser
-			matched, severities, err := parser.ReportParser(notify.When, &scan)
+
+			integration, err := fetchIntegrationDetails(server, port, token, parsedNotifyToUUID)
 			if err != nil {
-				log.Printf("Error evaluating notify.when:%v, %v", notify.When, err)
-				continue
+				log.Printf("Error fetching integration details: %v", err)
+				return "error", err
 			}
 
-			if matched {
-				// Fetch integration details
-				// Todo: To define separate schema for scans table to take notify.to as UUID and update all dependent APIs
-				parsedNotifyToUUID, err := uuid.Parse(notify.To)
-				if err != nil {
-					log.Printf("Notifier: invalid UUID string: %v", err)
-				}
-
-				integration, err := fetchIntegrationDetails(server, port, token, parsedNotifyToUUID)
-				if err != nil {
-					log.Printf("Error fetching integration details: %v", err)
-					continue
-				}
-
-				filteredVulnerabilities, err := scanner.FormatReportForNotify(scan.Report, severities, scan.Image)
-				if err != nil {
-					log.Printf("Notifier: Error formatting report for notify: %v", err)
-					continue
-				}
-
-				if len(filteredVulnerabilities) == 0 {
-					log.Printf("Notifier: no vulnerabilities found for scanID: %s and image: %s. Skipping creation of issues", scan.ID, scan.Image)
-					err = updateScanStatus(server, port, token, scan.ID, "success")
-					if err != nil {
-						log.Printf("Notifier: Error updating scan status: %v", err)
-					}
-					continue
-				}
-
-				// Generate a hash and check/save
-				var hash string
-				if notify.Fingerprint != "" {
-					fingerprint, err := scanner.GenerateFingerprint(scan.Image, scan.Report, notify.Fingerprint)
-					if err != nil {
-						log.Printf("Notifier: Error generating fingerprint using CEL: %v", err)
-						continue
-					}
-					hash = scanner.GenerateFingerprintHash(fingerprint)
-				} else {
-					vulnerabilityEntries := scanner.ConvertVulnerabilities(filteredVulnerabilities)
-					hash = scanner.GenerateDefaultHash(scan.Image, vulnerabilityEntries)
-				}
-
-				occurrences, err := fetchHashCount(server, port, token, hash)
-				if err != nil {
-					log.Printf("Error fetching occurances of hash: %v", err)
-					continue
-				}
-
-				if occurrences == nil || occurrences.Count == 0 {
-					err := saveHash(server, port, token, scan.ID, hash)
-					if err != nil {
-						log.Printf("Notifier: Error saving hash: %v", err)
-						continue
-					}
-
-					var n notification.Notifier
-					switch notification.IntegrationType(integration.Type) {
-					case notification.Linear:
-						linearIssue, err := constructLinearIssue(integration.Config)
-						if err != nil {
-							log.Printf("Notifier: Error constructing linear issue: %v", err)
-							continue
-						}
-						linearIssue.Title = fmt.Sprintf("%s - %s", scan.Image, linearIssue.Title)
-						linearIssue.Description = scanner.FormatVulnerabilityReport(scan.Image, filteredVulnerabilities)
-						n = linearIssue
-					default:
-						log.Printf("Notifier: Error creating notifier: unknown notifier %s", integration.Type)
-						continue
-					}
-					err = n.Notify(context.TODO())
-					if err != nil {
-						log.Printf("Notifier: Error sending notification: %v", err)
-					} else {
-						// Update scan status
-						err = updateScanStatus(server, port, token, scan.ID, "success")
-						if err != nil {
-							log.Printf("Notifier: Error updating scan status: %v", err)
-						}
-					}
-				} else {
-					log.Printf("Notifier: Linear issue exists for image: %s. Updating status to success.", scan.Image)
-					err = updateScanStatus(server, port, token, scan.ID, "success")
-					if err != nil {
-						log.Printf("Notifier: Failed to update status for scanID: %s: %v", scan.ID, err)
-					}
-
-				}
+			filteredVulnerabilities, err := scanner.FormatReportForNotify(scan.Report, severities, scan.Image)
+			if err != nil {
+				log.Printf("Notifier: Error formatting report for notify: %v", err)
+				return "error", err
 			}
-			if !matched {
-				log.Printf("Notifier: Condition not matched for scanID: %s and image: %s. Updating status to success.", scan.ID, scan.Image)
-				err = updateScanStatus(server, port, token, scan.ID, "success")
+
+			if len(filteredVulnerabilities) == 0 {
+				log.Printf("Notifier: no vulnerabilities found for scanID: %s and image: %s. Skipping creation of issues", scan.ID, scan.Image)
+				return "success", nil
+			}
+
+			// Generate a hash and check/save
+			var hash string
+			if notify.Fingerprint != "" {
+				fingerprint, err := scanner.GenerateFingerprint(scan.Image, scan.Report, notify.Fingerprint)
 				if err != nil {
-					log.Printf("Notifier: Failed to update status for scanID: %s: %v", scan.ID, err)
+					log.Printf("Notifier: Error generating fingerprint using CEL: %v", err)
+					return "error", err
 				}
-				continue
+				hash = scanner.GenerateFingerprintHash(fingerprint)
+			} else {
+				vulnerabilityEntries := scanner.ConvertVulnerabilities(filteredVulnerabilities)
+				hash = scanner.GenerateDefaultHash(scan.Image, vulnerabilityEntries)
+			}
+
+			occurrences, err := fetchHashCount(server, port, token, hash)
+			if err != nil {
+				log.Printf("Error fetching occurances of hash: %v", err)
+				return "error", err
+			}
+
+			if occurrences == nil || occurrences.Count == 0 {
+				err := saveHash(server, port, token, scan.ID, hash)
+				if err != nil {
+					log.Printf("Notifier: Error saving hash: %v", err)
+					return "error", err
+				}
+
+				var n notification.Notifier
+				switch notification.IntegrationType(integration.Type) {
+				case notification.Linear:
+					linearIssue, err := constructLinearIssue(integration.Config)
+					if err != nil {
+						return "error", errors.New("error constructing linear issue")
+					}
+					linearIssue.Title = fmt.Sprintf("%s - %s", scan.Image, linearIssue.Title)
+					linearIssue.Description = scanner.FormatVulnerabilityReport(scan.Image, filteredVulnerabilities)
+					n = linearIssue
+				default:
+					return "error", fmt.Errorf("unknown notifer: %s", integration.Type)
+				}
+				err = n.Notify(context.TODO())
+				if err != nil {
+					log.Printf("Notifier: Error sending notification: %v", err)
+				} else {
+					return "success", nil
+				}
+			} else {
+				log.Printf("Notifier: Linear issue exists for image: %s", scan.Image)
+				return "success", nil
 			}
 		}
+		if !matched {
+			log.Printf("Notifier: Condition not matched for scanID: %s and image: %s", scan.ID, scan.Image)
+			return "success", nil
+		}
 	}
+
+	return "error", nil
 }
 
 func fetchPendingScans(server string, port int, token, status string) ([]scans.GetScanResponse, error) {
