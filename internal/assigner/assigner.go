@@ -98,6 +98,7 @@ func AssignTasks(server string, port int, token string) {
 
 		// Step 3a: Filter agents by matching labels
 		matchingAgents := filterAgentsByLabels(availableAgents, scan.Labels)
+		fmt.Println("matchingAgents for scan", scan.ID, " are ", matchingAgents)
 
 		// Step 3b: If no exact matches, assign only to label-less agents
 		if len(matchingAgents) == 0 && len(scan.Labels) > 0 {
