@@ -63,29 +63,29 @@ func Start(server string, port int, token string, interval time.Duration) {
 func NotifyProcess(server string, port int, token string) error {
 	scans, err := fetchPendingScans(server, port, token, "notify_pending")
 	if err != nil {
-		log.Printf("Notifier: Error fetching pending notify: %v", err)
+		log.Printf("Error fetching pending notify: %v", err)
 		return err
 	}
 
 	if len(scans) == 0 {
-		log.Println("Notifier: No pending notify to execute.")
+		log.Println("No pending notify to execute.")
 		return nil
 	}
 
-	log.Println("Notifier: Found", len(scans), "scans to notify.")
+	log.Println("Found", len(scans), "scans to notify.")
 	for _, scan := range scans {
-		log.Println("Notifier: Processing scan ID:", scan.ID)
+		log.Println("Processing scan ID:", scan.ID)
 		status, err := processScan(server, port, token, scan)
 		if err != nil {
-			log.Printf("Notifier: Error processing scan ID: %s, %v", scan.ID, err)
+			log.Printf("Error processing scan ID: %s, %v", scan.ID, err)
 		}
 		err = updateScanStatus(server, port, token, scan.ID, status)
 		if err != nil {
-			log.Printf("Notifier: Failed to update status for scanID: %s: %v", scan.ID, err)
+			log.Printf("Failed to update status for scanID: %s: %v", scan.ID, err)
 		}
-		log.Println("Notifier: Updated status for scanID:", scan.ID, "to", status)
+		log.Println("Updated status for scanID:", scan.ID, "to", status)
 	}
-	log.Println("Notifier: Processed", len(scans), "scans.")
+	log.Println("Processed", len(scans), "scans.")
 
 	return nil
 }
@@ -94,7 +94,7 @@ func processScan(server string, port int, token string, scan scans.GetScanRespon
 	for _, notify := range *scan.Notify {
 		scanner, err := scanner.NewScanner(scan.Scanner)
 		if err != nil {
-			log.Printf("Notifier: Unsupported scanner tool: %s", scan.Scanner)
+			log.Printf("Unsupported scanner tool: %s", scan.Scanner)
 			return "error", err
 		}
 
@@ -110,7 +110,7 @@ func processScan(server string, port int, token string, scan scans.GetScanRespon
 			// Todo: To define separate schema for scans table to take notify.to as UUID and update all dependent APIs
 			parsedNotifyToUUID, err := uuid.Parse(notify.To)
 			if err != nil {
-				log.Printf("Notifier: invalid UUID string: %v", err)
+				log.Printf("invalid UUID string: %v", err)
 				return "error", err
 			}
 
@@ -122,12 +122,12 @@ func processScan(server string, port int, token string, scan scans.GetScanRespon
 
 			filteredVulnerabilities, err := scanner.FormatReportForNotify(scan.Report, severities, scan.Image)
 			if err != nil {
-				log.Printf("Notifier: Error formatting report for notify: %v", err)
+				log.Printf("Error formatting report for notify: %v", err)
 				return "error", err
 			}
 
 			if len(filteredVulnerabilities) == 0 {
-				log.Printf("Notifier: no vulnerabilities found for scanID: %s and image: %s. Skipping creation of issues", scan.ID, scan.Image)
+				log.Printf("no vulnerabilities found for scanID: %s and image: %s. Skipping creation of issues", scan.ID, scan.Image)
 				return "success", nil
 			}
 
@@ -136,7 +136,7 @@ func processScan(server string, port int, token string, scan scans.GetScanRespon
 			if notify.Fingerprint != "" {
 				fingerprint, err := scanner.GenerateFingerprint(scan.Image, scan.Report, notify.Fingerprint)
 				if err != nil {
-					log.Printf("Notifier: Error generating fingerprint using CEL: %v", err)
+					log.Printf("Error generating fingerprint using CEL: %v", err)
 					return "error", err
 				}
 				hash = scanner.GenerateFingerprintHash(fingerprint)
@@ -154,7 +154,7 @@ func processScan(server string, port int, token string, scan scans.GetScanRespon
 			if occurrences == nil || occurrences.Count == 0 {
 				err := saveHash(server, port, token, scan.ID, hash)
 				if err != nil {
-					log.Printf("Notifier: Error saving hash: %v", err)
+					log.Printf("Error saving hash: %v", err)
 					return "error", err
 				}
 
@@ -173,17 +173,17 @@ func processScan(server string, port int, token string, scan scans.GetScanRespon
 				}
 				err = n.Notify(context.TODO())
 				if err != nil {
-					log.Printf("Notifier: Error sending notification: %v", err)
+					log.Printf("Error sending notification: %v", err)
 				} else {
 					return "success", nil
 				}
 			} else {
-				log.Printf("Notifier: Linear issue exists for image: %s", scan.Image)
+				log.Printf("Linear issue exists for image: %s", scan.Image)
 				return "success", nil
 			}
 		}
 		if !matched {
-			log.Printf("Notifier: Condition not matched for scanID: %s and image: %s", scan.ID, scan.Image)
+			log.Printf("Condition not matched for scanID: %s and image: %s", scan.ID, scan.Image)
 			return "success", nil
 		}
 	}
