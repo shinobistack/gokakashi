@@ -168,6 +168,18 @@ func (su *ScansUpdate) ClearReport() *ScansUpdate {
 	return su
 }
 
+// SetScannerOptions sets the "scanner_options" field.
+func (su *ScansUpdate) SetScannerOptions(m map[string]string) *ScansUpdate {
+	su.mutation.SetScannerOptions(m)
+	return su
+}
+
+// ClearScannerOptions clears the value of the "scanner_options" field.
+func (su *ScansUpdate) ClearScannerOptions() *ScansUpdate {
+	su.mutation.ClearScannerOptions()
+	return su
+}
+
 // SetPolicy sets the "policy" edge to the Policies entity.
 func (su *ScansUpdate) SetPolicy(p *Policies) *ScansUpdate {
 	return su.SetPolicyID(p.ID)
@@ -405,6 +417,12 @@ func (su *ScansUpdate) sqlSave(ctx context.Context) (n int, err error) {
 	}
 	if su.mutation.ReportCleared() {
 		_spec.ClearField(scans.FieldReport, field.TypeJSON)
+	}
+	if value, ok := su.mutation.ScannerOptions(); ok {
+		_spec.SetField(scans.FieldScannerOptions, field.TypeJSON, value)
+	}
+	if su.mutation.ScannerOptionsCleared() {
+		_spec.ClearField(scans.FieldScannerOptions, field.TypeJSON)
 	}
 	if su.mutation.PolicyCleared() {
 		edge := &sqlgraph.EdgeSpec{
@@ -751,6 +769,18 @@ func (suo *ScansUpdateOne) ClearReport() *ScansUpdateOne {
 	return suo
 }
 
+// SetScannerOptions sets the "scanner_options" field.
+func (suo *ScansUpdateOne) SetScannerOptions(m map[string]string) *ScansUpdateOne {
+	suo.mutation.SetScannerOptions(m)
+	return suo
+}
+
+// ClearScannerOptions clears the value of the "scanner_options" field.
+func (suo *ScansUpdateOne) ClearScannerOptions() *ScansUpdateOne {
+	suo.mutation.ClearScannerOptions()
+	return suo
+}
+
 // SetPolicy sets the "policy" edge to the Policies entity.
 func (suo *ScansUpdateOne) SetPolicy(p *Policies) *ScansUpdateOne {
 	return suo.SetPolicyID(p.ID)
@@ -1018,6 +1048,12 @@ func (suo *ScansUpdateOne) sqlSave(ctx context.Context) (_node *Scans, err error
 	}
 	if suo.mutation.ReportCleared() {
 		_spec.ClearField(scans.FieldReport, field.TypeJSON)
+	}
+	if value, ok := suo.mutation.ScannerOptions(); ok {
+		_spec.SetField(scans.FieldScannerOptions, field.TypeJSON, value)
+	}
+	if suo.mutation.ScannerOptionsCleared() {
+		_spec.ClearField(scans.FieldScannerOptions, field.TypeJSON)
 	}
 	if suo.mutation.PolicyCleared() {
 		edge := &sqlgraph.EdgeSpec{

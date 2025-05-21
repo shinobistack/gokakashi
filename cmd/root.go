@@ -44,6 +44,7 @@ func init() {
 	scanImageCmd.Flags().StringVar(&image, "image", "", "Container image to scan")
 	scanImageCmd.Flags().StringVar(&policyName, "policy", "", "Policy name for the scan")
 	scanImageCmd.Flags().StringVar(&labels, "labels", "", "Labels for the scans in key=value format (e.g., --labels=\"key1=value1,key2=value2\"). Can be used to map agent's task the particular scan via labels")
+	scanImageCmd.Flags().StringVar(&scanTimeout, "timeout", "", "Timeout for the scan (e.g., 10m, 30m, 1h)")
 
 	// Flags for the `scan status` command
 	scanStatusCmd.Flags().StringVar(&scanID, "scanID", "", "Scan ID to check status")

@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+
 	"github.com/google/uuid"
 	"github.com/shinobistack/gokakashi/ent"
 	"github.com/shinobistack/gokakashi/ent/scans"
@@ -13,15 +14,16 @@ import (
 )
 
 type GetScanResponse struct {
-	ID            uuid.UUID             `json:"id"`
-	PolicyID      uuid.UUID             `json:"policy_id"`
-	Image         string                `json:"image"`
-	Scanner       string                `json:"scanner"`
-	IntegrationID *uuid.UUID            `json:"integration_id"`
-	Status        string                `json:"status"`
-	Labels        []schema.CommonLabels `json:"labels,omitempty"`
-	Notify        *[]schema.Notify      `json:"notify,omitempty"`
-	Report        json.RawMessage       `json:"report,omitempty"`
+	ID             uuid.UUID             `json:"id"`
+	PolicyID       uuid.UUID             `json:"policy_id"`
+	Image          string                `json:"image"`
+	Scanner        string                `json:"scanner"`
+	IntegrationID  *uuid.UUID            `json:"integration_id"`
+	Status         string                `json:"status"`
+	Labels         []schema.CommonLabels `json:"labels,omitempty"`
+	Notify         *[]schema.Notify      `json:"notify,omitempty"`
+	Report         json.RawMessage       `json:"report,omitempty"`
+	ScannerOptions map[string]string     `json:"scanner_options,omitempty"`
 }
 
 type ListScanRequest struct {

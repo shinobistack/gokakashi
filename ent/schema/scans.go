@@ -2,10 +2,11 @@ package schema
 
 import (
 	"encoding/json"
+	"errors"
+
 	"entgo.io/ent"
 	"entgo.io/ent/schema/edge"
 	"entgo.io/ent/schema/field"
-	"errors"
 	"github.com/google/uuid"
 )
 
@@ -58,6 +59,10 @@ func (Scans) Fields() []ent.Field {
 		field.JSON("report", json.RawMessage{}).
 			Optional().
 			Comment("Stores the scan results."),
+		field.JSON("scanner_options", map[string]string{}).
+			Optional().
+			Default(map[string]string{}).
+			Comment("Scanner-specific options like timeout"),
 	}
 }
 

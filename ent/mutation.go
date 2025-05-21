@@ -5341,6 +5341,7 @@ type ScansMutation struct {
 	labels                    *schema.CommonLabels
 	report                    *json.RawMessage
 	appendreport              json.RawMessage
+	scanner_options           *map[string]string
 	clearedFields             map[string]struct{}
 	policy                    *uuid.UUID
 	clearedpolicy             bool
@@ -5836,6 +5837,55 @@ func (m *ScansMutation) ResetReport() {
 	delete(m.clearedFields, scans.FieldReport)
 }
 
+// SetScannerOptions sets the "scanner_options" field.
+func (m *ScansMutation) SetScannerOptions(value map[string]string) {
+	m.scanner_options = &value
+}
+
+// ScannerOptions returns the value of the "scanner_options" field in the mutation.
+func (m *ScansMutation) ScannerOptions() (r map[string]string, exists bool) {
+	v := m.scanner_options
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldScannerOptions returns the old "scanner_options" field's value of the Scans entity.
+// If the Scans object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *ScansMutation) OldScannerOptions(ctx context.Context) (v map[string]string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldScannerOptions is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldScannerOptions requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldScannerOptions: %w", err)
+	}
+	return oldValue.ScannerOptions, nil
+}
+
+// ClearScannerOptions clears the value of the "scanner_options" field.
+func (m *ScansMutation) ClearScannerOptions() {
+	m.scanner_options = nil
+	m.clearedFields[scans.FieldScannerOptions] = struct{}{}
+}
+
+// ScannerOptionsCleared returns if the "scanner_options" field was cleared in this mutation.
+func (m *ScansMutation) ScannerOptionsCleared() bool {
+	_, ok := m.clearedFields[scans.FieldScannerOptions]
+	return ok
+}
+
+// ResetScannerOptions resets all changes to the "scanner_options" field.
+func (m *ScansMutation) ResetScannerOptions() {
+	m.scanner_options = nil
+	delete(m.clearedFields, scans.FieldScannerOptions)
+}
+
 // ClearPolicy clears the "policy" edge to the Policies entity.
 func (m *ScansMutation) ClearPolicy() {
 	m.clearedpolicy = true
@@ -6099,7 +6149,7 @@ func (m *ScansMutation) Type() string {
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
 func (m *ScansMutation) Fields() []string {
-	fields := make([]string, 0, 8)
+	fields := make([]string, 0, 9)
 	if m.policy != nil {
 		fields = append(fields, scans.FieldPolicyID)
 	}
@@ -6123,6 +6173,9 @@ func (m *ScansMutation) Fields() []string {
 	}
 	if m.report != nil {
 		fields = append(fields, scans.FieldReport)
+	}
+	if m.scanner_options != nil {
+		fields = append(fields, scans.FieldScannerOptions)
 	}
 	return fields
 }
@@ -6148,6 +6201,8 @@ func (m *ScansMutation) Field(name string) (ent.Value, bool) {
 		return m.Labels()
 	case scans.FieldReport:
 		return m.Report()
+	case scans.FieldScannerOptions:
+		return m.ScannerOptions()
 	}
 	return nil, false
 }
@@ -6173,6 +6228,8 @@ func (m *ScansMutation) OldField(ctx context.Context, name string) (ent.Value, e
 		return m.OldLabels(ctx)
 	case scans.FieldReport:
 		return m.OldReport(ctx)
+	case scans.FieldScannerOptions:
+		return m.OldScannerOptions(ctx)
 	}
 	return nil, fmt.Errorf("unknown Scans field %s", name)
 }
@@ -6238,6 +6295,13 @@ func (m *ScansMutation) SetField(name string, value ent.Value) error {
 		}
 		m.SetReport(v)
 		return nil
+	case scans.FieldScannerOptions:
+		v, ok := value.(map[string]string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetScannerOptions(v)
+		return nil
 	}
 	return fmt.Errorf("unknown Scans field %s", name)
 }
@@ -6280,6 +6344,9 @@ func (m *ScansMutation) ClearedFields() []string {
 	if m.FieldCleared(scans.FieldReport) {
 		fields = append(fields, scans.FieldReport)
 	}
+	if m.FieldCleared(scans.FieldScannerOptions) {
+		fields = append(fields, scans.FieldScannerOptions)
+	}
 	return fields
 }
 
@@ -6305,6 +6372,9 @@ func (m *ScansMutation) ClearField(name string) error {
 		return nil
 	case scans.FieldReport:
 		m.ClearReport()
+		return nil
+	case scans.FieldScannerOptions:
+		m.ClearScannerOptions()
 		return nil
 	}
 	return fmt.Errorf("unknown Scans nullable field %s", name)
@@ -6337,6 +6407,9 @@ func (m *ScansMutation) ResetField(name string) error {
 		return nil
 	case scans.FieldReport:
 		m.ResetReport()
+		return nil
+	case scans.FieldScannerOptions:
+		m.ResetScannerOptions()
 		return nil
 	}
 	return fmt.Errorf("unknown Scans field %s", name)

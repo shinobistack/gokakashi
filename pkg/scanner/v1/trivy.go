@@ -6,13 +6,14 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
-	"github.com/google/cel-go/cel"
-	"github.com/google/cel-go/checker/decls"
-	"github.com/google/cel-go/ext"
 	"log"
 	"os"
 	"os/exec"
 	"strings"
+
+	"github.com/google/cel-go/cel"
+	"github.com/google/cel-go/checker/decls"
+	"github.com/google/cel-go/ext"
 )
 
 type HashEntry struct {
@@ -56,7 +57,7 @@ type Vulnerability struct {
 
 type TrivyScanner struct{}
 
-func (t *TrivyScanner) Scan(image string, severityLevels []string) (string, error) {
+func (t *TrivyScanner) Scan(image string, severityLevels []string, options map[string]string) (string, error) {
 	// Create a temporary file for the report
 	// Todo: to make use of workspace for agents
 	outputFile, err := os.CreateTemp("", "trivy-report-*.json")
@@ -74,6 +75,13 @@ func (t *TrivyScanner) Scan(image string, severityLevels []string) (string, erro
 	} else {
 		log.Printf("[INFO] Scanning Docker image: %s with Trivy (no severity filter)", image)
 		cmd = exec.Command("trivy", "image", "--format", "json", "--output", outputFile.Name(), image)
+	}
+
+	if options != nil {
+		if timeout, exists := options["timeout"]; exists && timeout != "" {
+			log.Printf("[INFO] Setting Trivy timeout to: %s", timeout)
+			cmd.Args = append(cmd.Args, "--timeout", timeout)
+		}
 	}
 
 	// Execute the command and capture output for debugging

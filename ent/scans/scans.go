@@ -29,6 +29,8 @@ const (
 	FieldLabels = "labels"
 	// FieldReport holds the string denoting the report field in the database.
 	FieldReport = "report"
+	// FieldScannerOptions holds the string denoting the scanner_options field in the database.
+	FieldScannerOptions = "scanner_options"
 	// EdgePolicy holds the string denoting the policy edge name in mutations.
 	EdgePolicy = "policy"
 	// EdgeIntegrations holds the string denoting the integrations edge name in mutations.
@@ -89,6 +91,7 @@ var Columns = []string{
 	FieldNotify,
 	FieldLabels,
 	FieldReport,
+	FieldScannerOptions,
 }
 
 // ValidColumn reports if the column name is valid (part of the table columns).
@@ -106,6 +109,8 @@ var (
 	DefaultStatus string
 	// StatusValidator is a validator for the "status" field. It is called by the builders before save.
 	StatusValidator func(string) error
+	// DefaultScannerOptions holds the default value on creation for the "scanner_options" field.
+	DefaultScannerOptions map[string]string
 	// DefaultID holds the default value on creation for the "id" field.
 	DefaultID func() uuid.UUID
 )

@@ -21,7 +21,7 @@ services:
   gokakashi-server:
     build: ../
     container_name: gokakashi-server
-    command: server
+    command: server --config=config.yaml
     networks:
       - gokakashi-network
     ports:
@@ -36,6 +36,8 @@ services:
     depends_on:
       db:
         condition: service_healthy
+    volumes:
+      - ./config.yaml:/app/config.yaml
 
   gokakashi-notifier:
     build:
