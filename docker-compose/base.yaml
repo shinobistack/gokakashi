@@ -37,7 +37,9 @@ services:
       db:
         condition: service_healthy
     volumes:
-      - ./config.yaml:/app/config.yaml
+      - type: bind
+        source: ./config.yaml
+        target: /app/config.yaml
 
   gokakashi-notifier:
     build:

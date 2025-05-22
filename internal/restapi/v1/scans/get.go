@@ -54,15 +54,16 @@ func ListScans(client *ent.Client) func(ctx context.Context, req ListScanRequest
 			labels := mapScanLabels(scan.Edges.ScanLabels)
 
 			(*res)[i] = GetScanResponse{
-				ID:            scan.ID,
-				PolicyID:      scan.PolicyID,
-				Image:         scan.Image,
-				Scanner:       scan.Scanner,
-				IntegrationID: scan.IntegrationID,
-				Status:        scan.Status,
-				Notify:        &scan.Notify,
-				Report:        scan.Report,
-				Labels:        labels,
+				ID:             scan.ID,
+				PolicyID:       scan.PolicyID,
+				Image:          scan.Image,
+				Scanner:        scan.Scanner,
+				IntegrationID:  scan.IntegrationID,
+				Status:         scan.Status,
+				Notify:         &scan.Notify,
+				Report:         scan.Report,
+				Labels:         labels,
+				ScannerOptions: scan.ScannerOptions,
 			}
 		}
 		return nil
@@ -86,15 +87,16 @@ func GetScan(client *ent.Client) func(ctx context.Context, req GetScanRequest, r
 		labels := mapScanLabels(scan.Edges.ScanLabels)
 
 		*res = GetScanResponse{
-			ID:            scan.ID,
-			PolicyID:      scan.PolicyID,
-			Image:         scan.Image,
-			Scanner:       scan.Scanner,
-			IntegrationID: scan.IntegrationID,
-			Status:        scan.Status,
-			Notify:        &scan.Notify,
-			Report:        scan.Report,
-			Labels:        labels,
+			ID:             scan.ID,
+			PolicyID:       scan.PolicyID,
+			Image:          scan.Image,
+			Scanner:        scan.Scanner,
+			IntegrationID:  scan.IntegrationID,
+			Status:         scan.Status,
+			Notify:         &scan.Notify,
+			Report:         scan.Report,
+			Labels:         labels,
+			ScannerOptions: scan.ScannerOptions,
 		}
 
 		return nil
