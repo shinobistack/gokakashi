@@ -354,6 +354,16 @@ func ReportNotNil() predicate.Scans {
 	return predicate.Scans(sql.FieldNotNull(FieldReport))
 }
 
+// ScannerOptionsIsNil applies the IsNil predicate on the "scanner_options" field.
+func ScannerOptionsIsNil() predicate.Scans {
+	return predicate.Scans(sql.FieldIsNull(FieldScannerOptions))
+}
+
+// ScannerOptionsNotNil applies the NotNil predicate on the "scanner_options" field.
+func ScannerOptionsNotNil() predicate.Scans {
+	return predicate.Scans(sql.FieldNotNull(FieldScannerOptions))
+}
+
 // HasPolicy applies the HasEdge predicate on the "policy" edge.
 func HasPolicy() predicate.Scans {
 	return predicate.Scans(func(s *sql.Selector) {

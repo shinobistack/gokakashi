@@ -9,8 +9,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/shinobistack/gokakashi/ent/schema"
-	"github.com/shinobistack/gokakashi/internal/helper"
 	"io"
 	"log"
 	"net/http"
@@ -18,6 +16,9 @@ import (
 	"os"
 	"strings"
 	"time"
+
+	"github.com/shinobistack/gokakashi/ent/schema"
+	"github.com/shinobistack/gokakashi/internal/helper"
 
 	"github.com/google/uuid"
 	"github.com/shinobistack/gokakashi/internal/http/client"
@@ -542,7 +543,7 @@ func processTask(ctx context.Context, server, token string, task agenttasks.GetA
 	}
 	// Step 4: Perform the scan
 	// severityLevels := []string{"HIGH", "CRITICAL"}
-	reportPath, err := performScan(scan.Image, scan.Scanner)
+	reportPath, err := performScan(scan.Image, scan.Scanner, scan.ScannerOptions)
 	if err != nil {
 		log.Printf("Failed to perform scan: %v", err)
 		if err := updateScanStatus(ctx, server, token, scan.ID, "error"); err != nil {
@@ -684,7 +685,7 @@ func authenticateAndPullImage(image string, integration *integrations.GetIntegra
 	return nil
 }
 
-func performScan(image, scannerType string) (string, error) {
+func performScan(image, scannerType string, scannerOptions map[string]string) (string, error) {
 	// Initialize the scanner using the factory function.
 	scanner, err := scanner.NewScanner(scannerType)
 	if err != nil {
@@ -693,7 +694,7 @@ func performScan(image, scannerType string) (string, error) {
 
 	// Perform scan
 	// Todo: to add feature for severity args or tool args.
-	reportPath, err := scanner.Scan(image, nil)
+	reportPath, err := scanner.Scan(image, nil, scannerOptions)
 	if err != nil {
 		return "", fmt.Errorf("scan failed: %w", err)
 	}

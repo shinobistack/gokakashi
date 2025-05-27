@@ -151,6 +151,10 @@ func init() {
 	scans.DefaultStatus = scansDescStatus.Default.(string)
 	// scans.StatusValidator is a validator for the "status" field. It is called by the builders before save.
 	scans.StatusValidator = scansDescStatus.Validators[0].(func(string) error)
+	// scansDescScannerOptions is the schema descriptor for scanner_options field.
+	scansDescScannerOptions := scansFields[9].Descriptor()
+	// scans.DefaultScannerOptions holds the default value on creation for the scanner_options field.
+	scans.DefaultScannerOptions = scansDescScannerOptions.Default.(map[string]string)
 	// scansDescID is the schema descriptor for id field.
 	scansDescID := scansFields[0].Descriptor()
 	// scans.DefaultID holds the default value on creation for the id field.

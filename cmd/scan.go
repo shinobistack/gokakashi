@@ -5,6 +5,10 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"log"
+	"net/http"
+	"os"
+
 	"github.com/google/uuid"
 	"github.com/shinobistack/gokakashi/ent/schema"
 	"github.com/shinobistack/gokakashi/internal/helper"
@@ -13,9 +17,6 @@ import (
 	"github.com/shinobistack/gokakashi/internal/restapi/v1/policies"
 	"github.com/shinobistack/gokakashi/internal/restapi/v1/scans"
 	"github.com/spf13/cobra"
-	"log"
-	"net/http"
-	"os"
 )
 
 var scanCmd = &cobra.Command{
@@ -65,9 +66,10 @@ var scanStatusCmd = &cobra.Command{
 }
 
 var (
-	image      string
-	policyName string
-	scanID     string
+	image       string
+	policyName  string
+	scanID      string
+	scanTimeout string
 )
 
 func scanImage(cmd *cobra.Command, args []string) {
@@ -168,6 +170,14 @@ func postScanDetails(ctx context.Context, policyID uuid.UUID, scanner string, in
 		Status:        "scan_pending",
 		Labels:        labels,
 	}
+
+	// Add timeout if specified
+	if scanTimeout != "" {
+		reqBody.ScannerOptions = map[string]string{
+			"timeout": scanTimeout,
+		}
+	}
+
 	reqBodyJSON, _ := json.Marshal(reqBody)
 	url := helper.ConstructURL(server, "/api/v1/scans")
 

@@ -4,25 +4,26 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"log"
+
 	"github.com/google/uuid"
 	"github.com/shinobistack/gokakashi/ent"
 	"github.com/shinobistack/gokakashi/ent/integrations"
 	"github.com/shinobistack/gokakashi/ent/policies"
 	"github.com/shinobistack/gokakashi/ent/schema"
 	"github.com/swaggest/usecase/status"
-	"log"
 )
 
 type CreateScanRequest struct {
-	PolicyID uuid.UUID `json:"policy_id"`
-	// ToDo: To think if the image stored would be single registery/image:tag.
-	Image         string                `json:"image"`
-	Scanner       string                `json:"scanner"`
-	IntegrationID *uuid.UUID            `json:"integration_id,omitempty"`
-	Notify        []schema.Notify       `json:"notify"`
-	Status        string                `json:"status"`
-	Report        json.RawMessage       `json:"report,omitempty"`
-	Labels        []schema.CommonLabels `json:"labels,omitempty"`
+	PolicyID       uuid.UUID             `json:"policy_id"`
+	Image          string                `json:"image"`
+	Scanner        string                `json:"scanner"`
+	IntegrationID  *uuid.UUID            `json:"integration_id,omitempty"`
+	Notify         []schema.Notify       `json:"notify"`
+	Status         string                `json:"status"`
+	Report         json.RawMessage       `json:"report,omitempty"`
+	Labels         []schema.CommonLabels `json:"labels,omitempty"`
+	ScannerOptions map[string]string     `json:"scanner_options,omitempty"`
 }
 
 type CreateScanResponse struct {
@@ -97,6 +98,10 @@ func CreateScan(client *ent.Client) func(ctx context.Context, req CreateScanRequ
 		// Set IntegrationID only if not nil
 		if req.IntegrationID != nil {
 			scanCreate.SetIntegrationID(*req.IntegrationID)
+		}
+		// Set ScannerOptions if provided
+		if len(req.ScannerOptions) > 0 {
+			scanCreate.SetScannerOptions(req.ScannerOptions)
 		}
 
 		scan, err := scanCreate.Save(ctx)

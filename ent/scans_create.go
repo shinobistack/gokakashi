@@ -99,6 +99,12 @@ func (sc *ScansCreate) SetReport(jm json.RawMessage) *ScansCreate {
 	return sc
 }
 
+// SetScannerOptions sets the "scanner_options" field.
+func (sc *ScansCreate) SetScannerOptions(m map[string]string) *ScansCreate {
+	sc.mutation.SetScannerOptions(m)
+	return sc
+}
+
 // SetID sets the "id" field.
 func (sc *ScansCreate) SetID(u uuid.UUID) *ScansCreate {
 	sc.mutation.SetID(u)
@@ -221,6 +227,10 @@ func (sc *ScansCreate) defaults() {
 		v := scans.DefaultStatus
 		sc.mutation.SetStatus(v)
 	}
+	if _, ok := sc.mutation.ScannerOptions(); !ok {
+		v := scans.DefaultScannerOptions
+		sc.mutation.SetScannerOptions(v)
+	}
 	if _, ok := sc.mutation.ID(); !ok {
 		v := scans.DefaultID()
 		sc.mutation.SetID(v)
@@ -307,6 +317,10 @@ func (sc *ScansCreate) createSpec() (*Scans, *sqlgraph.CreateSpec) {
 	if value, ok := sc.mutation.Report(); ok {
 		_spec.SetField(scans.FieldReport, field.TypeJSON, value)
 		_node.Report = value
+	}
+	if value, ok := sc.mutation.ScannerOptions(); ok {
+		_spec.SetField(scans.FieldScannerOptions, field.TypeJSON, value)
+		_node.ScannerOptions = value
 	}
 	if nodes := sc.mutation.PolicyIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
