@@ -36,8 +36,8 @@ Find, analyze, and remediate vulnerabilities present in your container images.
 
 | Regisry |                                    Status                                    |
 |--------------|:----------------------------------------------------------------------------:|
-| Docker Hub |       [Complete](https://github.com/shinobistack/gokakashi/issues/81)        |
-| Google Artifact Registry |       [Complete](https://github.com/shinobistack/gokakashi/issues/82)        |
+| Docker Hub |       [✔️ Available](https://github.com/shinobistack/gokakashi/issues/81)        |
+| Google Artifact Registry |       [✔️ Available](https://github.com/shinobistack/gokakashi/issues/82)        |
 | GitHub Container Registry |     [In progress ⏳](https://github.com/shinobistack/gokakashi/issues/83)     |
 | Amazon Elastic Container Registry | [Open for contribution](https://github.com/shinobistack/gokakashi/issues/84) |
 | Azure Container Registry | [Open for contribution](https://github.com/shinobistack/gokakashi/issues/85) |
@@ -46,7 +46,7 @@ Find, analyze, and remediate vulnerabilities present in your container images.
 
 | Scanner |                                    Status                                    |
 |---------|:----------------------------------------------------------------------------:|
-| Trivy |       [Complete](https://github.com/shinobistack/gokakashi/issues/86)        |
+| Trivy |       [✔️ Available](https://github.com/shinobistack/gokakashi/issues/86)        |
 | Snyk  | [Open for contribution](https://github.com/shinobistack/gokakashi/issues/87) |
 | Clair | [Open for contribution](https://github.com/shinobistack/gokakashi/issues/88) |
 
@@ -54,7 +54,7 @@ Find, analyze, and remediate vulnerabilities present in your container images.
 
 | Scanner |                                    Status                                    |
 |---------|:----------------------------------------------------------------------------:|
-| Linear  |                                 [Complete]()                                 |
+| Linear  |                                 [✔️ Available]()                                 |
 | Jira    | [Open for contribution](https://github.com/shinobistack/gokakashi/issues/87) |
 | Slack   | [Open for contribution](https://github.com/shinobistack/gokakashi/issues/88) |
 
