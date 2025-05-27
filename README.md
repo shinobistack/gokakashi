@@ -9,6 +9,7 @@
   <br><br>
   <a href="https://github.com/shinobistack/gokakashi/actions/workflows/build.yml"><image src="https://github.com/shinobistack/gokakashi/actions/workflows/build.yml/badge.svg" /></a>
   <a href="https://shinobistack.zulipchat.com/#narrow/channel/486791-gokakashi"><img src="https://img.shields.io/badge/zulip-join_chat-brightgreen.svg" /></a>
+<a href="https://github.com/shinobistack/gokakashi/releases"><img src="https://img.shields.io/github/downloads/shinobistack/gokakashi/total" /></a>
 </p>
 
 &nbsp;
@@ -33,21 +34,29 @@ Find, analyze, and remediate vulnerabilities present in your container images.
 
 #### Image Registries
 
-| Regisry | Status |
-|--------------|:-----------------:|
-| Docker Hub | [In progress ⏳](https://github.com/shinobistack/gokakashi/issues/81) |
-| Google Artifact Registry | [In progress ⏳](https://github.com/shinobistack/gokakashi/issues/82) |
-| GitHub Container Registry | [In progress ⏳](https://github.com/shinobistack/gokakashi/issues/83) |
-| Amazon Elastic Container Registry | [Open for contribution](https://github.com/shinobistack/gokakashi/issues/84)  |
+| Regisry |                                    Status                                    |
+|--------------|:----------------------------------------------------------------------------:|
+| Docker Hub |       [Complete](https://github.com/shinobistack/gokakashi/issues/81)        |
+| Google Artifact Registry |       [Complete](https://github.com/shinobistack/gokakashi/issues/82)        |
+| GitHub Container Registry |     [In progress ⏳](https://github.com/shinobistack/gokakashi/issues/83)     |
+| Amazon Elastic Container Registry | [Open for contribution](https://github.com/shinobistack/gokakashi/issues/84) |
 | Azure Container Registry | [Open for contribution](https://github.com/shinobistack/gokakashi/issues/85) |
 
 #### Image Scanners
 
-| Scanner | Status |
-|---------|:------:|
-| Trivy | [In progress ⏳](https://github.com/shinobistack/gokakashi/issues/86) |
+| Scanner |                                    Status                                    |
+|---------|:----------------------------------------------------------------------------:|
+| Trivy |       [Complete](https://github.com/shinobistack/gokakashi/issues/86)        |
 | Snyk  | [Open for contribution](https://github.com/shinobistack/gokakashi/issues/87) |
 | Clair | [Open for contribution](https://github.com/shinobistack/gokakashi/issues/88) |
+
+#### Notification Systems
+
+| Scanner |                                    Status                                    |
+|---------|:----------------------------------------------------------------------------:|
+| Linear  |                                 [Complete]()                                 |
+| Jira    | [Open for contribution](https://github.com/shinobistack/gokakashi/issues/87) |
+| Slack   | [Open for contribution](https://github.com/shinobistack/gokakashi/issues/88) |
 
 
 ## Install 🛠️
