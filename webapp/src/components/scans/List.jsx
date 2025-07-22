@@ -15,6 +15,10 @@ const ScansList = () => {
             Authorization: `Bearer ${localStorage.getItem("adminSecret")}`,
             "Content-Type": "application/json",
           },
+          params: {
+            per_page: 25,
+            page: 1,
+          },
         });
         setScansData(response.data);
       } catch (error) {
