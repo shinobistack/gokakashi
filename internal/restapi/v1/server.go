@@ -142,6 +142,10 @@ func (srv *Server) Service() *web.Service {
 			`"urls.primaryName"`: `"APIv1"`,
 		},
 	}))
+
+	// serve frontend for unknown routes and let client-side routing handle it
+	s.Router.NotFound(frontend.ServeHTTP)
+
 	return s
 }
 
