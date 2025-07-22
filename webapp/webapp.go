@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 	"io/fs"
+	"log"
 	"net/http"
 	"os"
 )
@@ -33,7 +34,11 @@ func ReactApp() (http.Handler, error) {
 				indexFile, indexErr := reactApp.Open("index.html")
 				if indexErr != nil {
 					w.WriteHeader(http.StatusInternalServerError)
-					w.Write([]byte("500 - Could not find index.html"))
+					errMsg := []byte("500 - Could not find index.html")
+					if _, err := w.Write(errMsg); err != nil {
+						// Optionally log the error, e.g., fmt.Println("error writing response:", err)
+						log.Println("error writing response:", err)
+					}
 					return
 				}
 				defer indexFile.Close()
@@ -44,7 +49,11 @@ func ReactApp() (http.Handler, error) {
 			}
 			// Other errors
 			w.WriteHeader(http.StatusInternalServerError)
-			w.Write([]byte("500 - Internal Server Error"))
+			errMsg := []byte("500 - Internal Server Error")
+			if _, err := w.Write(errMsg); err != nil {
+				// Optionally log the error, e.g., fmt.Println("error writing response:", err)
+				log.Println("error writing response:", err)
+			}
 			return
 		}
 		file.Close()

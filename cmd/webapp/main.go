@@ -15,8 +15,11 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-	http.ListenAndServe(":8080", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	err = http.ListenAndServe(":8080", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		log.Println(r.URL.Path)
 		reactApp.ServeHTTP(w, r)
-	}))
+	}) )
+	if err != nil {
+		panic(err)
+	}
 }
