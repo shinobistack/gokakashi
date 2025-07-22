@@ -210,12 +210,12 @@ func fetchPendingScans(server string, port int, token, status string) ([]scans.G
 		return nil, fmt.Errorf("server responded with status: %d", resp.StatusCode)
 	}
 
-	var scans []scans.GetScanResponse
-	if err := json.NewDecoder(resp.Body).Decode(&scans); err != nil {
+	var listResp scans.ListScansResponse
+	if err := json.NewDecoder(resp.Body).Decode(&listResp); err != nil {
 		return nil, fmt.Errorf("failed to decode scans response: %w", err)
 	}
 
-	return scans, nil
+	return listResp.Scans, nil
 }
 
 func fetchIntegrationDetails(server string, port int, token string, integrationID uuid.UUID) (*integrations.GetIntegrationResponse, error) {
