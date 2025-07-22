@@ -27,8 +27,10 @@ type GetScanResponse struct {
 }
 
 type ListScanRequest struct {
-	Status string `query:"status"`
-	Name   string `query:"name"`
+	Status  string `query:"status"`
+	Name    string `query:"name"`
+	Page    int    `query:"page"`
+	PerPage int    `query:"per_page"`
 }
 
 type GetScanRequest struct {
@@ -43,6 +45,18 @@ func ListScans(client *ent.Client) func(ctx context.Context, req ListScanRequest
 		if req.Status != "" {
 			query = query.Where(scans.Status(req.Status))
 		}
+
+		// Pagination logic
+		page := req.Page
+		perPage := req.PerPage
+		if page < 1 {
+			page = 1
+		}
+		if perPage < 1 {
+			perPage = 100
+		}
+		offset := (page - 1) * perPage
+		query = query.Limit(perPage).Offset(offset)
 
 		scanResults, err := query.All(ctx)
 		if err != nil {

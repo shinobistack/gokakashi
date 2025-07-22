@@ -43,7 +43,7 @@ func TestListScans_Valid(t *testing.T) {
 		SetIntegrationID(integrations.ID).
 		SaveX(context.Background())
 
-	req := scans.ListScanRequest{"", ""}
+	req := scans.ListScanRequest{Status: "", Name: "", Page: 1, PerPage: 100}
 	res := []scans.GetScanResponse{}
 	err := scans.ListScans(client)(context.Background(), req, &res)
 
