@@ -2,10 +2,16 @@ import { useState, useEffect } from "react";
 import axios from "axios";
 
 const ScansList = () => {
-  const [itemsPerPage, setItemsPerPage] = useState(10);
+  const [itemsPerPage, setItemsPerPage] = useState(25);
   const [currentPage, setCurrentPage] = useState(1);
   const [searchQuery, setSearchQuery] = useState("");
-  const [scansData, setScansData] = useState([]);
+  const [scansResponse, setScansResponse] = useState({
+    scans: [],
+    page: 1,
+    per_page: 25,
+    total: 0,
+    total_pages: 1,
+  });
 
   useEffect(() => {
     const fetchScans = async () => {
@@ -16,18 +22,18 @@ const ScansList = () => {
             "Content-Type": "application/json",
           },
           params: {
-            per_page: 25,
-            page: 1,
+            per_page: itemsPerPage,
+            page: currentPage,
           },
         });
-        setScansData(response.data);
+        setScansResponse(response.data);
       } catch (error) {
         console.error("Error fetching scans:", error);
       }
     };
 
     fetchScans();
-  }, []);
+  }, [itemsPerPage, currentPage]);
 
   // Sorting state
   const [sortConfig, setSortConfig] = useState({
@@ -35,14 +41,14 @@ const ScansList = () => {
     direction: "ascending",
   });
 
-  // Filtered data based on search query
-  const filteredData = scansData.filter(
+  // Filtered data based on search query (only on current page's scans)
+  const filteredData = scansResponse.scans.filter(
     (scan) =>
       scan.image.toLowerCase().includes(searchQuery.toLowerCase()) ||
       scan.status.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
-  // Sorting function
+  // Sorting function (client-side, only for current page)
   const sortedData = filteredData.sort((a, b) => {
     if (a[sortConfig.key] < b[sortConfig.key]) {
       return sortConfig.direction === "ascending" ? -1 : 1;
@@ -53,12 +59,14 @@ const ScansList = () => {
     return 0;
   });
 
-  // Calculate total pages based on sorted data
-  const totalPages = Math.ceil(sortedData.length / itemsPerPage);
+  // Use backend-provided pagination
+  // const totalPages = scansResponse.total_pages;
+  const totalEntries = scansResponse.total;
+  // const perPage = scansResponse.per_page;
+  // const page = scansResponse.page;
 
-  // Get current items for the current page
-  const startIndex = (currentPage - 1) * itemsPerPage;
-  const currentItems = sortedData.slice(startIndex, startIndex + itemsPerPage);
+  // Get current items for the current page (already paginated from backend)
+  const currentItems = sortedData;
 
   const handlePageChange = (pageNumber) => {
     setCurrentPage(pageNumber);
@@ -171,21 +179,53 @@ const ScansList = () => {
           </table>
         </div>
 
-        {/* Pagination Controls */}
-        <div className="flex justify-center mt-4">
-          {Array.from({ length: totalPages }, (_, index) => (
+        {/* Entry Info */}
+        <div className="flex justify-between items-center mt-4">
+          <span>
+            Showing{" "}
+            {totalEntries === 0
+              ? 0
+              : (scansResponse.page - 1) * scansResponse.per_page + 1}
+            –
+            {Math.min(
+              scansResponse.page * scansResponse.per_page,
+              totalEntries
+            )}{" "}
+            of {totalEntries} entries
+          </span>
+          <div>
             <button
-              key={index + 1}
-              onClick={() => handlePageChange(index + 1)}
-              className={`mx-1 px-3 py-1 rounded ${
-                currentPage === index + 1
-                  ? "bg-blue-500 text-white"
-                  : "bg-gray-200 text-gray-700 hover:bg-gray-300"
-              }`}
+              onClick={() => handlePageChange(scansResponse.page - 1)}
+              disabled={scansResponse.page === 1}
+              className="mx-1 px-3 py-1 rounded bg-gray-200 text-gray-700 hover:bg-gray-300 disabled:opacity-50"
             >
-              {index + 1}
+              Previous
             </button>
-          ))}
+            {Array.from({ length: scansResponse.total_pages }, (_, i) => (
+              <button
+                key={i + 1}
+                onClick={() => handlePageChange(i + 1)}
+                disabled={scansResponse.page === i + 1}
+                className={`mx-1 px-3 py-1 rounded ${
+                  scansResponse.page === i + 1
+                    ? "bg-blue-500 text-white"
+                    : "bg-gray-200 text-gray-700 hover:bg-gray-300"
+                }`}
+                style={{
+                  fontWeight: scansResponse.page === i + 1 ? "bold" : "normal",
+                }}
+              >
+                {i + 1}
+              </button>
+            ))}
+            <button
+              onClick={() => handlePageChange(scansResponse.page + 1)}
+              disabled={scansResponse.page === scansResponse.total_pages}
+              className="mx-1 px-3 py-1 rounded bg-gray-200 text-gray-700 hover:bg-gray-300 disabled:opacity-50"
+            >
+              Next
+            </button>
+          </div>
         </div>
       </div>
     </div>
