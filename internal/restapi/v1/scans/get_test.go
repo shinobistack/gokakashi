@@ -43,12 +43,30 @@ func TestListScans_Valid(t *testing.T) {
 		SetIntegrationID(integrations.ID).
 		SaveX(context.Background())
 
-	req := scans.ListScanRequest{"", ""}
-	res := []scans.GetScanResponse{}
+	req := scans.ListScanRequest{Status: "", Name: "", Page: 1, PerPage: 100}
+	res := scans.ListScansResponse{}
 	err := scans.ListScans(client)(context.Background(), req, &res)
 
 	assert.NoError(t, err)
-	assert.Equal(t, 2, len(res))
+	assert.Equal(t, 2, len(res.Scans))
+	assert.Equal(t, 1, res.Page)
+	assert.Equal(t, 100, res.PerPage)
+	assert.Equal(t, 2, res.Total)
+	assert.Equal(t, 1, res.TotalPages)
+
+	// Test default perPage (should be 30)
+	resDefault := scans.ListScansResponse{}
+	reqDefault := scans.ListScanRequest{Status: "", Name: "", Page: 1, PerPage: 0}
+	err = scans.ListScans(client)(context.Background(), reqDefault, &resDefault)
+	assert.NoError(t, err)
+	assert.Equal(t, 30, resDefault.PerPage)
+
+	// Test perPage > 100 is capped at 100
+	resMax := scans.ListScansResponse{}
+	reqMax := scans.ListScanRequest{Status: "", Name: "", Page: 1, PerPage: 999}
+	err = scans.ListScans(client)(context.Background(), reqMax, &resMax)
+	assert.NoError(t, err)
+	assert.Equal(t, 100, resMax.PerPage)
 }
 
 func TestGetScan_Valid(t *testing.T) {

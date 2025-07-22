@@ -27,8 +27,10 @@ type GetScanResponse struct {
 }
 
 type ListScanRequest struct {
-	Status string `query:"status"`
-	Name   string `query:"name"`
+	Status  string `query:"status"`
+	Name    string `query:"name"`
+	Page    int    `query:"page"`
+	PerPage int    `query:"per_page"`
 }
 
 type GetScanRequest struct {
@@ -36,24 +38,57 @@ type GetScanRequest struct {
 	Labels []schema.CommonLabels `json:"labels,omitempty"`
 }
 
-func ListScans(client *ent.Client) func(ctx context.Context, req ListScanRequest, res *[]GetScanResponse) error {
-	return func(ctx context.Context, req ListScanRequest, res *[]GetScanResponse) error {
-		query := client.Scans.Query().WithScanLabels()
+type ListScansResponse struct {
+	Scans      []GetScanResponse `json:"scans"`
+	Page       int               `json:"page"`
+	PerPage    int               `json:"per_page"`
+	Total      int               `json:"total"`
+	TotalPages int               `json:"total_pages"`
+}
 
+func ListScans(client *ent.Client) func(ctx context.Context, req ListScanRequest, res *ListScansResponse) error {
+	return func(ctx context.Context, req ListScanRequest, res *ListScansResponse) error {
+		baseQuery := client.Scans.Query()
 		if req.Status != "" {
-			query = query.Where(scans.Status(req.Status))
+			baseQuery = baseQuery.Where(scans.Status(req.Status))
 		}
 
+		// Count total matching records (without pagination)
+		total, err := baseQuery.Clone().Count(ctx)
+		if err != nil {
+			return status.Wrap(errors.New("failed to count scans"), status.Internal)
+		}
+
+		// Pagination logic
+		page := req.Page
+		perPage := req.PerPage
+		if page < 1 {
+			page = 1
+		}
+		if perPage < 1 {
+			perPage = 30
+		}
+		if perPage > 100 {
+			perPage = 100
+		}
+		offset := (page - 1) * perPage
+
+		query := baseQuery.Clone().WithScanLabels().Limit(perPage).Offset(offset)
 		scanResults, err := query.All(ctx)
 		if err != nil {
 			return status.Wrap(errors.New("failed to fetch scan details"), status.Internal)
 		}
 
-		*res = make([]GetScanResponse, len(scanResults))
+		resp := ListScansResponse{
+			Scans:      make([]GetScanResponse, len(scanResults)),
+			Page:       page,
+			PerPage:    perPage,
+			Total:      total,
+			TotalPages: (total + perPage - 1) / perPage,
+		}
 		for i, scan := range scanResults {
 			labels := mapScanLabels(scan.Edges.ScanLabels)
-
-			(*res)[i] = GetScanResponse{
+			resp.Scans[i] = GetScanResponse{
 				ID:             scan.ID,
 				PolicyID:       scan.PolicyID,
 				Image:          scan.Image,
@@ -66,6 +101,7 @@ func ListScans(client *ent.Client) func(ctx context.Context, req ListScanRequest
 				ScannerOptions: scan.ScannerOptions,
 			}
 		}
+		*res = resp
 		return nil
 	}
 }
