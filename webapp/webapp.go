@@ -17,6 +17,22 @@ type Server struct {
 //go:embed dist
 var WebAssets embed.FS
 
+func serveIndexHTML(w http.ResponseWriter, reactApp fs.FS) {
+	indexFile, indexErr := reactApp.Open("index.html")
+	if indexErr != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		errMsg := []byte("500 - Could not find index.html")
+		if _, err := w.Write(errMsg); err != nil {
+			log.Println("error writing response:", err)
+		}
+		return
+	}
+	defer indexFile.Close()
+	w.Header().Set("Content-Type", "text/html; charset=utf-8")
+	w.WriteHeader(http.StatusOK)
+	_, _ = io.Copy(w, indexFile)
+}
+
 func ReactApp() (http.Handler, error) {
 	reactApp, err := fs.Sub(WebAssets, "dist")
 	if err != nil {
@@ -26,32 +42,25 @@ func ReactApp() (http.Handler, error) {
 	fileServer := http.FileServerFS(reactApp)
 
 	customHandler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		// If root path, serve index.html
+		requestedPath := r.URL.Path[1:] // strip leading '/'
+		if requestedPath == "" {
+			serveIndexHTML(w, reactApp)
+			return
+		}
+
 		// Try to open the requested file
-		file, err := reactApp.Open(r.URL.Path[1:]) // strip leading '/'
+		file, err := reactApp.Open(requestedPath)
 		if err != nil {
 			if os.IsNotExist(err) {
 				// Serve index.html for SPA routing
-				indexFile, indexErr := reactApp.Open("index.html")
-				if indexErr != nil {
-					w.WriteHeader(http.StatusInternalServerError)
-					errMsg := []byte("500 - Could not find index.html")
-					if _, err := w.Write(errMsg); err != nil {
-						// Optionally log the error, e.g., fmt.Println("error writing response:", err)
-						log.Println("error writing response:", err)
-					}
-					return
-				}
-				defer indexFile.Close()
-				w.Header().Set("Content-Type", "text/html; charset=utf-8")
-				w.WriteHeader(http.StatusOK)
-				_, _ = io.Copy(w, indexFile)
+				serveIndexHTML(w, reactApp)
 				return
 			}
 			// Other errors
 			w.WriteHeader(http.StatusInternalServerError)
 			errMsg := []byte("500 - Internal Server Error")
 			if _, err := w.Write(errMsg); err != nil {
-				// Optionally log the error, e.g., fmt.Println("error writing response:", err)
 				log.Println("error writing response:", err)
 			}
 			return
