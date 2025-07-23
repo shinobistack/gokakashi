@@ -25,6 +25,7 @@ import (
 	"github.com/shinobistack/gokakashi/internal/restapi/v1/agents"
 	"github.com/shinobistack/gokakashi/internal/restapi/v1/agenttasks"
 	"github.com/shinobistack/gokakashi/internal/restapi/v1/integrations"
+	"github.com/shinobistack/gokakashi/internal/restapi/v1/scanlabels"
 	"github.com/shinobistack/gokakashi/internal/restapi/v1/scans"
 	"github.com/shinobistack/gokakashi/pkg/registry/v1"
 	"github.com/shinobistack/gokakashi/pkg/scanner/v1"
@@ -521,6 +522,34 @@ func processTask(ctx context.Context, server, token string, task agenttasks.GetA
 		return
 	}
 
+	if scan == nil {
+		log.Printf("Scan not found for ID: %s", task.ScanID)
+		return
+	}
+
+	type scanLabel struct {
+		key   string
+		value string
+	}
+	envVars := []scanLabel{
+		{"ci", os.Getenv("CI")},
+		{"github_repository", os.Getenv("GITHUB_REPOSITORY")},
+		{"github_ref_name", os.Getenv("GITHUB_REF_NAME")},
+		{"github_sha", os.Getenv("GITHUB_SHA")},
+	}
+
+	if githubServerURL, githubRepo, githubRunID := os.Getenv("GITHUB_SERVER_URL"), os.Getenv("GITHUB_REPOSITORY"), os.Getenv("GITHUB_RUN_ID"); githubServerURL != "" && githubRepo != "" && githubRunID != "" {
+		githubActionLink := githubServerURL + "/" + githubRepo + "/actions/runs/" + githubRunID
+		envVars = append(envVars, scanLabel{"github_action_link", githubActionLink})
+	}
+
+	for _, envVar := range envVars {
+		err = createScanLabel(ctx, server, scan.ID, envVar.key, envVar.value)
+		if err != nil {
+			log.Printf("Failed to update scan labels: %v", err)
+		}
+	}
+
 	// if scan.IntegrationID not empty then execute fetchIntegration and authenticateAndPullImage
 	if scan.IntegrationID != nil {
 		// Step 2: Fetch integration details
@@ -601,6 +630,40 @@ func updateScanStatus(ctx context.Context, server, token string, scanID uuid.UUI
 	resp, err := ctx.Value(httpClientKey{}).(*client.Client).Do(req)
 	if err != nil {
 		return fmt.Errorf("failed to update scan status: %w", err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		return fmt.Errorf("server responded with status: %d", resp.StatusCode)
+	}
+
+	return nil
+}
+
+func createScanLabel(ctx context.Context, server string, scanID uuid.UUID, key, value string) error {
+	if value == "" {
+		return nil
+	}
+
+	reqBody := scanlabels.CreateScanLabelRequest{
+		ScanID: scanID,
+		Key:    key,
+		Value:  value,
+	}
+	reqBodyJSON, _ := json.Marshal(reqBody)
+
+	path := fmt.Sprintf("/api/v1/scans/%s/labels", scanID)
+	url := helper.ConstructURL(server, path)
+	req, err := http.NewRequest("POST", url, bytes.NewBuffer(reqBodyJSON))
+
+	if err != nil {
+		return fmt.Errorf("failed to create scan labels update request: %w", err)
+	}
+	req.Header.Set("Content-Type", "application/json")
+
+	resp, err := ctx.Value(httpClientKey{}).(*client.Client).Do(req)
+	if err != nil {
+		return fmt.Errorf("failed to update scan labels: %w", err)
 	}
 	defer resp.Body.Close()
 
