@@ -24,6 +24,7 @@ func (V2Agents) Fields() []ent.Field {
 			Unique().
 			Default(uuid.New).
 			Comment("Primary key"),
+
 		field.String("status").
 			Default(string(agent.Connected)).
 			Validate(agent.ValidateStatus).
