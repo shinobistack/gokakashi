@@ -73,7 +73,6 @@ var (
 )
 
 func scanImage(cmd *cobra.Command, args []string) {
-
 	if policyName == "" {
 		log.Fatalf("Error: --policy is required to specify the policy name.")
 	}
@@ -98,28 +97,22 @@ func scanImage(cmd *cobra.Command, args []string) {
 
 	switch triggerType {
 	case "ci":
-
 		// No image field (local images)
 		if policy.Image.Registry == "" && policy.Image.Name == "" && policy.Image.Tags == nil {
-			// log.Println("Policy type is CI with no image field, directly feeding into scans table.")
 			handleNotifyAndScan(cmd.Context(), policy, nil, parsedLabels)
 			return
 		}
 
 		// Only registry specified
 		if policy.Image.Registry != "" && policy.Image.Name == "" && policy.Image.Tags == nil {
-			// log.Printf("Policy type is CI with registry %s.", policy.Image.Registry)
-
 			integrationID, err := fetchIntegrationByName(cmd.Context(), policy.Image.Registry)
 			if err != nil {
 				log.Fatalf("Failed to fetch integration: %v", err)
 			}
 			handleNotifyAndScan(cmd.Context(), policy, integrationID, parsedLabels)
 			return
-
 		}
 		log.Fatalf("Unsupported CI configuration for policy %s", policyName)
-
 	default:
 		log.Println("Trigger type is Cron. Processing scheduled scan... (will support soon)")
 
@@ -127,8 +120,8 @@ func scanImage(cmd *cobra.Command, args []string) {
 		if err != nil {
 			log.Fatalf("Failed to fetch integration: %v", err)
 		}
-		handleNotifyAndScan(cmd.Context(), policy, integrationID, parsedLabels)
 
+		handleNotifyAndScan(cmd.Context(), policy, integrationID, parsedLabels)
 	}
 
 }
@@ -204,7 +197,6 @@ func postScanDetails(ctx context.Context, policyID uuid.UUID, scanner string, in
 
 	log.Printf("Scan triggered successfully! Scan ID: %s, status: %s", response.ID, response.Status)
 	return &response, nil
-
 }
 
 func getScanStatus(cmd *cobra.Command, args []string) {
