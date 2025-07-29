@@ -33,17 +33,8 @@ type CreateScanResponse struct {
 
 func CreateScan(client *ent.Client) func(ctx context.Context, req CreateScanRequest, res *CreateScanResponse) error {
 	return func(ctx context.Context, req CreateScanRequest, res *CreateScanResponse) error {
-		if req.PolicyID == uuid.Nil {
-			return status.Wrap(errors.New("policy_id is required"), status.InvalidArgument)
-		}
-		if req.Image == "" {
-			return status.Wrap(errors.New("image is required"), status.InvalidArgument)
-		}
-		if req.Status == "" {
-			return status.Wrap(errors.New("status is required"), status.InvalidArgument)
-		}
-		if req.Scanner == "" {
-			return status.Wrap(errors.New("scanner is required"), status.InvalidArgument)
+		if req.PolicyID == uuid.Nil || req.Image == "" || req.Status == "" {
+			return status.Wrap(errors.New("missing required fields"), status.InvalidArgument)
 		}
 
 		// Validate notify structure
@@ -86,7 +77,7 @@ func CreateScan(client *ent.Client) func(ctx context.Context, req CreateScanRequ
 		}
 
 		// Create the scan
-		scanCreate := client.Scans.Create().
+		scanCreate := tx.Scans.Create().
 			SetPolicyID(req.PolicyID).
 			SetImage(req.Image).
 			SetScanner(req.Scanner).
