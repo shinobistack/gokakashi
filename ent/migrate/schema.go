@@ -3,6 +3,7 @@
 package migrate
 
 import (
+	"entgo.io/ent/dialect/entsql"
 	"entgo.io/ent/dialect/sql/schema"
 	"entgo.io/ent/schema/field"
 )
@@ -218,19 +219,19 @@ var (
 			},
 		},
 	}
-	// V2agentsColumns holds the columns for the "v2agents" table.
-	V2agentsColumns = []*schema.Column{
+	// V2AgentsColumns holds the columns for the "v2_agents" table.
+	V2AgentsColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeUUID, Unique: true},
 		{Name: "status", Type: field.TypeString, Default: "connected"},
 		{Name: "last_heartbeat_at", Type: field.TypeTime, Nullable: true},
 		{Name: "created_at", Type: field.TypeTime},
 		{Name: "updated_at", Type: field.TypeTime},
 	}
-	// V2agentsTable holds the schema information for the "v2agents" table.
-	V2agentsTable = &schema.Table{
-		Name:       "v2agents",
-		Columns:    V2agentsColumns,
-		PrimaryKey: []*schema.Column{V2agentsColumns[0]},
+	// V2AgentsTable holds the schema information for the "v2_agents" table.
+	V2AgentsTable = &schema.Table{
+		Name:       "v2_agents",
+		Columns:    V2AgentsColumns,
+		PrimaryKey: []*schema.Column{V2AgentsColumns[0]},
 	}
 	// Tables holds all the tables in the schema.
 	Tables = []*schema.Table{
@@ -244,7 +245,7 @@ var (
 		ScanLabelsTable,
 		ScanNotifiesTable,
 		ScansTable,
-		V2agentsTable,
+		V2AgentsTable,
 	}
 )
 
@@ -258,4 +259,7 @@ func init() {
 	ScanNotifiesTable.ForeignKeys[0].RefTable = ScansTable
 	ScansTable.ForeignKeys[0].RefTable = IntegrationsTable
 	ScansTable.ForeignKeys[1].RefTable = PoliciesTable
+	V2AgentsTable.Annotation = &entsql.Annotation{
+		Table: "v2_agents",
+	}
 }

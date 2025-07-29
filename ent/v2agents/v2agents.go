@@ -23,7 +23,7 @@ const (
 	// FieldUpdatedAt holds the string denoting the updated_at field in the database.
 	FieldUpdatedAt = "updated_at"
 	// Table holds the table name of the v2agents in the database.
-	Table = "v2agents"
+	Table = "v2_agents"
 )
 
 // Columns holds all SQL columns for v2agents fields.
