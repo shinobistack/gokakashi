@@ -86,7 +86,7 @@ func CreateScan(client *ent.Client) func(ctx context.Context, req CreateScanRequ
 		}
 
 		// Create the scan
-		scanCreate := tx.Scans.Create().
+		scanCreate := client.Scans.Create().
 			SetPolicyID(req.PolicyID).
 			SetImage(req.Image).
 			SetScanner(req.Scanner).
