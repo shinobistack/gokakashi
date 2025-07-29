@@ -15,6 +15,9 @@ type AgentTasks func(*sql.Selector)
 // Agents is the predicate function for agents builders.
 type Agents func(*sql.Selector)
 
+// AgentsV2 is the predicate function for agentsv2 builders.
+type AgentsV2 func(*sql.Selector)
+
 // IntegrationType is the predicate function for integrationtype builders.
 type IntegrationType func(*sql.Selector)
 

@@ -74,6 +74,20 @@ var (
 		Columns:    AgentsColumns,
 		PrimaryKey: []*schema.Column{AgentsColumns[0]},
 	}
+	// AgentsV2sColumns holds the columns for the "agents_v2s" table.
+	AgentsV2sColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeUUID, Unique: true},
+		{Name: "status", Type: field.TypeString, Default: "connected"},
+		{Name: "last_heartbeat_at", Type: field.TypeTime, Nullable: true},
+		{Name: "created_at", Type: field.TypeTime},
+		{Name: "updated_at", Type: field.TypeTime},
+	}
+	// AgentsV2sTable holds the schema information for the "agents_v2s" table.
+	AgentsV2sTable = &schema.Table{
+		Name:       "agents_v2s",
+		Columns:    AgentsV2sColumns,
+		PrimaryKey: []*schema.Column{AgentsV2sColumns[0]},
+	}
 	// IntegrationTypesColumns holds the columns for the "integration_types" table.
 	IntegrationTypesColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeString, Unique: true},
@@ -223,6 +237,7 @@ var (
 		AgentLabelsTable,
 		AgentTasksTable,
 		AgentsTable,
+		AgentsV2sTable,
 		IntegrationTypesTable,
 		IntegrationsTable,
 		PoliciesTable,

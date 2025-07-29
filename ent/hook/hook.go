@@ -45,6 +45,18 @@ func (f AgentsFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, erro
 	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.AgentsMutation", m)
 }
 
+// The AgentsV2Func type is an adapter to allow the use of ordinary
+// function as AgentsV2 mutator.
+type AgentsV2Func func(context.Context, *ent.AgentsV2Mutation) (ent.Value, error)
+
+// Mutate calls f(ctx, m).
+func (f AgentsV2Func) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error) {
+	if mv, ok := m.(*ent.AgentsV2Mutation); ok {
+		return f(ctx, mv)
+	}
+	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.AgentsV2Mutation", m)
+}
+
 // The IntegrationTypeFunc type is an adapter to allow the use of ordinary
 // function as IntegrationType mutator.
 type IntegrationTypeFunc func(context.Context, *ent.IntegrationTypeMutation) (ent.Value, error)

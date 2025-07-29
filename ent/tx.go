@@ -18,6 +18,8 @@ type Tx struct {
 	AgentTasks *AgentTasksClient
 	// Agents is the client for interacting with the Agents builders.
 	Agents *AgentsClient
+	// AgentsV2 is the client for interacting with the AgentsV2 builders.
+	AgentsV2 *AgentsV2Client
 	// IntegrationType is the client for interacting with the IntegrationType builders.
 	IntegrationType *IntegrationTypeClient
 	// Integrations is the client for interacting with the Integrations builders.
@@ -166,6 +168,7 @@ func (tx *Tx) init() {
 	tx.AgentLabels = NewAgentLabelsClient(tx.config)
 	tx.AgentTasks = NewAgentTasksClient(tx.config)
 	tx.Agents = NewAgentsClient(tx.config)
+	tx.AgentsV2 = NewAgentsV2Client(tx.config)
 	tx.IntegrationType = NewIntegrationTypeClient(tx.config)
 	tx.Integrations = NewIntegrationsClient(tx.config)
 	tx.Policies = NewPoliciesClient(tx.config)

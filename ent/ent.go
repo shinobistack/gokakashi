@@ -14,6 +14,7 @@ import (
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"github.com/shinobistack/gokakashi/ent/agentlabels"
 	"github.com/shinobistack/gokakashi/ent/agents"
+	"github.com/shinobistack/gokakashi/ent/agentsv2"
 	"github.com/shinobistack/gokakashi/ent/agenttasks"
 	"github.com/shinobistack/gokakashi/ent/integrations"
 	"github.com/shinobistack/gokakashi/ent/integrationtype"
@@ -85,6 +86,7 @@ func checkColumn(table, column string) error {
 			agentlabels.Table:     agentlabels.ValidColumn,
 			agenttasks.Table:      agenttasks.ValidColumn,
 			agents.Table:          agents.ValidColumn,
+			agentsv2.Table:        agentsv2.ValidColumn,
 			integrationtype.Table: integrationtype.ValidColumn,
 			integrations.Table:    integrations.ValidColumn,
 			policies.Table:        policies.ValidColumn,
