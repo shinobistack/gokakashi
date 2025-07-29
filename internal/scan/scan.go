@@ -20,7 +20,7 @@ var (
 	ErrInvalidScanStatus = errors.New("invalid scan status")
 )
 
-func ValidScanStatuses() []Status {
+func validStatuses() []Status {
 	return []Status{
 		Pending,
 		InProgress,
@@ -32,7 +32,7 @@ func ValidScanStatuses() []Status {
 }
 
 func Statuses() []string {
-	statuses := ValidScanStatuses()
+	statuses := validStatuses()
 	result := make([]string, len(statuses))
 	for i, s := range statuses {
 		result[i] = string(s)

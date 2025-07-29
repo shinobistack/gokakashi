@@ -14,9 +14,9 @@ func TestValidScanStatuses(t *testing.T) {
 		Success,
 		Error,
 	}
-	actual := ValidScanStatuses()
+	actual := validStatuses()
 	if !reflect.DeepEqual(actual, expected) {
-		t.Errorf("ValidScanStatuses() = %v, want %v", actual, expected)
+		t.Errorf("validStatuses() = %v, want %v", actual, expected)
 	}
 }
 

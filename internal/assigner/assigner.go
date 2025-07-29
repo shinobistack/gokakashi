@@ -13,6 +13,7 @@ import (
 	"github.com/shinobistack/gokakashi/ent/schema"
 
 	"github.com/google/uuid"
+	"github.com/shinobistack/gokakashi/internal/agent"
 	"github.com/shinobistack/gokakashi/internal/restapi/v1/agents"
 	"github.com/shinobistack/gokakashi/internal/restapi/v1/agenttasks"
 	"github.com/shinobistack/gokakashi/internal/restapi/v1/scans"
@@ -54,9 +55,7 @@ func Start(server string, port int, token string, interval time.Duration) {
 var globalAgentIndex int
 
 func AssignTasks(server string, port int, token string) {
-	log.Println("Assigner now begins assigning your scans")
-
-	// Step 1: Fetch scans needing assignment
+	log.Println("Checking for pending scans")
 	pendingScans, err := fetchPendingScans(server, port, token, string(scan.Pending))
 	if err != nil {
 		log.Printf("Error fetching pending scans: %v", err)
@@ -68,8 +67,8 @@ func AssignTasks(server string, port int, token string) {
 	}
 	log.Println("Found", len(pendingScans), "pending scans")
 
-	// Step 2: Fetch available agents
-	availableAgents, err := fetchAvailableAgents(server, port, token, "scan_in_progress")
+	log.Println("Checking for available agents")
+	availableAgents, err := fetchAvailableAgents(server, port, token, string(agent.ScanInProgress))
 	if err != nil {
 		log.Printf("Error fetching available agents: %v", err)
 		return
@@ -82,11 +81,11 @@ func AssignTasks(server string, port int, token string) {
 	log.Println("Found", len(availableAgents), "available agents")
 
 	for _, scan := range pendingScans {
-		log.Println("scan labels for scan (", scan.ID, ") are ", scan.Labels)
+		log.Println("labels for scan ID (", scan.ID, ") are ", scan.Labels)
 	}
 
 	for _, agent := range availableAgents {
-		log.Println("scan labels for agent (", agent.ID, ") are ", agent.Labels)
+		log.Println("labels for agent ID (", agent.ID, ") are ", agent.Labels)
 	}
 
 	// Step 3: Assign scans to agents

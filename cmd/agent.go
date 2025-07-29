@@ -139,10 +139,7 @@ func agentDeRegister(cmd *cobra.Command, args []string) {
 	log.Printf("Agent successfully deregistered. ID: %d, Status: %s", response.ID, response.Status)
 }
 
-//ToDo: for any table status which results to error should we upload err message or just status error
-
 func agentRegister(cmd *cobra.Command, args []string) {
-
 	parsedLabels, err := parseLabels(labels)
 	if err != nil {
 		log.Fatalf("Error parsing labels: %v", err)

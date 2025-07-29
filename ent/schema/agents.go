@@ -1,11 +1,13 @@
 package schema
 
 import (
+	"strings"
+	"time"
+
 	"entgo.io/ent"
 	"entgo.io/ent/schema/edge"
 	"entgo.io/ent/schema/field"
-	"errors"
-	"time"
+	"github.com/shinobistack/gokakashi/internal/agent"
 )
 
 // Agents holds the schema definition for the Agents entity.
@@ -24,17 +26,9 @@ func (Agents) Fields() []ent.Field {
 			Unique().
 			Comment("Unique name or identifier for the agent."),
 		field.String("status").
-			Default("connected").
-			Validate(func(s string) error {
-				validStatuses := []string{"connected", "scan_in_progress", "disconnected"}
-				for _, status := range validStatuses {
-					if s == status {
-						return nil
-					}
-				}
-				return errors.New("invalid status")
-			}).
-			Comment("Enum: { connected, scan_in_progress, disconnected }."),
+			Default(string(agent.Connected)).
+			Validate(agent.ValidateStatus).
+			Comment("Enum: " + strings.Join(agent.Statuses(), ", ")),
 		field.String("workspace").
 			Optional().
 			Unique().
