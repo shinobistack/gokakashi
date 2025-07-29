@@ -16,6 +16,7 @@ import (
 	"github.com/shinobistack/gokakashi/internal/restapi/v1/agents"
 	"github.com/shinobistack/gokakashi/internal/restapi/v1/agenttasks"
 	"github.com/shinobistack/gokakashi/internal/restapi/v1/scans"
+	"github.com/shinobistack/gokakashi/internal/scan"
 )
 
 // Assigns scanID to available Agents
@@ -41,7 +42,7 @@ func constructURL(server string, port int, path string) string {
 }
 
 func Start(server string, port int, token string, interval time.Duration) {
-	log.Println("Starting the periodic task assigner...")
+	log.Println("Started assigner service: check will run every ", interval.String())
 	ticker := time.NewTicker(interval)
 	defer ticker.Stop()
 	for range ticker.C {
@@ -54,8 +55,9 @@ var globalAgentIndex int
 
 func AssignTasks(server string, port int, token string) {
 	log.Println("Assigner now begins assigning your scans")
+
 	// Step 1: Fetch scans needing assignment
-	pendingScans, err := fetchPendingScans(server, port, token, "scan_pending")
+	pendingScans, err := fetchPendingScans(server, port, token, string(scan.Pending))
 	if err != nil {
 		log.Printf("Error fetching pending scans: %v", err)
 		return
