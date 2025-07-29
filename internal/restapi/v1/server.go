@@ -22,6 +22,7 @@ import (
 	scanlabels1 "github.com/shinobistack/gokakashi/internal/restapi/v1/scanlabels"
 	scannotify1 "github.com/shinobistack/gokakashi/internal/restapi/v1/scannotify"
 	scans1 "github.com/shinobistack/gokakashi/internal/restapi/v1/scans"
+	v2agents "github.com/shinobistack/gokakashi/internal/restapi/v2/agents"
 
 	"log"
 	"net/http"
@@ -55,9 +56,18 @@ func (srv *Server) Service() *web.Service {
 	).WithInfo(openapi31.Info{Title: "GoKakashi API v1"})
 	apiV1 := web.NewService(v1Reflector)
 
+	v2Reflector := openapi31.NewReflector()
+	v2Reflector.SpecEns().WithServers(
+		openapi31.Server{URL: "/api/v2/"},
+	).WithInfo(openapi31.Info{Title: "GoKakashi API v2"})
+	apiV2 := web.NewService(v2Reflector)
+
 	bearerAuth := &middleware.BearerTokenAuth{AuthToken: srv.AuthToken}
 	apiV1.Wrap(bearerAuth.Middleware)
 	apiV1.Wrap(middleware.NewRequestLogger().Middleware)
+
+	apiV2.Wrap(bearerAuth.Middleware)
+	apiV2.Wrap(middleware.NewRequestLogger().Middleware)
 
 	// Define API endpoints
 	apiV1.Get("/integrations", usecase.NewInteractor(integrations1.ListIntegrations(srv.DB)))
@@ -119,6 +129,8 @@ func (srv *Server) Service() *web.Service {
 	apiV1.Put("/scannotify/{scan_id}", usecase.NewInteractor(scannotify1.UpdateScanNotify(srv.DB)))
 	apiV1.Delete("/scannotify/{scan_id}", usecase.NewInteractor(scannotify1.DeleteScanNotify(srv.DB)))
 
+	apiV2.Post("/agents", usecase.NewInteractor(v2agents.Register(srv.DB)))
+
 	s.Use(cors.New(cors.Options{
 		AllowedOrigins: []string{"http://localhost:5555"},
 		AllowedMethods: []string{http.MethodOptions, http.MethodGet},
@@ -126,6 +138,19 @@ func (srv *Server) Service() *web.Service {
 	}).Handler)
 	s.Mount("/api/v1/openapi.json", specHandler(apiV1.OpenAPICollector.SpecSchema().(*openapi31.Spec)))
 	s.Mount("/api/v1", apiV1)
+	s.Mount("/api/v2/openapi.json", specHandler(apiV2.OpenAPICollector.SpecSchema().(*openapi31.Spec)))
+	s.Mount("/api/v2", apiV2)
+
+	s.Docs("/docs", swgui.NewWithConfig(swg.Config{
+		ShowTopBar: true,
+		SettingsUI: map[string]string{
+			"urls": `[
+	{"url": "/api/v1/openapi.json", "name": "APIv1"},
+	{"url": "/api/v2/openapi.json", "name": "APIv2"}
+]`,
+			`"urls.primaryName"`: `"APIv1"`,
+		},
+	}))
 
 	frontend, err := webapp.ReactApp()
 	if err != nil {
@@ -133,15 +158,6 @@ func (srv *Server) Service() *web.Service {
 	}
 	s.Mount("/", frontend)
 
-	s.Docs("/docs", swgui.NewWithConfig(swg.Config{
-		ShowTopBar: true,
-		SettingsUI: map[string]string{
-			"urls": `[
-	{"url": "/api/v1/openapi.json", "name": "APIv1"}
-]`,
-			`"urls.primaryName"`: `"APIv1"`,
-		},
-	}))
 	return s
 }
 

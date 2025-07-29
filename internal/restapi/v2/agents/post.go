@@ -22,7 +22,7 @@ type RegisterAgentResponse struct {
 	UpdatedAt time.Time `json:"updated_at"`
 }
 
-func RegisterAgent(client *ent.Client) func(ctx context.Context, req RegisterAgentRequest, res *RegisterAgentResponse) error {
+func Register(client *ent.Client) func(ctx context.Context, req RegisterAgentRequest, res *RegisterAgentResponse) error {
 	return func(ctx context.Context, req RegisterAgentRequest, res *RegisterAgentResponse) error {
 		newAgent, err := client.V2Agents.Create().
 			SetStatus(string(agent.Disconnected)).

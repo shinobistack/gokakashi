@@ -5,17 +5,17 @@ import (
 	"testing"
 	"time"
 
+	_ "github.com/mattn/go-sqlite3"
 	"github.com/shinobistack/gokakashi/ent/enttest"
 	"github.com/shinobistack/gokakashi/internal/agent"
 	"github.com/stretchr/testify/assert"
-	_ "github.com/mattn/go-sqlite3"
 )
 
 func TestRegisterAgent_Integration_Success(t *testing.T) {
 	client := enttest.Open(t, "sqlite3", "file:enttest?mode=memory&cache=shared&_fk=1")
 	defer client.Close()
 
-	handler := RegisterAgent(client)
+	handler := Register(client)
 	var res RegisterAgentResponse
 	err := handler(context.Background(), RegisterAgentRequest{}, &res)
 	assert.NoError(t, err)
@@ -34,7 +34,7 @@ func TestRegisterAgent_Integration_DBError(t *testing.T) {
 	client := enttest.Open(t, "sqlite3", "file:enttest2?mode=memory&cache=shared&_fk=1")
 	client.Close() // force DB error
 
-	handler := RegisterAgent(client)
+	handler := Register(client)
 	var res RegisterAgentResponse
 	err := handler(context.Background(), RegisterAgentRequest{}, &res)
 	assert.Error(t, err)
