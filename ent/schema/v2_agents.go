@@ -10,13 +10,13 @@ import (
 	"github.com/shinobistack/gokakashi/internal/agent"
 )
 
-// AgentsV2 holds the schema definition for the Agents entity.
-type AgentsV2 struct {
+// V2Agents holds the schema definition for the Agents entity.
+type V2Agents struct {
 	ent.Schema
 }
 
 // Fields of the Agents.
-func (AgentsV2) Fields() []ent.Field {
+func (V2Agents) Fields() []ent.Field {
 	return []ent.Field{
 		field.UUID("id", uuid.UUID{}).
 			Unique().
@@ -45,6 +45,6 @@ func (AgentsV2) Fields() []ent.Field {
 }
 
 // Edges of the Agents.
-func (AgentsV2) Edges() []ent.Edge {
+func (V2Agents) Edges() []ent.Edge {
 	return nil
 }
