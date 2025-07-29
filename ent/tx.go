@@ -18,8 +18,6 @@ type Tx struct {
 	AgentTasks *AgentTasksClient
 	// Agents is the client for interacting with the Agents builders.
 	Agents *AgentsClient
-	// AgentsV2 is the client for interacting with the AgentsV2 builders.
-	AgentsV2 *AgentsV2Client
 	// IntegrationType is the client for interacting with the IntegrationType builders.
 	IntegrationType *IntegrationTypeClient
 	// Integrations is the client for interacting with the Integrations builders.
@@ -34,6 +32,8 @@ type Tx struct {
 	ScanNotify *ScanNotifyClient
 	// Scans is the client for interacting with the Scans builders.
 	Scans *ScansClient
+	// V2Agents is the client for interacting with the V2Agents builders.
+	V2Agents *V2AgentsClient
 
 	// lazily loaded.
 	client     *Client
@@ -168,7 +168,6 @@ func (tx *Tx) init() {
 	tx.AgentLabels = NewAgentLabelsClient(tx.config)
 	tx.AgentTasks = NewAgentTasksClient(tx.config)
 	tx.Agents = NewAgentsClient(tx.config)
-	tx.AgentsV2 = NewAgentsV2Client(tx.config)
 	tx.IntegrationType = NewIntegrationTypeClient(tx.config)
 	tx.Integrations = NewIntegrationsClient(tx.config)
 	tx.Policies = NewPoliciesClient(tx.config)
@@ -176,6 +175,7 @@ func (tx *Tx) init() {
 	tx.ScanLabels = NewScanLabelsClient(tx.config)
 	tx.ScanNotify = NewScanNotifyClient(tx.config)
 	tx.Scans = NewScansClient(tx.config)
+	tx.V2Agents = NewV2AgentsClient(tx.config)
 }
 
 // txDriver wraps the given dialect.Tx with a nop dialect.Driver implementation.

@@ -45,18 +45,6 @@ func (f AgentsFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, erro
 	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.AgentsMutation", m)
 }
 
-// The AgentsV2Func type is an adapter to allow the use of ordinary
-// function as AgentsV2 mutator.
-type AgentsV2Func func(context.Context, *ent.AgentsV2Mutation) (ent.Value, error)
-
-// Mutate calls f(ctx, m).
-func (f AgentsV2Func) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error) {
-	if mv, ok := m.(*ent.AgentsV2Mutation); ok {
-		return f(ctx, mv)
-	}
-	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.AgentsV2Mutation", m)
-}
-
 // The IntegrationTypeFunc type is an adapter to allow the use of ordinary
 // function as IntegrationType mutator.
 type IntegrationTypeFunc func(context.Context, *ent.IntegrationTypeMutation) (ent.Value, error)
@@ -139,6 +127,18 @@ func (f ScansFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error
 		return f(ctx, mv)
 	}
 	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.ScansMutation", m)
+}
+
+// The V2AgentsFunc type is an adapter to allow the use of ordinary
+// function as V2Agents mutator.
+type V2AgentsFunc func(context.Context, *ent.V2AgentsMutation) (ent.Value, error)
+
+// Mutate calls f(ctx, m).
+func (f V2AgentsFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error) {
+	if mv, ok := m.(*ent.V2AgentsMutation); ok {
+		return f(ctx, mv)
+	}
+	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.V2AgentsMutation", m)
 }
 
 // Condition is a hook condition function.

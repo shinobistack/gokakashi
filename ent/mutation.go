@@ -15,7 +15,6 @@ import (
 	"github.com/google/uuid"
 	"github.com/shinobistack/gokakashi/ent/agentlabels"
 	"github.com/shinobistack/gokakashi/ent/agents"
-	"github.com/shinobistack/gokakashi/ent/agentsv2"
 	"github.com/shinobistack/gokakashi/ent/agenttasks"
 	"github.com/shinobistack/gokakashi/ent/integrations"
 	"github.com/shinobistack/gokakashi/ent/integrationtype"
@@ -26,6 +25,7 @@ import (
 	"github.com/shinobistack/gokakashi/ent/scannotify"
 	"github.com/shinobistack/gokakashi/ent/scans"
 	"github.com/shinobistack/gokakashi/ent/schema"
+	"github.com/shinobistack/gokakashi/ent/v2agents"
 )
 
 const (
@@ -40,7 +40,6 @@ const (
 	TypeAgentLabels     = "AgentLabels"
 	TypeAgentTasks      = "AgentTasks"
 	TypeAgents          = "Agents"
-	TypeAgentsV2        = "AgentsV2"
 	TypeIntegrationType = "IntegrationType"
 	TypeIntegrations    = "Integrations"
 	TypePolicies        = "Policies"
@@ -48,6 +47,7 @@ const (
 	TypeScanLabels      = "ScanLabels"
 	TypeScanNotify      = "ScanNotify"
 	TypeScans           = "Scans"
+	TypeV2Agents        = "V2Agents"
 )
 
 // AgentLabelsMutation represents an operation that mutates the AgentLabels nodes in the graph.
@@ -2079,522 +2079,6 @@ func (m *AgentsMutation) ResetEdge(name string) error {
 		return nil
 	}
 	return fmt.Errorf("unknown Agents edge %s", name)
-}
-
-// AgentsV2Mutation represents an operation that mutates the AgentsV2 nodes in the graph.
-type AgentsV2Mutation struct {
-	config
-	op                Op
-	typ               string
-	id                *uuid.UUID
-	status            *string
-	last_heartbeat_at *time.Time
-	created_at        *time.Time
-	updated_at        *time.Time
-	clearedFields     map[string]struct{}
-	done              bool
-	oldValue          func(context.Context) (*AgentsV2, error)
-	predicates        []predicate.AgentsV2
-}
-
-var _ ent.Mutation = (*AgentsV2Mutation)(nil)
-
-// agentsv2Option allows management of the mutation configuration using functional options.
-type agentsv2Option func(*AgentsV2Mutation)
-
-// newAgentsV2Mutation creates new mutation for the AgentsV2 entity.
-func newAgentsV2Mutation(c config, op Op, opts ...agentsv2Option) *AgentsV2Mutation {
-	m := &AgentsV2Mutation{
-		config:        c,
-		op:            op,
-		typ:           TypeAgentsV2,
-		clearedFields: make(map[string]struct{}),
-	}
-	for _, opt := range opts {
-		opt(m)
-	}
-	return m
-}
-
-// withAgentsV2ID sets the ID field of the mutation.
-func withAgentsV2ID(id uuid.UUID) agentsv2Option {
-	return func(m *AgentsV2Mutation) {
-		var (
-			err   error
-			once  sync.Once
-			value *AgentsV2
-		)
-		m.oldValue = func(ctx context.Context) (*AgentsV2, error) {
-			once.Do(func() {
-				if m.done {
-					err = errors.New("querying old values post mutation is not allowed")
-				} else {
-					value, err = m.Client().AgentsV2.Get(ctx, id)
-				}
-			})
-			return value, err
-		}
-		m.id = &id
-	}
-}
-
-// withAgentsV2 sets the old AgentsV2 of the mutation.
-func withAgentsV2(node *AgentsV2) agentsv2Option {
-	return func(m *AgentsV2Mutation) {
-		m.oldValue = func(context.Context) (*AgentsV2, error) {
-			return node, nil
-		}
-		m.id = &node.ID
-	}
-}
-
-// Client returns a new `ent.Client` from the mutation. If the mutation was
-// executed in a transaction (ent.Tx), a transactional client is returned.
-func (m AgentsV2Mutation) Client() *Client {
-	client := &Client{config: m.config}
-	client.init()
-	return client
-}
-
-// Tx returns an `ent.Tx` for mutations that were executed in transactions;
-// it returns an error otherwise.
-func (m AgentsV2Mutation) Tx() (*Tx, error) {
-	if _, ok := m.driver.(*txDriver); !ok {
-		return nil, errors.New("ent: mutation is not running in a transaction")
-	}
-	tx := &Tx{config: m.config}
-	tx.init()
-	return tx, nil
-}
-
-// SetID sets the value of the id field. Note that this
-// operation is only accepted on creation of AgentsV2 entities.
-func (m *AgentsV2Mutation) SetID(id uuid.UUID) {
-	m.id = &id
-}
-
-// ID returns the ID value in the mutation. Note that the ID is only available
-// if it was provided to the builder or after it was returned from the database.
-func (m *AgentsV2Mutation) ID() (id uuid.UUID, exists bool) {
-	if m.id == nil {
-		return
-	}
-	return *m.id, true
-}
-
-// IDs queries the database and returns the entity ids that match the mutation's predicate.
-// That means, if the mutation is applied within a transaction with an isolation level such
-// as sql.LevelSerializable, the returned ids match the ids of the rows that will be updated
-// or updated by the mutation.
-func (m *AgentsV2Mutation) IDs(ctx context.Context) ([]uuid.UUID, error) {
-	switch {
-	case m.op.Is(OpUpdateOne | OpDeleteOne):
-		id, exists := m.ID()
-		if exists {
-			return []uuid.UUID{id}, nil
-		}
-		fallthrough
-	case m.op.Is(OpUpdate | OpDelete):
-		return m.Client().AgentsV2.Query().Where(m.predicates...).IDs(ctx)
-	default:
-		return nil, fmt.Errorf("IDs is not allowed on %s operations", m.op)
-	}
-}
-
-// SetStatus sets the "status" field.
-func (m *AgentsV2Mutation) SetStatus(s string) {
-	m.status = &s
-}
-
-// Status returns the value of the "status" field in the mutation.
-func (m *AgentsV2Mutation) Status() (r string, exists bool) {
-	v := m.status
-	if v == nil {
-		return
-	}
-	return *v, true
-}
-
-// OldStatus returns the old "status" field's value of the AgentsV2 entity.
-// If the AgentsV2 object wasn't provided to the builder, the object is fetched from the database.
-// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *AgentsV2Mutation) OldStatus(ctx context.Context) (v string, err error) {
-	if !m.op.Is(OpUpdateOne) {
-		return v, errors.New("OldStatus is only allowed on UpdateOne operations")
-	}
-	if m.id == nil || m.oldValue == nil {
-		return v, errors.New("OldStatus requires an ID field in the mutation")
-	}
-	oldValue, err := m.oldValue(ctx)
-	if err != nil {
-		return v, fmt.Errorf("querying old value for OldStatus: %w", err)
-	}
-	return oldValue.Status, nil
-}
-
-// ResetStatus resets all changes to the "status" field.
-func (m *AgentsV2Mutation) ResetStatus() {
-	m.status = nil
-}
-
-// SetLastHeartbeatAt sets the "last_heartbeat_at" field.
-func (m *AgentsV2Mutation) SetLastHeartbeatAt(t time.Time) {
-	m.last_heartbeat_at = &t
-}
-
-// LastHeartbeatAt returns the value of the "last_heartbeat_at" field in the mutation.
-func (m *AgentsV2Mutation) LastHeartbeatAt() (r time.Time, exists bool) {
-	v := m.last_heartbeat_at
-	if v == nil {
-		return
-	}
-	return *v, true
-}
-
-// OldLastHeartbeatAt returns the old "last_heartbeat_at" field's value of the AgentsV2 entity.
-// If the AgentsV2 object wasn't provided to the builder, the object is fetched from the database.
-// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *AgentsV2Mutation) OldLastHeartbeatAt(ctx context.Context) (v time.Time, err error) {
-	if !m.op.Is(OpUpdateOne) {
-		return v, errors.New("OldLastHeartbeatAt is only allowed on UpdateOne operations")
-	}
-	if m.id == nil || m.oldValue == nil {
-		return v, errors.New("OldLastHeartbeatAt requires an ID field in the mutation")
-	}
-	oldValue, err := m.oldValue(ctx)
-	if err != nil {
-		return v, fmt.Errorf("querying old value for OldLastHeartbeatAt: %w", err)
-	}
-	return oldValue.LastHeartbeatAt, nil
-}
-
-// ClearLastHeartbeatAt clears the value of the "last_heartbeat_at" field.
-func (m *AgentsV2Mutation) ClearLastHeartbeatAt() {
-	m.last_heartbeat_at = nil
-	m.clearedFields[agentsv2.FieldLastHeartbeatAt] = struct{}{}
-}
-
-// LastHeartbeatAtCleared returns if the "last_heartbeat_at" field was cleared in this mutation.
-func (m *AgentsV2Mutation) LastHeartbeatAtCleared() bool {
-	_, ok := m.clearedFields[agentsv2.FieldLastHeartbeatAt]
-	return ok
-}
-
-// ResetLastHeartbeatAt resets all changes to the "last_heartbeat_at" field.
-func (m *AgentsV2Mutation) ResetLastHeartbeatAt() {
-	m.last_heartbeat_at = nil
-	delete(m.clearedFields, agentsv2.FieldLastHeartbeatAt)
-}
-
-// SetCreatedAt sets the "created_at" field.
-func (m *AgentsV2Mutation) SetCreatedAt(t time.Time) {
-	m.created_at = &t
-}
-
-// CreatedAt returns the value of the "created_at" field in the mutation.
-func (m *AgentsV2Mutation) CreatedAt() (r time.Time, exists bool) {
-	v := m.created_at
-	if v == nil {
-		return
-	}
-	return *v, true
-}
-
-// OldCreatedAt returns the old "created_at" field's value of the AgentsV2 entity.
-// If the AgentsV2 object wasn't provided to the builder, the object is fetched from the database.
-// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *AgentsV2Mutation) OldCreatedAt(ctx context.Context) (v time.Time, err error) {
-	if !m.op.Is(OpUpdateOne) {
-		return v, errors.New("OldCreatedAt is only allowed on UpdateOne operations")
-	}
-	if m.id == nil || m.oldValue == nil {
-		return v, errors.New("OldCreatedAt requires an ID field in the mutation")
-	}
-	oldValue, err := m.oldValue(ctx)
-	if err != nil {
-		return v, fmt.Errorf("querying old value for OldCreatedAt: %w", err)
-	}
-	return oldValue.CreatedAt, nil
-}
-
-// ResetCreatedAt resets all changes to the "created_at" field.
-func (m *AgentsV2Mutation) ResetCreatedAt() {
-	m.created_at = nil
-}
-
-// SetUpdatedAt sets the "updated_at" field.
-func (m *AgentsV2Mutation) SetUpdatedAt(t time.Time) {
-	m.updated_at = &t
-}
-
-// UpdatedAt returns the value of the "updated_at" field in the mutation.
-func (m *AgentsV2Mutation) UpdatedAt() (r time.Time, exists bool) {
-	v := m.updated_at
-	if v == nil {
-		return
-	}
-	return *v, true
-}
-
-// OldUpdatedAt returns the old "updated_at" field's value of the AgentsV2 entity.
-// If the AgentsV2 object wasn't provided to the builder, the object is fetched from the database.
-// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *AgentsV2Mutation) OldUpdatedAt(ctx context.Context) (v time.Time, err error) {
-	if !m.op.Is(OpUpdateOne) {
-		return v, errors.New("OldUpdatedAt is only allowed on UpdateOne operations")
-	}
-	if m.id == nil || m.oldValue == nil {
-		return v, errors.New("OldUpdatedAt requires an ID field in the mutation")
-	}
-	oldValue, err := m.oldValue(ctx)
-	if err != nil {
-		return v, fmt.Errorf("querying old value for OldUpdatedAt: %w", err)
-	}
-	return oldValue.UpdatedAt, nil
-}
-
-// ResetUpdatedAt resets all changes to the "updated_at" field.
-func (m *AgentsV2Mutation) ResetUpdatedAt() {
-	m.updated_at = nil
-}
-
-// Where appends a list predicates to the AgentsV2Mutation builder.
-func (m *AgentsV2Mutation) Where(ps ...predicate.AgentsV2) {
-	m.predicates = append(m.predicates, ps...)
-}
-
-// WhereP appends storage-level predicates to the AgentsV2Mutation builder. Using this method,
-// users can use type-assertion to append predicates that do not depend on any generated package.
-func (m *AgentsV2Mutation) WhereP(ps ...func(*sql.Selector)) {
-	p := make([]predicate.AgentsV2, len(ps))
-	for i := range ps {
-		p[i] = ps[i]
-	}
-	m.Where(p...)
-}
-
-// Op returns the operation name.
-func (m *AgentsV2Mutation) Op() Op {
-	return m.op
-}
-
-// SetOp allows setting the mutation operation.
-func (m *AgentsV2Mutation) SetOp(op Op) {
-	m.op = op
-}
-
-// Type returns the node type of this mutation (AgentsV2).
-func (m *AgentsV2Mutation) Type() string {
-	return m.typ
-}
-
-// Fields returns all fields that were changed during this mutation. Note that in
-// order to get all numeric fields that were incremented/decremented, call
-// AddedFields().
-func (m *AgentsV2Mutation) Fields() []string {
-	fields := make([]string, 0, 4)
-	if m.status != nil {
-		fields = append(fields, agentsv2.FieldStatus)
-	}
-	if m.last_heartbeat_at != nil {
-		fields = append(fields, agentsv2.FieldLastHeartbeatAt)
-	}
-	if m.created_at != nil {
-		fields = append(fields, agentsv2.FieldCreatedAt)
-	}
-	if m.updated_at != nil {
-		fields = append(fields, agentsv2.FieldUpdatedAt)
-	}
-	return fields
-}
-
-// Field returns the value of a field with the given name. The second boolean
-// return value indicates that this field was not set, or was not defined in the
-// schema.
-func (m *AgentsV2Mutation) Field(name string) (ent.Value, bool) {
-	switch name {
-	case agentsv2.FieldStatus:
-		return m.Status()
-	case agentsv2.FieldLastHeartbeatAt:
-		return m.LastHeartbeatAt()
-	case agentsv2.FieldCreatedAt:
-		return m.CreatedAt()
-	case agentsv2.FieldUpdatedAt:
-		return m.UpdatedAt()
-	}
-	return nil, false
-}
-
-// OldField returns the old value of the field from the database. An error is
-// returned if the mutation operation is not UpdateOne, or the query to the
-// database failed.
-func (m *AgentsV2Mutation) OldField(ctx context.Context, name string) (ent.Value, error) {
-	switch name {
-	case agentsv2.FieldStatus:
-		return m.OldStatus(ctx)
-	case agentsv2.FieldLastHeartbeatAt:
-		return m.OldLastHeartbeatAt(ctx)
-	case agentsv2.FieldCreatedAt:
-		return m.OldCreatedAt(ctx)
-	case agentsv2.FieldUpdatedAt:
-		return m.OldUpdatedAt(ctx)
-	}
-	return nil, fmt.Errorf("unknown AgentsV2 field %s", name)
-}
-
-// SetField sets the value of a field with the given name. It returns an error if
-// the field is not defined in the schema, or if the type mismatched the field
-// type.
-func (m *AgentsV2Mutation) SetField(name string, value ent.Value) error {
-	switch name {
-	case agentsv2.FieldStatus:
-		v, ok := value.(string)
-		if !ok {
-			return fmt.Errorf("unexpected type %T for field %s", value, name)
-		}
-		m.SetStatus(v)
-		return nil
-	case agentsv2.FieldLastHeartbeatAt:
-		v, ok := value.(time.Time)
-		if !ok {
-			return fmt.Errorf("unexpected type %T for field %s", value, name)
-		}
-		m.SetLastHeartbeatAt(v)
-		return nil
-	case agentsv2.FieldCreatedAt:
-		v, ok := value.(time.Time)
-		if !ok {
-			return fmt.Errorf("unexpected type %T for field %s", value, name)
-		}
-		m.SetCreatedAt(v)
-		return nil
-	case agentsv2.FieldUpdatedAt:
-		v, ok := value.(time.Time)
-		if !ok {
-			return fmt.Errorf("unexpected type %T for field %s", value, name)
-		}
-		m.SetUpdatedAt(v)
-		return nil
-	}
-	return fmt.Errorf("unknown AgentsV2 field %s", name)
-}
-
-// AddedFields returns all numeric fields that were incremented/decremented during
-// this mutation.
-func (m *AgentsV2Mutation) AddedFields() []string {
-	return nil
-}
-
-// AddedField returns the numeric value that was incremented/decremented on a field
-// with the given name. The second boolean return value indicates that this field
-// was not set, or was not defined in the schema.
-func (m *AgentsV2Mutation) AddedField(name string) (ent.Value, bool) {
-	return nil, false
-}
-
-// AddField adds the value to the field with the given name. It returns an error if
-// the field is not defined in the schema, or if the type mismatched the field
-// type.
-func (m *AgentsV2Mutation) AddField(name string, value ent.Value) error {
-	switch name {
-	}
-	return fmt.Errorf("unknown AgentsV2 numeric field %s", name)
-}
-
-// ClearedFields returns all nullable fields that were cleared during this
-// mutation.
-func (m *AgentsV2Mutation) ClearedFields() []string {
-	var fields []string
-	if m.FieldCleared(agentsv2.FieldLastHeartbeatAt) {
-		fields = append(fields, agentsv2.FieldLastHeartbeatAt)
-	}
-	return fields
-}
-
-// FieldCleared returns a boolean indicating if a field with the given name was
-// cleared in this mutation.
-func (m *AgentsV2Mutation) FieldCleared(name string) bool {
-	_, ok := m.clearedFields[name]
-	return ok
-}
-
-// ClearField clears the value of the field with the given name. It returns an
-// error if the field is not defined in the schema.
-func (m *AgentsV2Mutation) ClearField(name string) error {
-	switch name {
-	case agentsv2.FieldLastHeartbeatAt:
-		m.ClearLastHeartbeatAt()
-		return nil
-	}
-	return fmt.Errorf("unknown AgentsV2 nullable field %s", name)
-}
-
-// ResetField resets all changes in the mutation for the field with the given name.
-// It returns an error if the field is not defined in the schema.
-func (m *AgentsV2Mutation) ResetField(name string) error {
-	switch name {
-	case agentsv2.FieldStatus:
-		m.ResetStatus()
-		return nil
-	case agentsv2.FieldLastHeartbeatAt:
-		m.ResetLastHeartbeatAt()
-		return nil
-	case agentsv2.FieldCreatedAt:
-		m.ResetCreatedAt()
-		return nil
-	case agentsv2.FieldUpdatedAt:
-		m.ResetUpdatedAt()
-		return nil
-	}
-	return fmt.Errorf("unknown AgentsV2 field %s", name)
-}
-
-// AddedEdges returns all edge names that were set/added in this mutation.
-func (m *AgentsV2Mutation) AddedEdges() []string {
-	edges := make([]string, 0, 0)
-	return edges
-}
-
-// AddedIDs returns all IDs (to other nodes) that were added for the given edge
-// name in this mutation.
-func (m *AgentsV2Mutation) AddedIDs(name string) []ent.Value {
-	return nil
-}
-
-// RemovedEdges returns all edge names that were removed in this mutation.
-func (m *AgentsV2Mutation) RemovedEdges() []string {
-	edges := make([]string, 0, 0)
-	return edges
-}
-
-// RemovedIDs returns all IDs (to other nodes) that were removed for the edge with
-// the given name in this mutation.
-func (m *AgentsV2Mutation) RemovedIDs(name string) []ent.Value {
-	return nil
-}
-
-// ClearedEdges returns all edge names that were cleared in this mutation.
-func (m *AgentsV2Mutation) ClearedEdges() []string {
-	edges := make([]string, 0, 0)
-	return edges
-}
-
-// EdgeCleared returns a boolean which indicates if the edge with the given name
-// was cleared in this mutation.
-func (m *AgentsV2Mutation) EdgeCleared(name string) bool {
-	return false
-}
-
-// ClearEdge clears the value of the edge with the given name. It returns an error
-// if that edge is not defined in the schema.
-func (m *AgentsV2Mutation) ClearEdge(name string) error {
-	return fmt.Errorf("unknown AgentsV2 unique edge %s", name)
-}
-
-// ResetEdge resets all changes to the edge with the given name in this mutation.
-// It returns an error if the edge is not defined in the schema.
-func (m *AgentsV2Mutation) ResetEdge(name string) error {
-	return fmt.Errorf("unknown AgentsV2 edge %s", name)
 }
 
 // IntegrationTypeMutation represents an operation that mutates the IntegrationType nodes in the graph.
@@ -7103,4 +6587,520 @@ func (m *ScansMutation) ResetEdge(name string) error {
 		return nil
 	}
 	return fmt.Errorf("unknown Scans edge %s", name)
+}
+
+// V2AgentsMutation represents an operation that mutates the V2Agents nodes in the graph.
+type V2AgentsMutation struct {
+	config
+	op                Op
+	typ               string
+	id                *uuid.UUID
+	status            *string
+	last_heartbeat_at *time.Time
+	created_at        *time.Time
+	updated_at        *time.Time
+	clearedFields     map[string]struct{}
+	done              bool
+	oldValue          func(context.Context) (*V2Agents, error)
+	predicates        []predicate.V2Agents
+}
+
+var _ ent.Mutation = (*V2AgentsMutation)(nil)
+
+// v2agentsOption allows management of the mutation configuration using functional options.
+type v2agentsOption func(*V2AgentsMutation)
+
+// newV2AgentsMutation creates new mutation for the V2Agents entity.
+func newV2AgentsMutation(c config, op Op, opts ...v2agentsOption) *V2AgentsMutation {
+	m := &V2AgentsMutation{
+		config:        c,
+		op:            op,
+		typ:           TypeV2Agents,
+		clearedFields: make(map[string]struct{}),
+	}
+	for _, opt := range opts {
+		opt(m)
+	}
+	return m
+}
+
+// withV2AgentsID sets the ID field of the mutation.
+func withV2AgentsID(id uuid.UUID) v2agentsOption {
+	return func(m *V2AgentsMutation) {
+		var (
+			err   error
+			once  sync.Once
+			value *V2Agents
+		)
+		m.oldValue = func(ctx context.Context) (*V2Agents, error) {
+			once.Do(func() {
+				if m.done {
+					err = errors.New("querying old values post mutation is not allowed")
+				} else {
+					value, err = m.Client().V2Agents.Get(ctx, id)
+				}
+			})
+			return value, err
+		}
+		m.id = &id
+	}
+}
+
+// withV2Agents sets the old V2Agents of the mutation.
+func withV2Agents(node *V2Agents) v2agentsOption {
+	return func(m *V2AgentsMutation) {
+		m.oldValue = func(context.Context) (*V2Agents, error) {
+			return node, nil
+		}
+		m.id = &node.ID
+	}
+}
+
+// Client returns a new `ent.Client` from the mutation. If the mutation was
+// executed in a transaction (ent.Tx), a transactional client is returned.
+func (m V2AgentsMutation) Client() *Client {
+	client := &Client{config: m.config}
+	client.init()
+	return client
+}
+
+// Tx returns an `ent.Tx` for mutations that were executed in transactions;
+// it returns an error otherwise.
+func (m V2AgentsMutation) Tx() (*Tx, error) {
+	if _, ok := m.driver.(*txDriver); !ok {
+		return nil, errors.New("ent: mutation is not running in a transaction")
+	}
+	tx := &Tx{config: m.config}
+	tx.init()
+	return tx, nil
+}
+
+// SetID sets the value of the id field. Note that this
+// operation is only accepted on creation of V2Agents entities.
+func (m *V2AgentsMutation) SetID(id uuid.UUID) {
+	m.id = &id
+}
+
+// ID returns the ID value in the mutation. Note that the ID is only available
+// if it was provided to the builder or after it was returned from the database.
+func (m *V2AgentsMutation) ID() (id uuid.UUID, exists bool) {
+	if m.id == nil {
+		return
+	}
+	return *m.id, true
+}
+
+// IDs queries the database and returns the entity ids that match the mutation's predicate.
+// That means, if the mutation is applied within a transaction with an isolation level such
+// as sql.LevelSerializable, the returned ids match the ids of the rows that will be updated
+// or updated by the mutation.
+func (m *V2AgentsMutation) IDs(ctx context.Context) ([]uuid.UUID, error) {
+	switch {
+	case m.op.Is(OpUpdateOne | OpDeleteOne):
+		id, exists := m.ID()
+		if exists {
+			return []uuid.UUID{id}, nil
+		}
+		fallthrough
+	case m.op.Is(OpUpdate | OpDelete):
+		return m.Client().V2Agents.Query().Where(m.predicates...).IDs(ctx)
+	default:
+		return nil, fmt.Errorf("IDs is not allowed on %s operations", m.op)
+	}
+}
+
+// SetStatus sets the "status" field.
+func (m *V2AgentsMutation) SetStatus(s string) {
+	m.status = &s
+}
+
+// Status returns the value of the "status" field in the mutation.
+func (m *V2AgentsMutation) Status() (r string, exists bool) {
+	v := m.status
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldStatus returns the old "status" field's value of the V2Agents entity.
+// If the V2Agents object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *V2AgentsMutation) OldStatus(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldStatus is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldStatus requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldStatus: %w", err)
+	}
+	return oldValue.Status, nil
+}
+
+// ResetStatus resets all changes to the "status" field.
+func (m *V2AgentsMutation) ResetStatus() {
+	m.status = nil
+}
+
+// SetLastHeartbeatAt sets the "last_heartbeat_at" field.
+func (m *V2AgentsMutation) SetLastHeartbeatAt(t time.Time) {
+	m.last_heartbeat_at = &t
+}
+
+// LastHeartbeatAt returns the value of the "last_heartbeat_at" field in the mutation.
+func (m *V2AgentsMutation) LastHeartbeatAt() (r time.Time, exists bool) {
+	v := m.last_heartbeat_at
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldLastHeartbeatAt returns the old "last_heartbeat_at" field's value of the V2Agents entity.
+// If the V2Agents object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *V2AgentsMutation) OldLastHeartbeatAt(ctx context.Context) (v time.Time, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldLastHeartbeatAt is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldLastHeartbeatAt requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldLastHeartbeatAt: %w", err)
+	}
+	return oldValue.LastHeartbeatAt, nil
+}
+
+// ClearLastHeartbeatAt clears the value of the "last_heartbeat_at" field.
+func (m *V2AgentsMutation) ClearLastHeartbeatAt() {
+	m.last_heartbeat_at = nil
+	m.clearedFields[v2agents.FieldLastHeartbeatAt] = struct{}{}
+}
+
+// LastHeartbeatAtCleared returns if the "last_heartbeat_at" field was cleared in this mutation.
+func (m *V2AgentsMutation) LastHeartbeatAtCleared() bool {
+	_, ok := m.clearedFields[v2agents.FieldLastHeartbeatAt]
+	return ok
+}
+
+// ResetLastHeartbeatAt resets all changes to the "last_heartbeat_at" field.
+func (m *V2AgentsMutation) ResetLastHeartbeatAt() {
+	m.last_heartbeat_at = nil
+	delete(m.clearedFields, v2agents.FieldLastHeartbeatAt)
+}
+
+// SetCreatedAt sets the "created_at" field.
+func (m *V2AgentsMutation) SetCreatedAt(t time.Time) {
+	m.created_at = &t
+}
+
+// CreatedAt returns the value of the "created_at" field in the mutation.
+func (m *V2AgentsMutation) CreatedAt() (r time.Time, exists bool) {
+	v := m.created_at
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldCreatedAt returns the old "created_at" field's value of the V2Agents entity.
+// If the V2Agents object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *V2AgentsMutation) OldCreatedAt(ctx context.Context) (v time.Time, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldCreatedAt is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldCreatedAt requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldCreatedAt: %w", err)
+	}
+	return oldValue.CreatedAt, nil
+}
+
+// ResetCreatedAt resets all changes to the "created_at" field.
+func (m *V2AgentsMutation) ResetCreatedAt() {
+	m.created_at = nil
+}
+
+// SetUpdatedAt sets the "updated_at" field.
+func (m *V2AgentsMutation) SetUpdatedAt(t time.Time) {
+	m.updated_at = &t
+}
+
+// UpdatedAt returns the value of the "updated_at" field in the mutation.
+func (m *V2AgentsMutation) UpdatedAt() (r time.Time, exists bool) {
+	v := m.updated_at
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldUpdatedAt returns the old "updated_at" field's value of the V2Agents entity.
+// If the V2Agents object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *V2AgentsMutation) OldUpdatedAt(ctx context.Context) (v time.Time, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldUpdatedAt is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldUpdatedAt requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldUpdatedAt: %w", err)
+	}
+	return oldValue.UpdatedAt, nil
+}
+
+// ResetUpdatedAt resets all changes to the "updated_at" field.
+func (m *V2AgentsMutation) ResetUpdatedAt() {
+	m.updated_at = nil
+}
+
+// Where appends a list predicates to the V2AgentsMutation builder.
+func (m *V2AgentsMutation) Where(ps ...predicate.V2Agents) {
+	m.predicates = append(m.predicates, ps...)
+}
+
+// WhereP appends storage-level predicates to the V2AgentsMutation builder. Using this method,
+// users can use type-assertion to append predicates that do not depend on any generated package.
+func (m *V2AgentsMutation) WhereP(ps ...func(*sql.Selector)) {
+	p := make([]predicate.V2Agents, len(ps))
+	for i := range ps {
+		p[i] = ps[i]
+	}
+	m.Where(p...)
+}
+
+// Op returns the operation name.
+func (m *V2AgentsMutation) Op() Op {
+	return m.op
+}
+
+// SetOp allows setting the mutation operation.
+func (m *V2AgentsMutation) SetOp(op Op) {
+	m.op = op
+}
+
+// Type returns the node type of this mutation (V2Agents).
+func (m *V2AgentsMutation) Type() string {
+	return m.typ
+}
+
+// Fields returns all fields that were changed during this mutation. Note that in
+// order to get all numeric fields that were incremented/decremented, call
+// AddedFields().
+func (m *V2AgentsMutation) Fields() []string {
+	fields := make([]string, 0, 4)
+	if m.status != nil {
+		fields = append(fields, v2agents.FieldStatus)
+	}
+	if m.last_heartbeat_at != nil {
+		fields = append(fields, v2agents.FieldLastHeartbeatAt)
+	}
+	if m.created_at != nil {
+		fields = append(fields, v2agents.FieldCreatedAt)
+	}
+	if m.updated_at != nil {
+		fields = append(fields, v2agents.FieldUpdatedAt)
+	}
+	return fields
+}
+
+// Field returns the value of a field with the given name. The second boolean
+// return value indicates that this field was not set, or was not defined in the
+// schema.
+func (m *V2AgentsMutation) Field(name string) (ent.Value, bool) {
+	switch name {
+	case v2agents.FieldStatus:
+		return m.Status()
+	case v2agents.FieldLastHeartbeatAt:
+		return m.LastHeartbeatAt()
+	case v2agents.FieldCreatedAt:
+		return m.CreatedAt()
+	case v2agents.FieldUpdatedAt:
+		return m.UpdatedAt()
+	}
+	return nil, false
+}
+
+// OldField returns the old value of the field from the database. An error is
+// returned if the mutation operation is not UpdateOne, or the query to the
+// database failed.
+func (m *V2AgentsMutation) OldField(ctx context.Context, name string) (ent.Value, error) {
+	switch name {
+	case v2agents.FieldStatus:
+		return m.OldStatus(ctx)
+	case v2agents.FieldLastHeartbeatAt:
+		return m.OldLastHeartbeatAt(ctx)
+	case v2agents.FieldCreatedAt:
+		return m.OldCreatedAt(ctx)
+	case v2agents.FieldUpdatedAt:
+		return m.OldUpdatedAt(ctx)
+	}
+	return nil, fmt.Errorf("unknown V2Agents field %s", name)
+}
+
+// SetField sets the value of a field with the given name. It returns an error if
+// the field is not defined in the schema, or if the type mismatched the field
+// type.
+func (m *V2AgentsMutation) SetField(name string, value ent.Value) error {
+	switch name {
+	case v2agents.FieldStatus:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetStatus(v)
+		return nil
+	case v2agents.FieldLastHeartbeatAt:
+		v, ok := value.(time.Time)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetLastHeartbeatAt(v)
+		return nil
+	case v2agents.FieldCreatedAt:
+		v, ok := value.(time.Time)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetCreatedAt(v)
+		return nil
+	case v2agents.FieldUpdatedAt:
+		v, ok := value.(time.Time)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetUpdatedAt(v)
+		return nil
+	}
+	return fmt.Errorf("unknown V2Agents field %s", name)
+}
+
+// AddedFields returns all numeric fields that were incremented/decremented during
+// this mutation.
+func (m *V2AgentsMutation) AddedFields() []string {
+	return nil
+}
+
+// AddedField returns the numeric value that was incremented/decremented on a field
+// with the given name. The second boolean return value indicates that this field
+// was not set, or was not defined in the schema.
+func (m *V2AgentsMutation) AddedField(name string) (ent.Value, bool) {
+	return nil, false
+}
+
+// AddField adds the value to the field with the given name. It returns an error if
+// the field is not defined in the schema, or if the type mismatched the field
+// type.
+func (m *V2AgentsMutation) AddField(name string, value ent.Value) error {
+	switch name {
+	}
+	return fmt.Errorf("unknown V2Agents numeric field %s", name)
+}
+
+// ClearedFields returns all nullable fields that were cleared during this
+// mutation.
+func (m *V2AgentsMutation) ClearedFields() []string {
+	var fields []string
+	if m.FieldCleared(v2agents.FieldLastHeartbeatAt) {
+		fields = append(fields, v2agents.FieldLastHeartbeatAt)
+	}
+	return fields
+}
+
+// FieldCleared returns a boolean indicating if a field with the given name was
+// cleared in this mutation.
+func (m *V2AgentsMutation) FieldCleared(name string) bool {
+	_, ok := m.clearedFields[name]
+	return ok
+}
+
+// ClearField clears the value of the field with the given name. It returns an
+// error if the field is not defined in the schema.
+func (m *V2AgentsMutation) ClearField(name string) error {
+	switch name {
+	case v2agents.FieldLastHeartbeatAt:
+		m.ClearLastHeartbeatAt()
+		return nil
+	}
+	return fmt.Errorf("unknown V2Agents nullable field %s", name)
+}
+
+// ResetField resets all changes in the mutation for the field with the given name.
+// It returns an error if the field is not defined in the schema.
+func (m *V2AgentsMutation) ResetField(name string) error {
+	switch name {
+	case v2agents.FieldStatus:
+		m.ResetStatus()
+		return nil
+	case v2agents.FieldLastHeartbeatAt:
+		m.ResetLastHeartbeatAt()
+		return nil
+	case v2agents.FieldCreatedAt:
+		m.ResetCreatedAt()
+		return nil
+	case v2agents.FieldUpdatedAt:
+		m.ResetUpdatedAt()
+		return nil
+	}
+	return fmt.Errorf("unknown V2Agents field %s", name)
+}
+
+// AddedEdges returns all edge names that were set/added in this mutation.
+func (m *V2AgentsMutation) AddedEdges() []string {
+	edges := make([]string, 0, 0)
+	return edges
+}
+
+// AddedIDs returns all IDs (to other nodes) that were added for the given edge
+// name in this mutation.
+func (m *V2AgentsMutation) AddedIDs(name string) []ent.Value {
+	return nil
+}
+
+// RemovedEdges returns all edge names that were removed in this mutation.
+func (m *V2AgentsMutation) RemovedEdges() []string {
+	edges := make([]string, 0, 0)
+	return edges
+}
+
+// RemovedIDs returns all IDs (to other nodes) that were removed for the edge with
+// the given name in this mutation.
+func (m *V2AgentsMutation) RemovedIDs(name string) []ent.Value {
+	return nil
+}
+
+// ClearedEdges returns all edge names that were cleared in this mutation.
+func (m *V2AgentsMutation) ClearedEdges() []string {
+	edges := make([]string, 0, 0)
+	return edges
+}
+
+// EdgeCleared returns a boolean which indicates if the edge with the given name
+// was cleared in this mutation.
+func (m *V2AgentsMutation) EdgeCleared(name string) bool {
+	return false
+}
+
+// ClearEdge clears the value of the edge with the given name. It returns an error
+// if that edge is not defined in the schema.
+func (m *V2AgentsMutation) ClearEdge(name string) error {
+	return fmt.Errorf("unknown V2Agents unique edge %s", name)
+}
+
+// ResetEdge resets all changes to the edge with the given name in this mutation.
+// It returns an error if the edge is not defined in the schema.
+func (m *V2AgentsMutation) ResetEdge(name string) error {
+	return fmt.Errorf("unknown V2Agents edge %s", name)
 }
