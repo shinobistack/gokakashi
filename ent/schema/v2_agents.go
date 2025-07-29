@@ -5,6 +5,8 @@ import (
 	"time"
 
 	"entgo.io/ent"
+	"entgo.io/ent/dialect/entsql"
+	"entgo.io/ent/schema"
 	"entgo.io/ent/schema/field"
 	"github.com/google/uuid"
 	"github.com/shinobistack/gokakashi/internal/agent"
@@ -49,6 +51,9 @@ func (V2Agents) Edges() []ent.Edge {
 	return nil
 }
 
-func (V2Agents) Table() string {
-	return "v2_agents"
+// Annotations of the Agents.
+func (V2Agents) Annotations() []schema.Annotation {
+	return []schema.Annotation{
+		entsql.Annotation{Table: "v2_agents"},
+	}
 }
