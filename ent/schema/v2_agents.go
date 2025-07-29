@@ -48,3 +48,7 @@ func (V2Agents) Fields() []ent.Field {
 func (V2Agents) Edges() []ent.Edge {
 	return nil
 }
+
+func (V2Agents) Table() string {
+	return "v2_agents"
+}
