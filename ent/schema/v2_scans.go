@@ -2,6 +2,7 @@ package schema
 
 import (
 	"strings"
+	"time"
 
 	"entgo.io/ent"
 	"entgo.io/ent/schema/field"
@@ -33,6 +34,14 @@ func (V2Scans) Fields() []ent.Field {
 		field.JSON("labels", map[string]string{}).
 			Optional().
 			Comment("Scan labels key:value"),
+
+		field.Time("created_at").
+			Default(time.Now).
+			Comment("Scan creation time"),
+		field.Time("updated_at").
+			Default(time.Now).
+			UpdateDefault(time.Now).
+			Comment("Scan update time"),
 	}
 }
 
