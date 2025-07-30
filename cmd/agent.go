@@ -84,7 +84,7 @@ var agentStartCmd = &cobra.Command{
 			if err != nil {
 				log.Fatalf("Failed to create gokakashi API client: %v", err)
 			}
-			if err := agent.New(gokakashiAPIClient).Start(); err != nil {
+			if err := agent.New(gokakashiAPIClient).Start(cmd.Context()); err != nil {
 				log.Fatalf("Failed to start agent: %v", err)
 			}
 			return
