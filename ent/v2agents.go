@@ -19,7 +19,7 @@ type V2Agents struct {
 	// ID of the ent.
 	// Primary key
 	ID uuid.UUID `json:"id,omitempty"`
-	// Enum: connected, scan_in_progress, disconnected
+	// Enum: connected, scan_in_progress, disconnected, lost
 	Status string `json:"status,omitempty"`
 	// Timestamp of the agent's liveliness.
 	LastHeartbeatAt time.Time `json:"last_heartbeat_at,omitempty"`

@@ -1,40 +1,15 @@
 package agent
 
-import (
-	"errors"
-	"slices"
-)
+import "fmt"
 
-type Status string
+type Agent struct{}
 
-const (
-	Connected      Status = "connected"
-	ScanInProgress Status = "scan_in_progress"
-	Disconnected   Status = "disconnected"
-)
-
-var ErrInvalidAgentStatus = errors.New("invalid agent status")
-
-func validStatuses() []Status {
-	return []Status{
-		Connected,
-		ScanInProgress,
-		Disconnected,
-	}
+func New() *Agent {
+	return &Agent{}
 }
 
-func Statuses() []string {
-	statuses := validStatuses()
-	result := make([]string, len(statuses))
-	for i, s := range statuses {
-		result[i] = string(s)
-	}
-	return result
-}
+func (a *Agent) Start() error {
+	fmt.Println("TODO: implement v2 agent start logic")
 
-func ValidateStatus(s string) error {
-	if !slices.Contains(validStatuses(), Status(s)) {
-		return ErrInvalidAgentStatus
-	}
 	return nil
 }

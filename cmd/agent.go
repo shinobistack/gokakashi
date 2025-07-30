@@ -18,6 +18,8 @@ import (
 	"time"
 
 	"github.com/shinobistack/gokakashi/ent/schema"
+	"github.com/shinobistack/gokakashi/internal/agent"
+	"github.com/shinobistack/gokakashi/internal/experiment"
 	"github.com/shinobistack/gokakashi/internal/helper"
 
 	"github.com/google/uuid"
@@ -71,7 +73,16 @@ var agentCmd = &cobra.Command{
 var agentStartCmd = &cobra.Command{
 	Use:   "start",
 	Short: "Register an agent and start polling for tasks",
-	Run:   agentRegister,
+	Run: func(cmd *cobra.Command, args []string) {
+		if experiment.Enabled(experiment.V2Agents) {
+			if err := agent.New().Start(); err != nil {
+				log.Fatalf("Failed to start agent: %v", err)
+			}
+			return
+		}
+
+		agentRegister(cmd, args)
+	},
 }
 
 var agentStopCmd = &cobra.Command{
