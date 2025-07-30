@@ -130,6 +130,7 @@ func (srv *Server) Service() *web.Service {
 	apiV1.Delete("/scannotify/{scan_id}", usecase.NewInteractor(scannotify1.DeleteScanNotify(srv.DB)))
 
 	apiV2.Post("/agents", usecase.NewInteractor(v2agents.Register(srv.DB)))
+	apiV2.Patch("/agents/{agent_id}/heartbeat", usecase.NewInteractor(v2agents.Heartbeat(srv.DB)))
 
 	s.Use(cors.New(cors.Options{
 		AllowedOrigins: []string{"http://localhost:5555"},
