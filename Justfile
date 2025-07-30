@@ -1,4 +1,5 @@
-# Justfile for dev and clean docker compose commands
+set dotenv-load := true
+set dotenv-filename := "docker-compose/.env"
 
 # Run development docker compose
 # Usage: just dev
@@ -9,3 +10,6 @@ dev:
 # Usage: just clean
 clean:
     docker compose -f docker-compose/base.yaml -f docker-compose/dev.yaml down -v
+
+dev-agent:
+    go run main.go agent start --server=http://localhost:5556 --token="${GOKAKASHI_API_TOKEN}" --experiments="v2_agents"

@@ -5,7 +5,7 @@ import (
 )
 
 func TestStatuses(t *testing.T) {
-	expected := []string{"connected", "scan_in_progress", "disconnected"}
+	expected := []string{"connected", "scan_in_progress", "disconnected", "lost", "exited"}
 	got := Statuses()
 	if len(got) != len(expected) {
 		t.Fatalf("expected %d statuses, got %d", len(expected), len(got))
@@ -18,7 +18,7 @@ func TestStatuses(t *testing.T) {
 }
 
 func TestValidateStatus(t *testing.T) {
-	valid := []string{"connected", "scan_in_progress", "disconnected"}
+	valid := []string{"connected", "scan_in_progress", "disconnected", "lost", "exited"}
 	for _, s := range valid {
 		if err := ValidateStatus(s); err != nil {
 			t.Errorf("ValidateStatus(%q) returned error: %v, want nil", s, err)
