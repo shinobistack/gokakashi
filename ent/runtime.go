@@ -17,6 +17,7 @@ import (
 	"github.com/shinobistack/gokakashi/ent/scannotify"
 	"github.com/shinobistack/gokakashi/ent/scans"
 	"github.com/shinobistack/gokakashi/ent/schema"
+	"github.com/shinobistack/gokakashi/ent/v2agents"
 )
 
 // The init function reads all schema descriptors with runtime code
@@ -159,4 +160,32 @@ func init() {
 	scansDescID := scansFields[0].Descriptor()
 	// scans.DefaultID holds the default value on creation for the id field.
 	scans.DefaultID = scansDescID.Default.(func() uuid.UUID)
+	v2agentsFields := schema.V2Agents{}.Fields()
+	_ = v2agentsFields
+	// v2agentsDescStatus is the schema descriptor for status field.
+	v2agentsDescStatus := v2agentsFields[1].Descriptor()
+	// v2agents.DefaultStatus holds the default value on creation for the status field.
+	v2agents.DefaultStatus = v2agentsDescStatus.Default.(string)
+	// v2agents.StatusValidator is a validator for the "status" field. It is called by the builders before save.
+	v2agents.StatusValidator = v2agentsDescStatus.Validators[0].(func(string) error)
+	// v2agentsDescLastHeartbeatAt is the schema descriptor for last_heartbeat_at field.
+	v2agentsDescLastHeartbeatAt := v2agentsFields[2].Descriptor()
+	// v2agents.DefaultLastHeartbeatAt holds the default value on creation for the last_heartbeat_at field.
+	v2agents.DefaultLastHeartbeatAt = v2agentsDescLastHeartbeatAt.Default.(func() time.Time)
+	// v2agents.UpdateDefaultLastHeartbeatAt holds the default value on update for the last_heartbeat_at field.
+	v2agents.UpdateDefaultLastHeartbeatAt = v2agentsDescLastHeartbeatAt.UpdateDefault.(func() time.Time)
+	// v2agentsDescCreatedAt is the schema descriptor for created_at field.
+	v2agentsDescCreatedAt := v2agentsFields[3].Descriptor()
+	// v2agents.DefaultCreatedAt holds the default value on creation for the created_at field.
+	v2agents.DefaultCreatedAt = v2agentsDescCreatedAt.Default.(func() time.Time)
+	// v2agentsDescUpdatedAt is the schema descriptor for updated_at field.
+	v2agentsDescUpdatedAt := v2agentsFields[4].Descriptor()
+	// v2agents.DefaultUpdatedAt holds the default value on creation for the updated_at field.
+	v2agents.DefaultUpdatedAt = v2agentsDescUpdatedAt.Default.(func() time.Time)
+	// v2agents.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.
+	v2agents.UpdateDefaultUpdatedAt = v2agentsDescUpdatedAt.UpdateDefault.(func() time.Time)
+	// v2agentsDescID is the schema descriptor for id field.
+	v2agentsDescID := v2agentsFields[0].Descriptor()
+	// v2agents.DefaultID holds the default value on creation for the id field.
+	v2agents.DefaultID = v2agentsDescID.Default.(func() uuid.UUID)
 }

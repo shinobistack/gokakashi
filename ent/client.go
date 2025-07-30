@@ -26,6 +26,7 @@ import (
 	"github.com/shinobistack/gokakashi/ent/scanlabels"
 	"github.com/shinobistack/gokakashi/ent/scannotify"
 	"github.com/shinobistack/gokakashi/ent/scans"
+	"github.com/shinobistack/gokakashi/ent/v2agents"
 )
 
 // Client is the client that holds all ent builders.
@@ -53,6 +54,8 @@ type Client struct {
 	ScanNotify *ScanNotifyClient
 	// Scans is the client for interacting with the Scans builders.
 	Scans *ScansClient
+	// V2Agents is the client for interacting with the V2Agents builders.
+	V2Agents *V2AgentsClient
 }
 
 // NewClient creates a new client configured with the given options.
@@ -74,6 +77,7 @@ func (c *Client) init() {
 	c.ScanLabels = NewScanLabelsClient(c.config)
 	c.ScanNotify = NewScanNotifyClient(c.config)
 	c.Scans = NewScansClient(c.config)
+	c.V2Agents = NewV2AgentsClient(c.config)
 }
 
 type (
@@ -176,6 +180,7 @@ func (c *Client) Tx(ctx context.Context) (*Tx, error) {
 		ScanLabels:      NewScanLabelsClient(cfg),
 		ScanNotify:      NewScanNotifyClient(cfg),
 		Scans:           NewScansClient(cfg),
+		V2Agents:        NewV2AgentsClient(cfg),
 	}, nil
 }
 
@@ -205,6 +210,7 @@ func (c *Client) BeginTx(ctx context.Context, opts *sql.TxOptions) (*Tx, error) 
 		ScanLabels:      NewScanLabelsClient(cfg),
 		ScanNotify:      NewScanNotifyClient(cfg),
 		Scans:           NewScansClient(cfg),
+		V2Agents:        NewV2AgentsClient(cfg),
 	}, nil
 }
 
@@ -235,7 +241,7 @@ func (c *Client) Close() error {
 func (c *Client) Use(hooks ...Hook) {
 	for _, n := range []interface{ Use(...Hook) }{
 		c.AgentLabels, c.AgentTasks, c.Agents, c.IntegrationType, c.Integrations,
-		c.Policies, c.PolicyLabels, c.ScanLabels, c.ScanNotify, c.Scans,
+		c.Policies, c.PolicyLabels, c.ScanLabels, c.ScanNotify, c.Scans, c.V2Agents,
 	} {
 		n.Use(hooks...)
 	}
@@ -246,7 +252,7 @@ func (c *Client) Use(hooks ...Hook) {
 func (c *Client) Intercept(interceptors ...Interceptor) {
 	for _, n := range []interface{ Intercept(...Interceptor) }{
 		c.AgentLabels, c.AgentTasks, c.Agents, c.IntegrationType, c.Integrations,
-		c.Policies, c.PolicyLabels, c.ScanLabels, c.ScanNotify, c.Scans,
+		c.Policies, c.PolicyLabels, c.ScanLabels, c.ScanNotify, c.Scans, c.V2Agents,
 	} {
 		n.Intercept(interceptors...)
 	}
@@ -275,6 +281,8 @@ func (c *Client) Mutate(ctx context.Context, m Mutation) (Value, error) {
 		return c.ScanNotify.mutate(ctx, m)
 	case *ScansMutation:
 		return c.Scans.mutate(ctx, m)
+	case *V2AgentsMutation:
+		return c.V2Agents.mutate(ctx, m)
 	default:
 		return nil, fmt.Errorf("ent: unknown mutation type %T", m)
 	}
@@ -1882,14 +1890,147 @@ func (c *ScansClient) mutate(ctx context.Context, m *ScansMutation) (Value, erro
 	}
 }
 
+// V2AgentsClient is a client for the V2Agents schema.
+type V2AgentsClient struct {
+	config
+}
+
+// NewV2AgentsClient returns a client for the V2Agents from the given config.
+func NewV2AgentsClient(c config) *V2AgentsClient {
+	return &V2AgentsClient{config: c}
+}
+
+// Use adds a list of mutation hooks to the hooks stack.
+// A call to `Use(f, g, h)` equals to `v2agents.Hooks(f(g(h())))`.
+func (c *V2AgentsClient) Use(hooks ...Hook) {
+	c.hooks.V2Agents = append(c.hooks.V2Agents, hooks...)
+}
+
+// Intercept adds a list of query interceptors to the interceptors stack.
+// A call to `Intercept(f, g, h)` equals to `v2agents.Intercept(f(g(h())))`.
+func (c *V2AgentsClient) Intercept(interceptors ...Interceptor) {
+	c.inters.V2Agents = append(c.inters.V2Agents, interceptors...)
+}
+
+// Create returns a builder for creating a V2Agents entity.
+func (c *V2AgentsClient) Create() *V2AgentsCreate {
+	mutation := newV2AgentsMutation(c.config, OpCreate)
+	return &V2AgentsCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// CreateBulk returns a builder for creating a bulk of V2Agents entities.
+func (c *V2AgentsClient) CreateBulk(builders ...*V2AgentsCreate) *V2AgentsCreateBulk {
+	return &V2AgentsCreateBulk{config: c.config, builders: builders}
+}
+
+// MapCreateBulk creates a bulk creation builder from the given slice. For each item in the slice, the function creates
+// a builder and applies setFunc on it.
+func (c *V2AgentsClient) MapCreateBulk(slice any, setFunc func(*V2AgentsCreate, int)) *V2AgentsCreateBulk {
+	rv := reflect.ValueOf(slice)
+	if rv.Kind() != reflect.Slice {
+		return &V2AgentsCreateBulk{err: fmt.Errorf("calling to V2AgentsClient.MapCreateBulk with wrong type %T, need slice", slice)}
+	}
+	builders := make([]*V2AgentsCreate, rv.Len())
+	for i := 0; i < rv.Len(); i++ {
+		builders[i] = c.Create()
+		setFunc(builders[i], i)
+	}
+	return &V2AgentsCreateBulk{config: c.config, builders: builders}
+}
+
+// Update returns an update builder for V2Agents.
+func (c *V2AgentsClient) Update() *V2AgentsUpdate {
+	mutation := newV2AgentsMutation(c.config, OpUpdate)
+	return &V2AgentsUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOne returns an update builder for the given entity.
+func (c *V2AgentsClient) UpdateOne(v *V2Agents) *V2AgentsUpdateOne {
+	mutation := newV2AgentsMutation(c.config, OpUpdateOne, withV2Agents(v))
+	return &V2AgentsUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOneID returns an update builder for the given id.
+func (c *V2AgentsClient) UpdateOneID(id uuid.UUID) *V2AgentsUpdateOne {
+	mutation := newV2AgentsMutation(c.config, OpUpdateOne, withV2AgentsID(id))
+	return &V2AgentsUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// Delete returns a delete builder for V2Agents.
+func (c *V2AgentsClient) Delete() *V2AgentsDelete {
+	mutation := newV2AgentsMutation(c.config, OpDelete)
+	return &V2AgentsDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// DeleteOne returns a builder for deleting the given entity.
+func (c *V2AgentsClient) DeleteOne(v *V2Agents) *V2AgentsDeleteOne {
+	return c.DeleteOneID(v.ID)
+}
+
+// DeleteOneID returns a builder for deleting the given entity by its id.
+func (c *V2AgentsClient) DeleteOneID(id uuid.UUID) *V2AgentsDeleteOne {
+	builder := c.Delete().Where(v2agents.ID(id))
+	builder.mutation.id = &id
+	builder.mutation.op = OpDeleteOne
+	return &V2AgentsDeleteOne{builder}
+}
+
+// Query returns a query builder for V2Agents.
+func (c *V2AgentsClient) Query() *V2AgentsQuery {
+	return &V2AgentsQuery{
+		config: c.config,
+		ctx:    &QueryContext{Type: TypeV2Agents},
+		inters: c.Interceptors(),
+	}
+}
+
+// Get returns a V2Agents entity by its id.
+func (c *V2AgentsClient) Get(ctx context.Context, id uuid.UUID) (*V2Agents, error) {
+	return c.Query().Where(v2agents.ID(id)).Only(ctx)
+}
+
+// GetX is like Get, but panics if an error occurs.
+func (c *V2AgentsClient) GetX(ctx context.Context, id uuid.UUID) *V2Agents {
+	obj, err := c.Get(ctx, id)
+	if err != nil {
+		panic(err)
+	}
+	return obj
+}
+
+// Hooks returns the client hooks.
+func (c *V2AgentsClient) Hooks() []Hook {
+	return c.hooks.V2Agents
+}
+
+// Interceptors returns the client interceptors.
+func (c *V2AgentsClient) Interceptors() []Interceptor {
+	return c.inters.V2Agents
+}
+
+func (c *V2AgentsClient) mutate(ctx context.Context, m *V2AgentsMutation) (Value, error) {
+	switch m.Op() {
+	case OpCreate:
+		return (&V2AgentsCreate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdate:
+		return (&V2AgentsUpdate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdateOne:
+		return (&V2AgentsUpdateOne{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpDelete, OpDeleteOne:
+		return (&V2AgentsDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
+	default:
+		return nil, fmt.Errorf("ent: unknown V2Agents mutation op: %q", m.Op())
+	}
+}
+
 // hooks and interceptors per client, for fast access.
 type (
 	hooks struct {
 		AgentLabels, AgentTasks, Agents, IntegrationType, Integrations, Policies,
-		PolicyLabels, ScanLabels, ScanNotify, Scans []ent.Hook
+		PolicyLabels, ScanLabels, ScanNotify, Scans, V2Agents []ent.Hook
 	}
 	inters struct {
 		AgentLabels, AgentTasks, Agents, IntegrationType, Integrations, Policies,
-		PolicyLabels, ScanLabels, ScanNotify, Scans []ent.Interceptor
+		PolicyLabels, ScanLabels, ScanNotify, Scans, V2Agents []ent.Interceptor
 	}
 )

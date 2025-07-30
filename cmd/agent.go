@@ -80,17 +80,6 @@ var agentStopCmd = &cobra.Command{
 	Run:   agentDeRegister,
 }
 
-var (
-	server       string
-	token        string
-	workspace    string
-	name         string
-	id           int
-	chidori      bool
-	labels       string
-	singleStrike bool
-)
-
 func agentDeRegister(cmd *cobra.Command, args []string) {
 	id, _ := cmd.Flags().GetInt("id")
 	name, _ := cmd.Flags().GetString("name")

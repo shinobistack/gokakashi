@@ -7,6 +7,17 @@ import (
 	"github.com/spf13/cobra"
 )
 
+var (
+	server       string
+	token        string
+	workspace    string
+	name         string
+	id           int
+	chidori      bool
+	labels       string
+	singleStrike bool
+)
+
 var rootCmd = &cobra.Command{
 	Use:   "gokakashi",
 	Short: "GoKakashi - The Container image vulnerability management platform",
