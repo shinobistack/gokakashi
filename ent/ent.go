@@ -23,6 +23,7 @@ import (
 	"github.com/shinobistack/gokakashi/ent/scannotify"
 	"github.com/shinobistack/gokakashi/ent/scans"
 	"github.com/shinobistack/gokakashi/ent/v2agents"
+	"github.com/shinobistack/gokakashi/ent/v2scans"
 )
 
 // ent aliases to avoid import conflicts in user's code.
@@ -94,6 +95,7 @@ func checkColumn(table, column string) error {
 			scannotify.Table:      scannotify.ValidColumn,
 			scans.Table:           scans.ValidColumn,
 			v2agents.Table:        v2agents.ValidColumn,
+			v2scans.Table:         v2scans.ValidColumn,
 		})
 	})
 	return columnCheck(table, column)

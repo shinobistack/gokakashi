@@ -141,6 +141,18 @@ func (f V2AgentsFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, er
 	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.V2AgentsMutation", m)
 }
 
+// The V2ScansFunc type is an adapter to allow the use of ordinary
+// function as V2Scans mutator.
+type V2ScansFunc func(context.Context, *ent.V2ScansMutation) (ent.Value, error)
+
+// Mutate calls f(ctx, m).
+func (f V2ScansFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error) {
+	if mv, ok := m.(*ent.V2ScansMutation); ok {
+		return f(ctx, mv)
+	}
+	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.V2ScansMutation", m)
+}
+
 // Condition is a hook condition function.
 type Condition func(context.Context, ent.Mutation) bool
 

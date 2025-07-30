@@ -34,6 +34,8 @@ type Tx struct {
 	Scans *ScansClient
 	// V2Agents is the client for interacting with the V2Agents builders.
 	V2Agents *V2AgentsClient
+	// V2Scans is the client for interacting with the V2Scans builders.
+	V2Scans *V2ScansClient
 
 	// lazily loaded.
 	client     *Client
@@ -176,6 +178,7 @@ func (tx *Tx) init() {
 	tx.ScanNotify = NewScanNotifyClient(tx.config)
 	tx.Scans = NewScansClient(tx.config)
 	tx.V2Agents = NewV2AgentsClient(tx.config)
+	tx.V2Scans = NewV2ScansClient(tx.config)
 }
 
 // txDriver wraps the given dialect.Tx with a nop dialect.Driver implementation.

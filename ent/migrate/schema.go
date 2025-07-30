@@ -233,6 +233,19 @@ var (
 		Columns:    V2AgentsColumns,
 		PrimaryKey: []*schema.Column{V2AgentsColumns[0]},
 	}
+	// V2scansColumns holds the columns for the "v2scans" table.
+	V2scansColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeUUID, Unique: true},
+		{Name: "status", Type: field.TypeString, Default: "pending"},
+		{Name: "image", Type: field.TypeString},
+		{Name: "labels", Type: field.TypeJSON, Nullable: true},
+	}
+	// V2scansTable holds the schema information for the "v2scans" table.
+	V2scansTable = &schema.Table{
+		Name:       "v2scans",
+		Columns:    V2scansColumns,
+		PrimaryKey: []*schema.Column{V2scansColumns[0]},
+	}
 	// Tables holds all the tables in the schema.
 	Tables = []*schema.Table{
 		AgentLabelsTable,
@@ -246,6 +259,7 @@ var (
 		ScanNotifiesTable,
 		ScansTable,
 		V2AgentsTable,
+		V2scansTable,
 	}
 )
 

@@ -26,6 +26,7 @@ import (
 	"github.com/shinobistack/gokakashi/ent/scans"
 	"github.com/shinobistack/gokakashi/ent/schema"
 	"github.com/shinobistack/gokakashi/ent/v2agents"
+	"github.com/shinobistack/gokakashi/ent/v2scans"
 )
 
 const (
@@ -48,6 +49,7 @@ const (
 	TypeScanNotify      = "ScanNotify"
 	TypeScans           = "Scans"
 	TypeV2Agents        = "V2Agents"
+	TypeV2Scans         = "V2Scans"
 )
 
 // AgentLabelsMutation represents an operation that mutates the AgentLabels nodes in the graph.
@@ -7103,4 +7105,466 @@ func (m *V2AgentsMutation) ClearEdge(name string) error {
 // It returns an error if the edge is not defined in the schema.
 func (m *V2AgentsMutation) ResetEdge(name string) error {
 	return fmt.Errorf("unknown V2Agents edge %s", name)
+}
+
+// V2ScansMutation represents an operation that mutates the V2Scans nodes in the graph.
+type V2ScansMutation struct {
+	config
+	op            Op
+	typ           string
+	id            *uuid.UUID
+	status        *string
+	image         *string
+	labels        *map[string]string
+	clearedFields map[string]struct{}
+	done          bool
+	oldValue      func(context.Context) (*V2Scans, error)
+	predicates    []predicate.V2Scans
+}
+
+var _ ent.Mutation = (*V2ScansMutation)(nil)
+
+// v2scansOption allows management of the mutation configuration using functional options.
+type v2scansOption func(*V2ScansMutation)
+
+// newV2ScansMutation creates new mutation for the V2Scans entity.
+func newV2ScansMutation(c config, op Op, opts ...v2scansOption) *V2ScansMutation {
+	m := &V2ScansMutation{
+		config:        c,
+		op:            op,
+		typ:           TypeV2Scans,
+		clearedFields: make(map[string]struct{}),
+	}
+	for _, opt := range opts {
+		opt(m)
+	}
+	return m
+}
+
+// withV2ScansID sets the ID field of the mutation.
+func withV2ScansID(id uuid.UUID) v2scansOption {
+	return func(m *V2ScansMutation) {
+		var (
+			err   error
+			once  sync.Once
+			value *V2Scans
+		)
+		m.oldValue = func(ctx context.Context) (*V2Scans, error) {
+			once.Do(func() {
+				if m.done {
+					err = errors.New("querying old values post mutation is not allowed")
+				} else {
+					value, err = m.Client().V2Scans.Get(ctx, id)
+				}
+			})
+			return value, err
+		}
+		m.id = &id
+	}
+}
+
+// withV2Scans sets the old V2Scans of the mutation.
+func withV2Scans(node *V2Scans) v2scansOption {
+	return func(m *V2ScansMutation) {
+		m.oldValue = func(context.Context) (*V2Scans, error) {
+			return node, nil
+		}
+		m.id = &node.ID
+	}
+}
+
+// Client returns a new `ent.Client` from the mutation. If the mutation was
+// executed in a transaction (ent.Tx), a transactional client is returned.
+func (m V2ScansMutation) Client() *Client {
+	client := &Client{config: m.config}
+	client.init()
+	return client
+}
+
+// Tx returns an `ent.Tx` for mutations that were executed in transactions;
+// it returns an error otherwise.
+func (m V2ScansMutation) Tx() (*Tx, error) {
+	if _, ok := m.driver.(*txDriver); !ok {
+		return nil, errors.New("ent: mutation is not running in a transaction")
+	}
+	tx := &Tx{config: m.config}
+	tx.init()
+	return tx, nil
+}
+
+// SetID sets the value of the id field. Note that this
+// operation is only accepted on creation of V2Scans entities.
+func (m *V2ScansMutation) SetID(id uuid.UUID) {
+	m.id = &id
+}
+
+// ID returns the ID value in the mutation. Note that the ID is only available
+// if it was provided to the builder or after it was returned from the database.
+func (m *V2ScansMutation) ID() (id uuid.UUID, exists bool) {
+	if m.id == nil {
+		return
+	}
+	return *m.id, true
+}
+
+// IDs queries the database and returns the entity ids that match the mutation's predicate.
+// That means, if the mutation is applied within a transaction with an isolation level such
+// as sql.LevelSerializable, the returned ids match the ids of the rows that will be updated
+// or updated by the mutation.
+func (m *V2ScansMutation) IDs(ctx context.Context) ([]uuid.UUID, error) {
+	switch {
+	case m.op.Is(OpUpdateOne | OpDeleteOne):
+		id, exists := m.ID()
+		if exists {
+			return []uuid.UUID{id}, nil
+		}
+		fallthrough
+	case m.op.Is(OpUpdate | OpDelete):
+		return m.Client().V2Scans.Query().Where(m.predicates...).IDs(ctx)
+	default:
+		return nil, fmt.Errorf("IDs is not allowed on %s operations", m.op)
+	}
+}
+
+// SetStatus sets the "status" field.
+func (m *V2ScansMutation) SetStatus(s string) {
+	m.status = &s
+}
+
+// Status returns the value of the "status" field in the mutation.
+func (m *V2ScansMutation) Status() (r string, exists bool) {
+	v := m.status
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldStatus returns the old "status" field's value of the V2Scans entity.
+// If the V2Scans object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *V2ScansMutation) OldStatus(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldStatus is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldStatus requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldStatus: %w", err)
+	}
+	return oldValue.Status, nil
+}
+
+// ResetStatus resets all changes to the "status" field.
+func (m *V2ScansMutation) ResetStatus() {
+	m.status = nil
+}
+
+// SetImage sets the "image" field.
+func (m *V2ScansMutation) SetImage(s string) {
+	m.image = &s
+}
+
+// Image returns the value of the "image" field in the mutation.
+func (m *V2ScansMutation) Image() (r string, exists bool) {
+	v := m.image
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldImage returns the old "image" field's value of the V2Scans entity.
+// If the V2Scans object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *V2ScansMutation) OldImage(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldImage is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldImage requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldImage: %w", err)
+	}
+	return oldValue.Image, nil
+}
+
+// ResetImage resets all changes to the "image" field.
+func (m *V2ScansMutation) ResetImage() {
+	m.image = nil
+}
+
+// SetLabels sets the "labels" field.
+func (m *V2ScansMutation) SetLabels(value map[string]string) {
+	m.labels = &value
+}
+
+// Labels returns the value of the "labels" field in the mutation.
+func (m *V2ScansMutation) Labels() (r map[string]string, exists bool) {
+	v := m.labels
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldLabels returns the old "labels" field's value of the V2Scans entity.
+// If the V2Scans object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *V2ScansMutation) OldLabels(ctx context.Context) (v map[string]string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldLabels is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldLabels requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldLabels: %w", err)
+	}
+	return oldValue.Labels, nil
+}
+
+// ClearLabels clears the value of the "labels" field.
+func (m *V2ScansMutation) ClearLabels() {
+	m.labels = nil
+	m.clearedFields[v2scans.FieldLabels] = struct{}{}
+}
+
+// LabelsCleared returns if the "labels" field was cleared in this mutation.
+func (m *V2ScansMutation) LabelsCleared() bool {
+	_, ok := m.clearedFields[v2scans.FieldLabels]
+	return ok
+}
+
+// ResetLabels resets all changes to the "labels" field.
+func (m *V2ScansMutation) ResetLabels() {
+	m.labels = nil
+	delete(m.clearedFields, v2scans.FieldLabels)
+}
+
+// Where appends a list predicates to the V2ScansMutation builder.
+func (m *V2ScansMutation) Where(ps ...predicate.V2Scans) {
+	m.predicates = append(m.predicates, ps...)
+}
+
+// WhereP appends storage-level predicates to the V2ScansMutation builder. Using this method,
+// users can use type-assertion to append predicates that do not depend on any generated package.
+func (m *V2ScansMutation) WhereP(ps ...func(*sql.Selector)) {
+	p := make([]predicate.V2Scans, len(ps))
+	for i := range ps {
+		p[i] = ps[i]
+	}
+	m.Where(p...)
+}
+
+// Op returns the operation name.
+func (m *V2ScansMutation) Op() Op {
+	return m.op
+}
+
+// SetOp allows setting the mutation operation.
+func (m *V2ScansMutation) SetOp(op Op) {
+	m.op = op
+}
+
+// Type returns the node type of this mutation (V2Scans).
+func (m *V2ScansMutation) Type() string {
+	return m.typ
+}
+
+// Fields returns all fields that were changed during this mutation. Note that in
+// order to get all numeric fields that were incremented/decremented, call
+// AddedFields().
+func (m *V2ScansMutation) Fields() []string {
+	fields := make([]string, 0, 3)
+	if m.status != nil {
+		fields = append(fields, v2scans.FieldStatus)
+	}
+	if m.image != nil {
+		fields = append(fields, v2scans.FieldImage)
+	}
+	if m.labels != nil {
+		fields = append(fields, v2scans.FieldLabels)
+	}
+	return fields
+}
+
+// Field returns the value of a field with the given name. The second boolean
+// return value indicates that this field was not set, or was not defined in the
+// schema.
+func (m *V2ScansMutation) Field(name string) (ent.Value, bool) {
+	switch name {
+	case v2scans.FieldStatus:
+		return m.Status()
+	case v2scans.FieldImage:
+		return m.Image()
+	case v2scans.FieldLabels:
+		return m.Labels()
+	}
+	return nil, false
+}
+
+// OldField returns the old value of the field from the database. An error is
+// returned if the mutation operation is not UpdateOne, or the query to the
+// database failed.
+func (m *V2ScansMutation) OldField(ctx context.Context, name string) (ent.Value, error) {
+	switch name {
+	case v2scans.FieldStatus:
+		return m.OldStatus(ctx)
+	case v2scans.FieldImage:
+		return m.OldImage(ctx)
+	case v2scans.FieldLabels:
+		return m.OldLabels(ctx)
+	}
+	return nil, fmt.Errorf("unknown V2Scans field %s", name)
+}
+
+// SetField sets the value of a field with the given name. It returns an error if
+// the field is not defined in the schema, or if the type mismatched the field
+// type.
+func (m *V2ScansMutation) SetField(name string, value ent.Value) error {
+	switch name {
+	case v2scans.FieldStatus:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetStatus(v)
+		return nil
+	case v2scans.FieldImage:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetImage(v)
+		return nil
+	case v2scans.FieldLabels:
+		v, ok := value.(map[string]string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetLabels(v)
+		return nil
+	}
+	return fmt.Errorf("unknown V2Scans field %s", name)
+}
+
+// AddedFields returns all numeric fields that were incremented/decremented during
+// this mutation.
+func (m *V2ScansMutation) AddedFields() []string {
+	return nil
+}
+
+// AddedField returns the numeric value that was incremented/decremented on a field
+// with the given name. The second boolean return value indicates that this field
+// was not set, or was not defined in the schema.
+func (m *V2ScansMutation) AddedField(name string) (ent.Value, bool) {
+	return nil, false
+}
+
+// AddField adds the value to the field with the given name. It returns an error if
+// the field is not defined in the schema, or if the type mismatched the field
+// type.
+func (m *V2ScansMutation) AddField(name string, value ent.Value) error {
+	switch name {
+	}
+	return fmt.Errorf("unknown V2Scans numeric field %s", name)
+}
+
+// ClearedFields returns all nullable fields that were cleared during this
+// mutation.
+func (m *V2ScansMutation) ClearedFields() []string {
+	var fields []string
+	if m.FieldCleared(v2scans.FieldLabels) {
+		fields = append(fields, v2scans.FieldLabels)
+	}
+	return fields
+}
+
+// FieldCleared returns a boolean indicating if a field with the given name was
+// cleared in this mutation.
+func (m *V2ScansMutation) FieldCleared(name string) bool {
+	_, ok := m.clearedFields[name]
+	return ok
+}
+
+// ClearField clears the value of the field with the given name. It returns an
+// error if the field is not defined in the schema.
+func (m *V2ScansMutation) ClearField(name string) error {
+	switch name {
+	case v2scans.FieldLabels:
+		m.ClearLabels()
+		return nil
+	}
+	return fmt.Errorf("unknown V2Scans nullable field %s", name)
+}
+
+// ResetField resets all changes in the mutation for the field with the given name.
+// It returns an error if the field is not defined in the schema.
+func (m *V2ScansMutation) ResetField(name string) error {
+	switch name {
+	case v2scans.FieldStatus:
+		m.ResetStatus()
+		return nil
+	case v2scans.FieldImage:
+		m.ResetImage()
+		return nil
+	case v2scans.FieldLabels:
+		m.ResetLabels()
+		return nil
+	}
+	return fmt.Errorf("unknown V2Scans field %s", name)
+}
+
+// AddedEdges returns all edge names that were set/added in this mutation.
+func (m *V2ScansMutation) AddedEdges() []string {
+	edges := make([]string, 0, 0)
+	return edges
+}
+
+// AddedIDs returns all IDs (to other nodes) that were added for the given edge
+// name in this mutation.
+func (m *V2ScansMutation) AddedIDs(name string) []ent.Value {
+	return nil
+}
+
+// RemovedEdges returns all edge names that were removed in this mutation.
+func (m *V2ScansMutation) RemovedEdges() []string {
+	edges := make([]string, 0, 0)
+	return edges
+}
+
+// RemovedIDs returns all IDs (to other nodes) that were removed for the edge with
+// the given name in this mutation.
+func (m *V2ScansMutation) RemovedIDs(name string) []ent.Value {
+	return nil
+}
+
+// ClearedEdges returns all edge names that were cleared in this mutation.
+func (m *V2ScansMutation) ClearedEdges() []string {
+	edges := make([]string, 0, 0)
+	return edges
+}
+
+// EdgeCleared returns a boolean which indicates if the edge with the given name
+// was cleared in this mutation.
+func (m *V2ScansMutation) EdgeCleared(name string) bool {
+	return false
+}
+
+// ClearEdge clears the value of the edge with the given name. It returns an error
+// if that edge is not defined in the schema.
+func (m *V2ScansMutation) ClearEdge(name string) error {
+	return fmt.Errorf("unknown V2Scans unique edge %s", name)
+}
+
+// ResetEdge resets all changes to the edge with the given name in this mutation.
+// It returns an error if the edge is not defined in the schema.
+func (m *V2ScansMutation) ResetEdge(name string) error {
+	return fmt.Errorf("unknown V2Scans edge %s", name)
 }

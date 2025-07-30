@@ -18,6 +18,7 @@ import (
 	"github.com/shinobistack/gokakashi/ent/scans"
 	"github.com/shinobistack/gokakashi/ent/schema"
 	"github.com/shinobistack/gokakashi/ent/v2agents"
+	"github.com/shinobistack/gokakashi/ent/v2scans"
 )
 
 // The init function reads all schema descriptors with runtime code
@@ -188,4 +189,16 @@ func init() {
 	v2agentsDescID := v2agentsFields[0].Descriptor()
 	// v2agents.DefaultID holds the default value on creation for the id field.
 	v2agents.DefaultID = v2agentsDescID.Default.(func() uuid.UUID)
+	v2scansFields := schema.V2Scans{}.Fields()
+	_ = v2scansFields
+	// v2scansDescStatus is the schema descriptor for status field.
+	v2scansDescStatus := v2scansFields[1].Descriptor()
+	// v2scans.DefaultStatus holds the default value on creation for the status field.
+	v2scans.DefaultStatus = v2scansDescStatus.Default.(string)
+	// v2scans.StatusValidator is a validator for the "status" field. It is called by the builders before save.
+	v2scans.StatusValidator = v2scansDescStatus.Validators[0].(func(string) error)
+	// v2scansDescID is the schema descriptor for id field.
+	v2scansDescID := v2scansFields[0].Descriptor()
+	// v2scans.DefaultID holds the default value on creation for the id field.
+	v2scans.DefaultID = v2scansDescID.Default.(func() uuid.UUID)
 }
