@@ -19,3 +19,15 @@ type AgentRegisterResponse struct {
 	CreatedAt time.Time `json:"created_at"`
 	UpdatedAt time.Time `json:"updated_at"`
 }
+
+type AgentHeartbeatRequest struct {
+	ID uuid.UUID `path:"agent_id"`
+}
+
+type AgentHeartbeatResponse struct {
+	ID              uuid.UUID    `json:"id"`
+	Status          agent.Status `json:"status"`
+	LastHeartbeatAt time.Time    `json:"last_heartbeat_at"`
+	CreatedAt       time.Time    `json:"created_at"`
+	UpdatedAt       time.Time    `json:"updated_at"`
+}

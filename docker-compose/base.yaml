@@ -71,6 +71,23 @@ services:
       gokakashi-server:
         condition: service_started
 
+  gokakashi-agentmon:
+    build:
+      context: ../
+      dockerfile: cmd/agentmon/Dockerfile
+    container_name: gokakashi-agentmon
+    networks:
+      - gokakashi-network
+    environment:
+      DB_HOST: db
+      DB_PORT: 5432
+      DB_USER: postgres
+      DB_PASSWORD: CHANGE_THIS_PASSWORD
+      DB_NAME: gokakashi
+    depends_on:
+      db:
+        condition: service_healthy
+
 networks:
   gokakashi-network:
 
