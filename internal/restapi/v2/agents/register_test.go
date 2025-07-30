@@ -8,6 +8,7 @@ import (
 	_ "github.com/mattn/go-sqlite3"
 	"github.com/shinobistack/gokakashi/ent/enttest"
 	"github.com/shinobistack/gokakashi/internal/agent"
+	"github.com/shinobistack/gokakashi/internal/restapi/v2/io"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -16,8 +17,8 @@ func TestRegisterAgent_Integration_Success(t *testing.T) {
 	defer client.Close()
 
 	handler := Register(client)
-	var res RegisterAgentResponse
-	err := handler(context.Background(), RegisterAgentRequest{}, &res)
+	var res io.RegisterAgentResponse
+	err := handler(context.Background(), io.RegisterAgentRequest{}, &res)
 	assert.NoError(t, err)
 
 	dbAgent, err := client.V2Agents.Get(context.Background(), res.ID)
@@ -35,7 +36,7 @@ func TestRegisterAgent_Integration_DBError(t *testing.T) {
 	client.Close() // force DB error
 
 	handler := Register(client)
-	var res RegisterAgentResponse
-	err := handler(context.Background(), RegisterAgentRequest{}, &res)
+	var res io.RegisterAgentResponse
+	err := handler(context.Background(), io.RegisterAgentRequest{}, &res)
 	assert.Error(t, err)
 }
