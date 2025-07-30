@@ -13,7 +13,7 @@ import (
 	"github.com/shinobistack/gokakashi/ent/schema"
 
 	"github.com/google/uuid"
-	"github.com/shinobistack/gokakashi/internal/agent"
+	agent "github.com/shinobistack/gokakashi/internal/agent/status/v1"
 	"github.com/shinobistack/gokakashi/internal/restapi/v1/agents"
 	"github.com/shinobistack/gokakashi/internal/restapi/v1/agenttasks"
 	"github.com/shinobistack/gokakashi/internal/restapi/v1/scans"
