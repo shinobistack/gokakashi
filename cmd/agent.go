@@ -21,6 +21,7 @@ import (
 	"github.com/shinobistack/gokakashi/internal/agent"
 	"github.com/shinobistack/gokakashi/internal/experiment"
 	"github.com/shinobistack/gokakashi/internal/helper"
+	"golang.org/x/oauth2"
 
 	"github.com/google/uuid"
 	"github.com/shinobistack/gokakashi/internal/http/client"
@@ -29,6 +30,7 @@ import (
 	"github.com/shinobistack/gokakashi/internal/restapi/v1/integrations"
 	"github.com/shinobistack/gokakashi/internal/restapi/v1/scanlabels"
 	"github.com/shinobistack/gokakashi/internal/restapi/v1/scans"
+	gokakashiclient "github.com/shinobistack/gokakashi/pkg/client"
 	"github.com/shinobistack/gokakashi/pkg/registry/v1"
 	"github.com/shinobistack/gokakashi/pkg/scanner/v1"
 	"github.com/spf13/cobra"
@@ -75,7 +77,14 @@ var agentStartCmd = &cobra.Command{
 	Short: "Register an agent and start polling for tasks",
 	Run: func(cmd *cobra.Command, args []string) {
 		if experiment.Enabled(experiment.V2Agents) {
-			if err := agent.New().Start(); err != nil {
+			ts := oauth2.StaticTokenSource(&oauth2.Token{AccessToken: token})
+			tokenClient := oauth2.NewClient(cmd.Context(), ts)
+
+			gokakashiAPIClient, err := gokakashiclient.New(server, tokenClient)
+			if err != nil {
+				log.Fatalf("Failed to create gokakashi API client: %v", err)
+			}
+			if err := agent.New(gokakashiAPIClient).Start(); err != nil {
 				log.Fatalf("Failed to start agent: %v", err)
 			}
 			return

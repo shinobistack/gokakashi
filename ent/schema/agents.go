@@ -7,7 +7,7 @@ import (
 	"entgo.io/ent"
 	"entgo.io/ent/schema/edge"
 	"entgo.io/ent/schema/field"
-	agent "github.com/shinobistack/gokakashi/internal/agent/v1"
+	agent "github.com/shinobistack/gokakashi/internal/agent/status/v1"
 )
 
 // Agents holds the schema definition for the Agents entity.

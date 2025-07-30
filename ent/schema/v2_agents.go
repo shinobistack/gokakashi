@@ -9,7 +9,7 @@ import (
 	"entgo.io/ent/schema"
 	"entgo.io/ent/schema/field"
 	"github.com/google/uuid"
-	"github.com/shinobistack/gokakashi/internal/agent"
+	agent "github.com/shinobistack/gokakashi/internal/agent/status/v2"
 )
 
 // V2Agents holds the schema definition for the Agents entity.

@@ -1,15 +1,34 @@
 package agent
 
-import "fmt"
+import (
+	"context"
+	"log"
 
-type Agent struct{}
+	"github.com/google/uuid"
+	"github.com/shinobistack/gokakashi/pkg/client"
+)
 
-func New() *Agent {
-	return &Agent{}
+type Agent struct {
+	client *client.Client
+
+	id uuid.UUID
+}
+
+func New(client *client.Client) *Agent {
+	return &Agent{
+		client: client,
+	}
 }
 
 func (a *Agent) Start() error {
-	fmt.Println("TODO: implement v2 agent start logic")
+	log.Println("Starting gokakashi agent")
+	regAgent, err := a.client.Agent.Register(context.Background(), nil)
+	if err != nil {
+		return err
+	}
+	a.id = regAgent.ID
+	log.Println("Agent registered successfully! Agent ID: ", a.id)
+	log.Println("Agent details: ", regAgent)
 
 	return nil
 }

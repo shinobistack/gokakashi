@@ -5,12 +5,12 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/shinobistack/gokakashi/internal/agent"
+	agent "github.com/shinobistack/gokakashi/internal/agent/status/v2"
 )
 
-type RegisterAgentRequest struct{}
+type AgentRegisterRequest struct{}
 
-type RegisterAgentResponse struct {
+type AgentRegisterResponse struct {
 	ID uuid.UUID `json:"id"`
 
 	Status          agent.Status `json:"status"`
