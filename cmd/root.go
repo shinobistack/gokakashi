@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/shinobistack/gokakashi/internal/experiment"
 	"github.com/spf13/cobra"
 )
 
@@ -31,6 +32,7 @@ func init() {
 	rootCmd.AddCommand(versionCmd)
 	rootCmd.PersistentFlags().StringVar(&server, "server", "", "The server address to connect to")
 	rootCmd.PersistentFlags().StringVar(&token, "token", "", "Authentication token for the server")
+	rootCmd.PersistentFlags().StringVar(&experiment.Experiments, "experiments", "", "Comma-separated list of experiment flags (e.g., --experiments=exp1,exp2)")
 
 	// To independently process its own configuration file path.
 	serverConfigFilePath = serverCmd.Flags().String("config", "", "Path to the config YAML file")
