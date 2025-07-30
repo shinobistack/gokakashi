@@ -8,7 +8,7 @@ import (
 	"entgo.io/ent/schema/edge"
 	"entgo.io/ent/schema/field"
 	"github.com/google/uuid"
-	"github.com/shinobistack/gokakashi/internal/scan"
+	"github.com/shinobistack/gokakashi/internal/scan/v1"
 )
 
 // Scans holds the schema definition for the Scans entity.

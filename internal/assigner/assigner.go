@@ -17,7 +17,7 @@ import (
 	"github.com/shinobistack/gokakashi/internal/restapi/v1/agents"
 	"github.com/shinobistack/gokakashi/internal/restapi/v1/agenttasks"
 	"github.com/shinobistack/gokakashi/internal/restapi/v1/scans"
-	"github.com/shinobistack/gokakashi/internal/scan"
+	"github.com/shinobistack/gokakashi/internal/scan/v1"
 )
 
 // Assigns scanID to available Agents

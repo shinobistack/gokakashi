@@ -11,6 +11,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/shinobistack/gokakashi/ent/schema"
+	"github.com/shinobistack/gokakashi/internal/experiment"
 	"github.com/shinobistack/gokakashi/internal/helper"
 	"github.com/shinobistack/gokakashi/internal/http/client"
 	"github.com/shinobistack/gokakashi/internal/restapi/v1/integrations"
@@ -56,7 +57,13 @@ var scanCmd = &cobra.Command{
 var scanImageCmd = &cobra.Command{
 	Use:   "image",
 	Short: "Trigger a scan for a container image",
-	Run:   scanImage,
+	Run: func(cmd *cobra.Command, args []string) {
+		if experiment.Enabled(experiment.V2Agents) {
+			// TODO: implement V2 agents scan logic
+		}
+
+		scanImage(cmd, args)
+	},
 }
 
 var scanStatusCmd = &cobra.Command{
