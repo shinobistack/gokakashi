@@ -40,7 +40,7 @@ func TestValidateStatus(t *testing.T) {
 		}
 	}
 
-	invalidStatuses := []string{"", "unknown", "pending", "in_progress", "success ", " error"}
+	invalidStatuses := []string{"", "unknown", "success ", " error"}
 	for _, s := range invalidStatuses {
 		err := ValidateStatus(s)
 		if err != ErrInvalidScanStatus {

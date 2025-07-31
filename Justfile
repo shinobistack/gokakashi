@@ -13,3 +13,6 @@ clean:
 
 dev-agent:
     go run main.go agent start --server=http://localhost:5556 --token="${GOKAKASHI_API_TOKEN}" --experiments="v2_agents"
+
+dev-agent-scan:
+    go run main.go agent scan --server=http://localhost:5556 --token="${GOKAKASHI_API_TOKEN}" ubuntu:24.04

@@ -71,11 +71,10 @@ func TestAgentStartAndStop(t *testing.T) {
 	if err != nil {
 		t.Fatalf("failed to create client: %v", err)
 	}
-	a := &Agent{
-		client:          cli,
-		heartbeatTicker: time.NewTicker(10 * time.Millisecond),
-		done:            make(chan struct{}),
-	}
+	a := New(cli)
+	a.heartbeatTicker = time.NewTicker(10 * time.Millisecond)
+	a.taskTicker = time.NewTicker(10 * time.Millisecond)
+	a.scanStatusTicker = time.NewTicker(10 * time.Millisecond)
 
 	ctx, cancel := context.WithTimeout(context.Background(), 50*time.Millisecond)
 	defer cancel()

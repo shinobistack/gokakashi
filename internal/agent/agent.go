@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/shinobistack/gokakashi/internal/scan/v2"
 	"github.com/shinobistack/gokakashi/pkg/client"
 )
 
@@ -83,10 +84,9 @@ func (a *Agent) Scan(ctx context.Context, image string) error {
 	if err != nil {
 		return err
 	}
+
 	log.Println("Scan created with ID:", sc.ID)
-
-	go a.checkScanStatus(ctx, sc.ID)
-
+	a.waitForScanCompletion(ctx, sc.ID)
 	return nil
 }
 
@@ -96,7 +96,7 @@ func (a *Agent) listenForAgentTasks(ctx context.Context) {
 	}
 }
 
-func (a *Agent) checkScanStatus(ctx context.Context, scanID uuid.UUID) {
+func (a *Agent) waitForScanCompletion(ctx context.Context, scanID uuid.UUID) {
 	if scanID == uuid.Nil {
 		return
 	}
@@ -105,6 +105,15 @@ func (a *Agent) checkScanStatus(ctx context.Context, scanID uuid.UUID) {
 		select {
 		case <-a.scanStatusTicker.C:
 			log.Println("Checking status for scan:", scanID)
+			s, err := a.client.Scan.Get(ctx, &client.ScanGetRequest{ID: scanID})
+			if err != nil {
+				log.Println("Scan status check error:", err)
+				continue
+			}
+			log.Println("Scan status:", s.Status)
+			if s.Status == scan.Success || s.Status == scan.Error {
+				return
+			}
 		case <-ctx.Done():
 			log.Println("Scan status check cancelled")
 			return
