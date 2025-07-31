@@ -132,6 +132,7 @@ func (srv *Server) Service() *web.Service {
 
 	apiV2.Post("/agents", usecase.NewInteractor(v2agents.Register(srv.DB)))
 	apiV2.Patch("/agents/{agent_id}/heartbeat", usecase.NewInteractor(v2agents.Heartbeat(srv.DB)))
+	apiV2.Get("/agents/{agent_id}/tasks", usecase.NewInteractor(v2agents.ListAgentTasks(srv.DB)))
 
 	apiV2.Post("/scans", usecase.NewInteractor(v2scans.CreateScan(srv.DB)))
 	apiV2.Get("/scans/{id}", usecase.NewInteractor(v2scans.GetScan(srv.DB)))
