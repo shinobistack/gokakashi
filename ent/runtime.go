@@ -18,6 +18,7 @@ import (
 	"github.com/shinobistack/gokakashi/ent/scans"
 	"github.com/shinobistack/gokakashi/ent/schema"
 	"github.com/shinobistack/gokakashi/ent/v2agents"
+	"github.com/shinobistack/gokakashi/ent/v2agenttasks"
 	"github.com/shinobistack/gokakashi/ent/v2scans"
 )
 
@@ -161,6 +162,28 @@ func init() {
 	scansDescID := scansFields[0].Descriptor()
 	// scans.DefaultID holds the default value on creation for the id field.
 	scans.DefaultID = scansDescID.Default.(func() uuid.UUID)
+	v2agenttasksFields := schema.V2AgentTasks{}.Fields()
+	_ = v2agenttasksFields
+	// v2agenttasksDescStatus is the schema descriptor for status field.
+	v2agenttasksDescStatus := v2agenttasksFields[3].Descriptor()
+	// v2agenttasks.DefaultStatus holds the default value on creation for the status field.
+	v2agenttasks.DefaultStatus = v2agenttasksDescStatus.Default.(string)
+	// v2agenttasks.StatusValidator is a validator for the "status" field. It is called by the builders before save.
+	v2agenttasks.StatusValidator = v2agenttasksDescStatus.Validators[0].(func(string) error)
+	// v2agenttasksDescCreatedAt is the schema descriptor for created_at field.
+	v2agenttasksDescCreatedAt := v2agenttasksFields[4].Descriptor()
+	// v2agenttasks.DefaultCreatedAt holds the default value on creation for the created_at field.
+	v2agenttasks.DefaultCreatedAt = v2agenttasksDescCreatedAt.Default.(func() time.Time)
+	// v2agenttasksDescUpdatedAt is the schema descriptor for updated_at field.
+	v2agenttasksDescUpdatedAt := v2agenttasksFields[5].Descriptor()
+	// v2agenttasks.DefaultUpdatedAt holds the default value on creation for the updated_at field.
+	v2agenttasks.DefaultUpdatedAt = v2agenttasksDescUpdatedAt.Default.(func() time.Time)
+	// v2agenttasks.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.
+	v2agenttasks.UpdateDefaultUpdatedAt = v2agenttasksDescUpdatedAt.UpdateDefault.(func() time.Time)
+	// v2agenttasksDescID is the schema descriptor for id field.
+	v2agenttasksDescID := v2agenttasksFields[0].Descriptor()
+	// v2agenttasks.DefaultID holds the default value on creation for the id field.
+	v2agenttasks.DefaultID = v2agenttasksDescID.Default.(func() uuid.UUID)
 	v2agentsFields := schema.V2Agents{}.Fields()
 	_ = v2agentsFields
 	// v2agentsDescStatus is the schema descriptor for status field.

@@ -129,6 +129,18 @@ func (f ScansFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error
 	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.ScansMutation", m)
 }
 
+// The V2AgentTasksFunc type is an adapter to allow the use of ordinary
+// function as V2AgentTasks mutator.
+type V2AgentTasksFunc func(context.Context, *ent.V2AgentTasksMutation) (ent.Value, error)
+
+// Mutate calls f(ctx, m).
+func (f V2AgentTasksFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error) {
+	if mv, ok := m.(*ent.V2AgentTasksMutation); ok {
+		return f(ctx, mv)
+	}
+	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.V2AgentTasksMutation", m)
+}
+
 // The V2AgentsFunc type is an adapter to allow the use of ordinary
 // function as V2Agents mutator.
 type V2AgentsFunc func(context.Context, *ent.V2AgentsMutation) (ent.Value, error)

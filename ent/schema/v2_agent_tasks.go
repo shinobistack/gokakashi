@@ -7,7 +7,6 @@ import (
 	"entgo.io/ent"
 	"entgo.io/ent/dialect/entsql"
 	"entgo.io/ent/schema"
-	"entgo.io/ent/schema/edge"
 	"entgo.io/ent/schema/field"
 	"github.com/google/uuid"
 	"github.com/shinobistack/gokakashi/internal/agent/task"
@@ -49,12 +48,8 @@ func (V2AgentTasks) Fields() []ent.Field {
 
 // Edges of the Agent Tasks.
 func (V2AgentTasks) Edges() []ent.Edge {
-	return []ent.Edge{
-		edge.To("agent", V2Agents.Type).
-			Field("agent_id"),
-		edge.To("scan", V2Scans.Type).
-			Field("scan_id"),
-	}
+	// TODO: add edges to V2Agents and V2Scans
+	return []ent.Edge{}
 }
 
 // Annotations of the Agent Tasks.

@@ -32,6 +32,8 @@ type Tx struct {
 	ScanNotify *ScanNotifyClient
 	// Scans is the client for interacting with the Scans builders.
 	Scans *ScansClient
+	// V2AgentTasks is the client for interacting with the V2AgentTasks builders.
+	V2AgentTasks *V2AgentTasksClient
 	// V2Agents is the client for interacting with the V2Agents builders.
 	V2Agents *V2AgentsClient
 	// V2Scans is the client for interacting with the V2Scans builders.
@@ -177,6 +179,7 @@ func (tx *Tx) init() {
 	tx.ScanLabels = NewScanLabelsClient(tx.config)
 	tx.ScanNotify = NewScanNotifyClient(tx.config)
 	tx.Scans = NewScansClient(tx.config)
+	tx.V2AgentTasks = NewV2AgentTasksClient(tx.config)
 	tx.V2Agents = NewV2AgentsClient(tx.config)
 	tx.V2Scans = NewV2ScansClient(tx.config)
 }
