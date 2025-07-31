@@ -134,6 +134,7 @@ func (srv *Server) Service() *web.Service {
 	apiV2.Patch("/agents/{agent_id}/heartbeat", usecase.NewInteractor(v2agents.Heartbeat(srv.DB)))
 
 	apiV2.Post("/scans", usecase.NewInteractor(v2scans.CreateScan(srv.DB)))
+	apiV2.Get("/scans/{id}", usecase.NewInteractor(v2scans.GetScan(srv.DB)))
 
 	s.Use(cors.New(cors.Options{
 		AllowedOrigins: []string{"http://localhost:5555"},

@@ -3,6 +3,7 @@ package scans
 import (
 	"context"
 	"testing"
+	"time"
 
 	_ "github.com/mattn/go-sqlite3"
 
@@ -29,11 +30,17 @@ func TestCreateScan_Success(t *testing.T) {
 	require.NoError(t, err)
 	require.NotZero(t, response.ID)
 	require.Equal(t, scan.Pending, response.Status)
+	require.Equal(t, request.Image, response.Image)
+	require.Equal(t, labels, response.Labels)
+	require.False(t, response.CreatedAt.IsZero(), "CreatedAt should be set")
+	require.False(t, response.UpdatedAt.IsZero(), "UpdatedAt should be set")
 
 	saved, err := db.V2Scans.Get(ctx, response.ID)
 	require.NoError(t, err)
 	require.Equal(t, request.Image, saved.Image)
 	require.Equal(t, labels, saved.Labels)
+	require.WithinDuration(t, response.CreatedAt, saved.CreatedAt, 2*time.Second)
+	require.WithinDuration(t, response.UpdatedAt, saved.UpdatedAt, 2*time.Second)
 }
 
 func TestCreateScan_MissingImage(t *testing.T) {

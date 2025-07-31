@@ -30,8 +30,14 @@ func CreateScan(client *ent.Client) func(ctx context.Context, req io.ScanCreateR
 		}
 
 		*res = io.ScanCreateResponse{
-			ID:     s.ID,
-			Status: scan.Status(s.Status),
+			Scan: io.Scan{
+				ID:        s.ID,
+				Image:     s.Image,
+				Labels:    s.Labels,
+				Status:    scan.Status(s.Status),
+				CreatedAt: s.CreatedAt,
+				UpdatedAt: s.UpdatedAt,
+			},
 		}
 		return nil
 	}
