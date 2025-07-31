@@ -6,6 +6,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"time"
 
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
@@ -43,6 +44,34 @@ func (vc *V2ScansCreate) SetImage(s string) *V2ScansCreate {
 // SetLabels sets the "labels" field.
 func (vc *V2ScansCreate) SetLabels(m map[string]string) *V2ScansCreate {
 	vc.mutation.SetLabels(m)
+	return vc
+}
+
+// SetCreatedAt sets the "created_at" field.
+func (vc *V2ScansCreate) SetCreatedAt(t time.Time) *V2ScansCreate {
+	vc.mutation.SetCreatedAt(t)
+	return vc
+}
+
+// SetNillableCreatedAt sets the "created_at" field if the given value is not nil.
+func (vc *V2ScansCreate) SetNillableCreatedAt(t *time.Time) *V2ScansCreate {
+	if t != nil {
+		vc.SetCreatedAt(*t)
+	}
+	return vc
+}
+
+// SetUpdatedAt sets the "updated_at" field.
+func (vc *V2ScansCreate) SetUpdatedAt(t time.Time) *V2ScansCreate {
+	vc.mutation.SetUpdatedAt(t)
+	return vc
+}
+
+// SetNillableUpdatedAt sets the "updated_at" field if the given value is not nil.
+func (vc *V2ScansCreate) SetNillableUpdatedAt(t *time.Time) *V2ScansCreate {
+	if t != nil {
+		vc.SetUpdatedAt(*t)
+	}
 	return vc
 }
 
@@ -99,6 +128,14 @@ func (vc *V2ScansCreate) defaults() {
 		v := v2scans.DefaultStatus
 		vc.mutation.SetStatus(v)
 	}
+	if _, ok := vc.mutation.CreatedAt(); !ok {
+		v := v2scans.DefaultCreatedAt()
+		vc.mutation.SetCreatedAt(v)
+	}
+	if _, ok := vc.mutation.UpdatedAt(); !ok {
+		v := v2scans.DefaultUpdatedAt()
+		vc.mutation.SetUpdatedAt(v)
+	}
 	if _, ok := vc.mutation.ID(); !ok {
 		v := v2scans.DefaultID()
 		vc.mutation.SetID(v)
@@ -117,6 +154,12 @@ func (vc *V2ScansCreate) check() error {
 	}
 	if _, ok := vc.mutation.Image(); !ok {
 		return &ValidationError{Name: "image", err: errors.New(`ent: missing required field "V2Scans.image"`)}
+	}
+	if _, ok := vc.mutation.CreatedAt(); !ok {
+		return &ValidationError{Name: "created_at", err: errors.New(`ent: missing required field "V2Scans.created_at"`)}
+	}
+	if _, ok := vc.mutation.UpdatedAt(); !ok {
+		return &ValidationError{Name: "updated_at", err: errors.New(`ent: missing required field "V2Scans.updated_at"`)}
 	}
 	return nil
 }
@@ -164,6 +207,14 @@ func (vc *V2ScansCreate) createSpec() (*V2Scans, *sqlgraph.CreateSpec) {
 	if value, ok := vc.mutation.Labels(); ok {
 		_spec.SetField(v2scans.FieldLabels, field.TypeJSON, value)
 		_node.Labels = value
+	}
+	if value, ok := vc.mutation.CreatedAt(); ok {
+		_spec.SetField(v2scans.FieldCreatedAt, field.TypeTime, value)
+		_node.CreatedAt = value
+	}
+	if value, ok := vc.mutation.UpdatedAt(); ok {
+		_spec.SetField(v2scans.FieldUpdatedAt, field.TypeTime, value)
+		_node.UpdatedAt = value
 	}
 	return _node, _spec
 }

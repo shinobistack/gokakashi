@@ -239,6 +239,8 @@ var (
 		{Name: "status", Type: field.TypeString, Default: "pending"},
 		{Name: "image", Type: field.TypeString},
 		{Name: "labels", Type: field.TypeJSON, Nullable: true},
+		{Name: "created_at", Type: field.TypeTime},
+		{Name: "updated_at", Type: field.TypeTime},
 	}
 	// V2scansTable holds the schema information for the "v2scans" table.
 	V2scansTable = &schema.Table{

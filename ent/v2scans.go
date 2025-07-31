@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"strings"
+	"time"
 
 	"entgo.io/ent"
 	"entgo.io/ent/dialect/sql"
@@ -24,7 +25,11 @@ type V2Scans struct {
 	// Details of the image being scanned.
 	Image string `json:"image,omitempty"`
 	// Scan labels key:value
-	Labels       map[string]string `json:"labels,omitempty"`
+	Labels map[string]string `json:"labels,omitempty"`
+	// Scan creation time
+	CreatedAt time.Time `json:"created_at,omitempty"`
+	// Scan update time
+	UpdatedAt    time.Time `json:"updated_at,omitempty"`
 	selectValues sql.SelectValues
 }
 
@@ -37,6 +42,8 @@ func (*V2Scans) scanValues(columns []string) ([]any, error) {
 			values[i] = new([]byte)
 		case v2scans.FieldStatus, v2scans.FieldImage:
 			values[i] = new(sql.NullString)
+		case v2scans.FieldCreatedAt, v2scans.FieldUpdatedAt:
+			values[i] = new(sql.NullTime)
 		case v2scans.FieldID:
 			values[i] = new(uuid.UUID)
 		default:
@@ -79,6 +86,18 @@ func (v *V2Scans) assignValues(columns []string, values []any) error {
 				if err := json.Unmarshal(*value, &v.Labels); err != nil {
 					return fmt.Errorf("unmarshal field labels: %w", err)
 				}
+			}
+		case v2scans.FieldCreatedAt:
+			if value, ok := values[i].(*sql.NullTime); !ok {
+				return fmt.Errorf("unexpected type %T for field created_at", values[i])
+			} else if value.Valid {
+				v.CreatedAt = value.Time
+			}
+		case v2scans.FieldUpdatedAt:
+			if value, ok := values[i].(*sql.NullTime); !ok {
+				return fmt.Errorf("unexpected type %T for field updated_at", values[i])
+			} else if value.Valid {
+				v.UpdatedAt = value.Time
 			}
 		default:
 			v.selectValues.Set(columns[i], values[i])
@@ -124,6 +143,12 @@ func (v *V2Scans) String() string {
 	builder.WriteString(", ")
 	builder.WriteString("labels=")
 	builder.WriteString(fmt.Sprintf("%v", v.Labels))
+	builder.WriteString(", ")
+	builder.WriteString("created_at=")
+	builder.WriteString(v.CreatedAt.Format(time.ANSIC))
+	builder.WriteString(", ")
+	builder.WriteString("updated_at=")
+	builder.WriteString(v.UpdatedAt.Format(time.ANSIC))
 	builder.WriteByte(')')
 	return builder.String()
 }

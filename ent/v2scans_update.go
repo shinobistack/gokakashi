@@ -6,6 +6,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"time"
 
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
@@ -67,6 +68,26 @@ func (vu *V2ScansUpdate) ClearLabels() *V2ScansUpdate {
 	return vu
 }
 
+// SetCreatedAt sets the "created_at" field.
+func (vu *V2ScansUpdate) SetCreatedAt(t time.Time) *V2ScansUpdate {
+	vu.mutation.SetCreatedAt(t)
+	return vu
+}
+
+// SetNillableCreatedAt sets the "created_at" field if the given value is not nil.
+func (vu *V2ScansUpdate) SetNillableCreatedAt(t *time.Time) *V2ScansUpdate {
+	if t != nil {
+		vu.SetCreatedAt(*t)
+	}
+	return vu
+}
+
+// SetUpdatedAt sets the "updated_at" field.
+func (vu *V2ScansUpdate) SetUpdatedAt(t time.Time) *V2ScansUpdate {
+	vu.mutation.SetUpdatedAt(t)
+	return vu
+}
+
 // Mutation returns the V2ScansMutation object of the builder.
 func (vu *V2ScansUpdate) Mutation() *V2ScansMutation {
 	return vu.mutation
@@ -74,6 +95,7 @@ func (vu *V2ScansUpdate) Mutation() *V2ScansMutation {
 
 // Save executes the query and returns the number of nodes affected by the update operation.
 func (vu *V2ScansUpdate) Save(ctx context.Context) (int, error) {
+	vu.defaults()
 	return withHooks(ctx, vu.sqlSave, vu.mutation, vu.hooks)
 }
 
@@ -96,6 +118,14 @@ func (vu *V2ScansUpdate) Exec(ctx context.Context) error {
 func (vu *V2ScansUpdate) ExecX(ctx context.Context) {
 	if err := vu.Exec(ctx); err != nil {
 		panic(err)
+	}
+}
+
+// defaults sets the default values of the builder before save.
+func (vu *V2ScansUpdate) defaults() {
+	if _, ok := vu.mutation.UpdatedAt(); !ok {
+		v := v2scans.UpdateDefaultUpdatedAt()
+		vu.mutation.SetUpdatedAt(v)
 	}
 }
 
@@ -132,6 +162,12 @@ func (vu *V2ScansUpdate) sqlSave(ctx context.Context) (n int, err error) {
 	}
 	if vu.mutation.LabelsCleared() {
 		_spec.ClearField(v2scans.FieldLabels, field.TypeJSON)
+	}
+	if value, ok := vu.mutation.CreatedAt(); ok {
+		_spec.SetField(v2scans.FieldCreatedAt, field.TypeTime, value)
+	}
+	if value, ok := vu.mutation.UpdatedAt(); ok {
+		_spec.SetField(v2scans.FieldUpdatedAt, field.TypeTime, value)
 	}
 	if n, err = sqlgraph.UpdateNodes(ctx, vu.driver, _spec); err != nil {
 		if _, ok := err.(*sqlgraph.NotFoundError); ok {
@@ -193,6 +229,26 @@ func (vuo *V2ScansUpdateOne) ClearLabels() *V2ScansUpdateOne {
 	return vuo
 }
 
+// SetCreatedAt sets the "created_at" field.
+func (vuo *V2ScansUpdateOne) SetCreatedAt(t time.Time) *V2ScansUpdateOne {
+	vuo.mutation.SetCreatedAt(t)
+	return vuo
+}
+
+// SetNillableCreatedAt sets the "created_at" field if the given value is not nil.
+func (vuo *V2ScansUpdateOne) SetNillableCreatedAt(t *time.Time) *V2ScansUpdateOne {
+	if t != nil {
+		vuo.SetCreatedAt(*t)
+	}
+	return vuo
+}
+
+// SetUpdatedAt sets the "updated_at" field.
+func (vuo *V2ScansUpdateOne) SetUpdatedAt(t time.Time) *V2ScansUpdateOne {
+	vuo.mutation.SetUpdatedAt(t)
+	return vuo
+}
+
 // Mutation returns the V2ScansMutation object of the builder.
 func (vuo *V2ScansUpdateOne) Mutation() *V2ScansMutation {
 	return vuo.mutation
@@ -213,6 +269,7 @@ func (vuo *V2ScansUpdateOne) Select(field string, fields ...string) *V2ScansUpda
 
 // Save executes the query and returns the updated V2Scans entity.
 func (vuo *V2ScansUpdateOne) Save(ctx context.Context) (*V2Scans, error) {
+	vuo.defaults()
 	return withHooks(ctx, vuo.sqlSave, vuo.mutation, vuo.hooks)
 }
 
@@ -235,6 +292,14 @@ func (vuo *V2ScansUpdateOne) Exec(ctx context.Context) error {
 func (vuo *V2ScansUpdateOne) ExecX(ctx context.Context) {
 	if err := vuo.Exec(ctx); err != nil {
 		panic(err)
+	}
+}
+
+// defaults sets the default values of the builder before save.
+func (vuo *V2ScansUpdateOne) defaults() {
+	if _, ok := vuo.mutation.UpdatedAt(); !ok {
+		v := v2scans.UpdateDefaultUpdatedAt()
+		vuo.mutation.SetUpdatedAt(v)
 	}
 }
 
@@ -288,6 +353,12 @@ func (vuo *V2ScansUpdateOne) sqlSave(ctx context.Context) (_node *V2Scans, err e
 	}
 	if vuo.mutation.LabelsCleared() {
 		_spec.ClearField(v2scans.FieldLabels, field.TypeJSON)
+	}
+	if value, ok := vuo.mutation.CreatedAt(); ok {
+		_spec.SetField(v2scans.FieldCreatedAt, field.TypeTime, value)
+	}
+	if value, ok := vuo.mutation.UpdatedAt(); ok {
+		_spec.SetField(v2scans.FieldUpdatedAt, field.TypeTime, value)
 	}
 	_node = &V2Scans{config: vuo.config}
 	_spec.Assign = _node.assignValues

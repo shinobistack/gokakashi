@@ -197,6 +197,16 @@ func init() {
 	v2scans.DefaultStatus = v2scansDescStatus.Default.(string)
 	// v2scans.StatusValidator is a validator for the "status" field. It is called by the builders before save.
 	v2scans.StatusValidator = v2scansDescStatus.Validators[0].(func(string) error)
+	// v2scansDescCreatedAt is the schema descriptor for created_at field.
+	v2scansDescCreatedAt := v2scansFields[4].Descriptor()
+	// v2scans.DefaultCreatedAt holds the default value on creation for the created_at field.
+	v2scans.DefaultCreatedAt = v2scansDescCreatedAt.Default.(func() time.Time)
+	// v2scansDescUpdatedAt is the schema descriptor for updated_at field.
+	v2scansDescUpdatedAt := v2scansFields[5].Descriptor()
+	// v2scans.DefaultUpdatedAt holds the default value on creation for the updated_at field.
+	v2scans.DefaultUpdatedAt = v2scansDescUpdatedAt.Default.(func() time.Time)
+	// v2scans.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.
+	v2scans.UpdateDefaultUpdatedAt = v2scansDescUpdatedAt.UpdateDefault.(func() time.Time)
 	// v2scansDescID is the schema descriptor for id field.
 	v2scansDescID := v2scansFields[0].Descriptor()
 	// v2scans.DefaultID holds the default value on creation for the id field.
