@@ -84,7 +84,7 @@ func TestAgentStartAndStop(t *testing.T) {
 	wg.Add(1)
 	go func() {
 		defer wg.Done()
-		err := a.Start(ctx)
+		err := a.Listen(ctx)
 		if err != nil {
 			t.Errorf("Start returned error: %v", err)
 		}

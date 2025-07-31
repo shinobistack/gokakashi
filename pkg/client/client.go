@@ -16,6 +16,7 @@ type Client struct {
 
 	common service
 	Agent  *AgentService
+	Scan   *ScanService
 }
 
 type service struct {
@@ -37,6 +38,7 @@ func New(baseURL string, client *http.Client) (*Client, error) {
 
 	c.common.client = c
 	c.Agent = (*AgentService)(&c.common)
+	c.Scan = (*ScanService)(&c.common)
 
 	return c, nil
 }

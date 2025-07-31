@@ -84,13 +84,31 @@ var agentStartCmd = &cobra.Command{
 			if err != nil {
 				log.Fatalf("Failed to create gokakashi API client: %v", err)
 			}
-			if err := agent.New(gokakashiAPIClient).Start(cmd.Context()); err != nil {
+			if err := agent.New(gokakashiAPIClient).Listen(cmd.Context()); err != nil {
 				log.Fatalf("Failed to start agent: %v", err)
 			}
 			return
 		}
 
 		agentRegister(cmd, args)
+	},
+}
+
+var agentScanCmd = &cobra.Command{
+	Use:   "scan",
+	Short: "Start an agent and perform a scan",
+	Run: func(cmd *cobra.Command, args []string) {
+		ts := oauth2.StaticTokenSource(&oauth2.Token{AccessToken: token})
+		tokenClient := oauth2.NewClient(cmd.Context(), ts)
+
+		gokakashiAPIClient, err := gokakashiclient.New(server, tokenClient)
+		if err != nil {
+			log.Fatalf("Failed to create gokakashi API client: %v", err)
+		}
+
+		if err := agent.New(gokakashiAPIClient).Scan(cmd.Context(), args[0]); err != nil {
+			log.Fatalf("Failed to start agent: %v", err)
+		}
 	},
 }
 
