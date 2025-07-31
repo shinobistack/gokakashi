@@ -5,6 +5,8 @@ import (
 	"time"
 
 	"entgo.io/ent"
+	"entgo.io/ent/dialect/entsql"
+	"entgo.io/ent/schema"
 	"entgo.io/ent/schema/field"
 	"github.com/google/uuid"
 	"github.com/shinobistack/gokakashi/internal/scan/v2"
@@ -48,4 +50,11 @@ func (V2Scans) Fields() []ent.Field {
 // Edges of the Scans.
 func (V2Scans) Edges() []ent.Edge {
 	return []ent.Edge{}
+}
+
+// Annotations of the Scans.
+func (V2Scans) Annotations() []schema.Annotation {
+	return []schema.Annotation{
+		entsql.Annotation{Table: "v2_scans"},
+	}
 }
