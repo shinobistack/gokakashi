@@ -2,17 +2,15 @@ package agents
 
 import (
 	"context"
-	"errors"
 	"testing"
 	"time"
 
+	"github.com/google/uuid"
+	"github.com/shinobistack/gokakashi/ent/enttest"
 	"github.com/shinobistack/gokakashi/ent"
-	"github.com/shinobistack/gokakashi/ent/v2agenttasks"
 	"github.com/shinobistack/gokakashi/internal/restapi/v2/io"
+	"github.com/stretchr/testify/require"
 )
-
-// mockEntClient and helpers would be implemented here or imported from a testutil package.
-// For brevity, we use a minimal stub approach. Replace with proper ent test setup as needed.
 
 type mockV2AgentTasksQuery struct {
 	tasks []*ent.V2AgentTasks
@@ -47,74 +45,73 @@ func (c *mockEntClient) V2AgentTasks() *mockV2AgentTasksClient { return c.v2Agen
 
 func TestListAgentTasks(t *testing.T) {
 	now := time.Now()
-	tests := []struct {
-		name   string
-		query  *mockV2AgentTasksQuery
-		req    io.AgentTaskListRequest
-		want   io.AgentTaskListResponse
-		wantErr bool
-	}{
-		{
-			name:  "no tasks",
-			query: &mockV2AgentTasksQuery{tasks: []*ent.V2AgentTasks{}, total: 0},
-			req:   io.AgentTaskListRequest{AgentID: 1, Page: 1, PerPage: 10},
-			want: io.AgentTaskListResponse{
-				Tasks:      []io.AgentTask{},
-				Pagination: io.Pagination{Page: 1, PerPage: 10},
-				Total:      0,
-			},
-			wantErr: false,
-		},
-		{
-			name: "one task",
-			query: &mockV2AgentTasksQuery{
-				tasks: []*ent.V2AgentTasks{{
-					ID:        42,
-					ScanID:    10,
-					AgentID:   1,
-					Status:    "pending",
-					CreatedAt: now,
-					UpdatedAt: now,
-				}},
-				total: 1,
-			},
-			req: io.AgentTaskListRequest{AgentID: 1, Page: 1, PerPage: 10},
-			want: io.AgentTaskListResponse{
-				Tasks: []io.AgentTask{{
-					ID:        42,
-					ScanID:    10,
-					AgentID:   1,
-					Status:    "pending",
-					CreatedAt: now,
-					UpdatedAt: now,
-				}},
-				Pagination: io.Pagination{Page: 1, PerPage: 10},
-				Total:      1,
-			},
-			wantErr: false,
-		},
-		{
-			name:   "db error",
-			query:  &mockV2AgentTasksQuery{err: errors.New("db fail")},
-			req:    io.AgentTaskListRequest{AgentID: 1, Page: 1, PerPage: 10},
-			want:   io.AgentTaskListResponse{},
-			wantErr: true,
-		},
-	}
 
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			client := &mockEntClient{v2AgentTasks: &mockV2AgentTasksClient{query: tt.query}}
-			handler := ListAgentTasks((*ent.Client)(client)) // type cast for compatibility
-			var res io.AgentTaskListResponse
-			err := handler(context.Background(), tt.req, &res)
-			if (err != nil) != tt.wantErr {
-				t.Errorf("error = %v, wantErr %v", err, tt.wantErr)
-			}
-			if !tt.wantErr && len(res.Tasks) != len(tt.want.Tasks) {
-				t.Errorf("got %d tasks, want %d", len(res.Tasks), len(tt.want.Tasks))
-			}
-			// Additional deep checks can be added here for Tasks, Pagination, etc.
-		})
-	}
+	t.Run("no tasks", func(t *testing.T) {
+		client := enttest.Open(t, "sqlite3", "file:agenttasklist_notasks?mode=memory&cache=shared&_fk=1")
+		defer client.Close()
+		ctx := context.Background()
+		agentID := uuid.MustParse("00000000-0000-0000-0000-000000000001")
+		// Create agent only, no tasks
+		_, err := client.V2Agents.Create().
+			SetID(agentID).
+			SetStatus("disconnected").
+			Save(ctx)
+		require.NoError(t, err)
+
+		req := io.AgentTaskListRequest{
+			AgentID: agentID,
+			Pagination: io.Pagination{Page: 1, PerPage: 10},
+		}
+		var res io.AgentTaskListResponse
+		err = ListAgentTasks(client)(ctx, req, &res)
+		require.NoError(t, err)
+		require.Equal(t, 0, len(res.Tasks))
+		require.Equal(t, 0, res.Total)
+		require.Equal(t, 1, res.Pagination.Page)
+		require.Equal(t, 10, res.Pagination.PerPage)
+	})
+
+	t.Run("one task", func(t *testing.T) {
+		client := enttest.Open(t, "sqlite3", "file:agenttasklist_onetask?mode=memory&cache=shared&_fk=1")
+		defer client.Close()
+		ctx := context.Background()
+		agentID := uuid.MustParse("00000000-0000-0000-0000-000000000001")
+		scanID := uuid.MustParse("00000000-0000-0000-0000-000000000010")
+		taskID := uuid.MustParse("00000000-0000-0000-0000-000000000042")
+		// Create agent
+		_, err := client.V2Agents.Create().
+			SetID(agentID).
+			SetStatus("disconnected").
+			Save(ctx)
+		require.NoError(t, err)
+		// Create task
+		_, err = client.V2AgentTasks.Create().
+			SetID(taskID).
+			SetScanID(scanID).
+			SetAgentID(agentID).
+			SetStatus("pending").
+			SetCreatedAt(now).
+			SetUpdatedAt(now).
+			Save(ctx)
+		require.NoError(t, err)
+
+		req := io.AgentTaskListRequest{
+			AgentID: agentID,
+			Pagination: io.Pagination{Page: 1, PerPage: 10},
+		}
+		var res io.AgentTaskListResponse
+		err = ListAgentTasks(client)(ctx, req, &res)
+		require.NoError(t, err)
+		require.Equal(t, 1, len(res.Tasks))
+		require.Equal(t, 1, res.Total)
+		task := res.Tasks[0]
+		require.Equal(t, taskID, task.ID)
+		require.Equal(t, scanID, task.ScanID)
+		require.Equal(t, agentID, task.AgentID)
+		require.Equal(t, "pending", string(task.Status))
+		require.WithinDuration(t, now, task.CreatedAt, time.Second)
+		require.WithinDuration(t, now, task.UpdatedAt, time.Second)
+		require.Equal(t, 1, res.Pagination.Page)
+		require.Equal(t, 10, res.Pagination.PerPage)
+	})
 }
