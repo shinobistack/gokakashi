@@ -23,6 +23,7 @@ import (
 	scannotify1 "github.com/shinobistack/gokakashi/internal/restapi/v1/scannotify"
 	scans1 "github.com/shinobistack/gokakashi/internal/restapi/v1/scans"
 	v2agents "github.com/shinobistack/gokakashi/internal/restapi/v2/agents"
+	v2scans "github.com/shinobistack/gokakashi/internal/restapi/v2/scans"
 
 	"log"
 	"net/http"
@@ -131,6 +132,10 @@ func (srv *Server) Service() *web.Service {
 
 	apiV2.Post("/agents", usecase.NewInteractor(v2agents.Register(srv.DB)))
 	apiV2.Patch("/agents/{agent_id}/heartbeat", usecase.NewInteractor(v2agents.Heartbeat(srv.DB)))
+	apiV2.Get("/agents/{agent_id}/tasks", usecase.NewInteractor(v2agents.ListAgentTasks(srv.DB)))
+
+	apiV2.Post("/scans", usecase.NewInteractor(v2scans.CreateScan(srv.DB)))
+	apiV2.Get("/scans/{id}", usecase.NewInteractor(v2scans.GetScan(srv.DB)))
 
 	s.Use(cors.New(cors.Options{
 		AllowedOrigins: []string{"http://localhost:5555"},

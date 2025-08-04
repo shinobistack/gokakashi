@@ -51,6 +51,7 @@ func init() {
 
 	rootCmd.AddCommand(agentCmd)
 	agentCmd.AddCommand(agentStartCmd)
+	agentCmd.AddCommand(agentScanCmd)
 	agentCmd.AddCommand(agentStopCmd)
 
 	// Flags for the `scan image` command

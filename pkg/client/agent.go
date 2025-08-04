@@ -14,6 +14,9 @@ type AgentRegisterResponse io.AgentRegisterResponse
 type AgentHeartbeatRequest io.AgentHeartbeatRequest
 type AgentHeartbeatResponse io.AgentHeartbeatResponse
 
+type AgentTaskListRequest io.AgentTaskListRequest
+type AgentTaskListResponse io.AgentTaskListResponse
+
 func (s *AgentService) Register(ctx context.Context, _ *AgentRegisterRequest) (*AgentRegisterResponse, error) {
 	req, err := s.client.NewRequest("POST", "api/v2/agents", nil)
 	if err != nil {
@@ -36,6 +39,19 @@ func (s *AgentService) Heartbeat(ctx context.Context, reqData *AgentHeartbeatReq
 	}
 
 	var resp AgentHeartbeatResponse
+	if err := s.client.Do(ctx, req, &resp); err != nil {
+		return nil, err
+	}
+	return &resp, nil
+}
+
+func (s *AgentService) ListTasks(ctx context.Context, reqData *AgentTaskListRequest) (*AgentTaskListResponse, error) {
+	req, err := s.client.NewRequest("GET", "api/v2/agents/"+reqData.AgentID.String()+"/tasks", nil)
+	if err != nil {
+		return nil, err
+	}
+
+	var resp AgentTaskListResponse
 	if err := s.client.Do(ctx, req, &resp); err != nil {
 		return nil, err
 	}

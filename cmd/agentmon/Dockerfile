@@ -7,7 +7,7 @@ RUN go mod download
 
 COPY . .
 
-RUN CGO_ENABLED=0 GOOS=linux go build -o agentmon ./cmd/agentmon/main.go
+RUN CGO_ENABLED=0 GOOS=linux go build -o agentmon ./cmd/agentmon
 
 FROM alpine:3.21
 

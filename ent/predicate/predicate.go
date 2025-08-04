@@ -36,5 +36,11 @@ type ScanNotify func(*sql.Selector)
 // Scans is the predicate function for scans builders.
 type Scans func(*sql.Selector)
 
+// V2AgentTasks is the predicate function for v2agenttasks builders.
+type V2AgentTasks func(*sql.Selector)
+
 // V2Agents is the predicate function for v2agents builders.
 type V2Agents func(*sql.Selector)
+
+// V2Scans is the predicate function for v2scans builders.
+type V2Scans func(*sql.Selector)

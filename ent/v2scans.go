@@ -3,6 +3,7 @@
 package ent
 
 import (
+	"encoding/json"
 	"fmt"
 	"strings"
 	"time"
@@ -10,36 +11,40 @@ import (
 	"entgo.io/ent"
 	"entgo.io/ent/dialect/sql"
 	"github.com/google/uuid"
-	"github.com/shinobistack/gokakashi/ent/v2agents"
+	"github.com/shinobistack/gokakashi/ent/v2scans"
 )
 
-// V2Agents is the model entity for the V2Agents schema.
-type V2Agents struct {
+// V2Scans is the model entity for the V2Scans schema.
+type V2Scans struct {
 	config `json:"-"`
 	// ID of the ent.
-	// Primary key
+	// Primary key, unique identifier.
 	ID uuid.UUID `json:"id,omitempty"`
-	// Enum: connected, scan_in_progress, disconnected, lost, exited
+	// Enum: pending, in_progress, success, error
 	Status string `json:"status,omitempty"`
-	// Timestamp of the agent's liveliness.
-	LastHeartbeatAt time.Time `json:"last_heartbeat_at,omitempty"`
-	// Timestamp of the agent's creation.
+	// Details of the image being scanned.
+	Image string `json:"image,omitempty"`
+	// Scan labels key:value
+	Labels map[string]string `json:"labels,omitempty"`
+	// Scan creation time
 	CreatedAt time.Time `json:"created_at,omitempty"`
-	// Timestamp of the agent's last update.
+	// Scan update time
 	UpdatedAt    time.Time `json:"updated_at,omitempty"`
 	selectValues sql.SelectValues
 }
 
 // scanValues returns the types for scanning values from sql.Rows.
-func (*V2Agents) scanValues(columns []string) ([]any, error) {
+func (*V2Scans) scanValues(columns []string) ([]any, error) {
 	values := make([]any, len(columns))
 	for i := range columns {
 		switch columns[i] {
-		case v2agents.FieldStatus:
+		case v2scans.FieldLabels:
+			values[i] = new([]byte)
+		case v2scans.FieldStatus, v2scans.FieldImage:
 			values[i] = new(sql.NullString)
-		case v2agents.FieldLastHeartbeatAt, v2agents.FieldCreatedAt, v2agents.FieldUpdatedAt:
+		case v2scans.FieldCreatedAt, v2scans.FieldUpdatedAt:
 			values[i] = new(sql.NullTime)
-		case v2agents.FieldID:
+		case v2scans.FieldID:
 			values[i] = new(uuid.UUID)
 		default:
 			values[i] = new(sql.UnknownType)
@@ -49,38 +54,46 @@ func (*V2Agents) scanValues(columns []string) ([]any, error) {
 }
 
 // assignValues assigns the values that were returned from sql.Rows (after scanning)
-// to the V2Agents fields.
-func (v *V2Agents) assignValues(columns []string, values []any) error {
+// to the V2Scans fields.
+func (v *V2Scans) assignValues(columns []string, values []any) error {
 	if m, n := len(values), len(columns); m < n {
 		return fmt.Errorf("mismatch number of scan values: %d != %d", m, n)
 	}
 	for i := range columns {
 		switch columns[i] {
-		case v2agents.FieldID:
+		case v2scans.FieldID:
 			if value, ok := values[i].(*uuid.UUID); !ok {
 				return fmt.Errorf("unexpected type %T for field id", values[i])
 			} else if value != nil {
 				v.ID = *value
 			}
-		case v2agents.FieldStatus:
+		case v2scans.FieldStatus:
 			if value, ok := values[i].(*sql.NullString); !ok {
 				return fmt.Errorf("unexpected type %T for field status", values[i])
 			} else if value.Valid {
 				v.Status = value.String
 			}
-		case v2agents.FieldLastHeartbeatAt:
-			if value, ok := values[i].(*sql.NullTime); !ok {
-				return fmt.Errorf("unexpected type %T for field last_heartbeat_at", values[i])
+		case v2scans.FieldImage:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field image", values[i])
 			} else if value.Valid {
-				v.LastHeartbeatAt = value.Time
+				v.Image = value.String
 			}
-		case v2agents.FieldCreatedAt:
+		case v2scans.FieldLabels:
+			if value, ok := values[i].(*[]byte); !ok {
+				return fmt.Errorf("unexpected type %T for field labels", values[i])
+			} else if value != nil && len(*value) > 0 {
+				if err := json.Unmarshal(*value, &v.Labels); err != nil {
+					return fmt.Errorf("unmarshal field labels: %w", err)
+				}
+			}
+		case v2scans.FieldCreatedAt:
 			if value, ok := values[i].(*sql.NullTime); !ok {
 				return fmt.Errorf("unexpected type %T for field created_at", values[i])
 			} else if value.Valid {
 				v.CreatedAt = value.Time
 			}
-		case v2agents.FieldUpdatedAt:
+		case v2scans.FieldUpdatedAt:
 			if value, ok := values[i].(*sql.NullTime); !ok {
 				return fmt.Errorf("unexpected type %T for field updated_at", values[i])
 			} else if value.Valid {
@@ -93,40 +106,43 @@ func (v *V2Agents) assignValues(columns []string, values []any) error {
 	return nil
 }
 
-// Value returns the ent.Value that was dynamically selected and assigned to the V2Agents.
+// Value returns the ent.Value that was dynamically selected and assigned to the V2Scans.
 // This includes values selected through modifiers, order, etc.
-func (v *V2Agents) Value(name string) (ent.Value, error) {
+func (v *V2Scans) Value(name string) (ent.Value, error) {
 	return v.selectValues.Get(name)
 }
 
-// Update returns a builder for updating this V2Agents.
-// Note that you need to call V2Agents.Unwrap() before calling this method if this V2Agents
+// Update returns a builder for updating this V2Scans.
+// Note that you need to call V2Scans.Unwrap() before calling this method if this V2Scans
 // was returned from a transaction, and the transaction was committed or rolled back.
-func (v *V2Agents) Update() *V2AgentsUpdateOne {
-	return NewV2AgentsClient(v.config).UpdateOne(v)
+func (v *V2Scans) Update() *V2ScansUpdateOne {
+	return NewV2ScansClient(v.config).UpdateOne(v)
 }
 
-// Unwrap unwraps the V2Agents entity that was returned from a transaction after it was closed,
+// Unwrap unwraps the V2Scans entity that was returned from a transaction after it was closed,
 // so that all future queries will be executed through the driver which created the transaction.
-func (v *V2Agents) Unwrap() *V2Agents {
+func (v *V2Scans) Unwrap() *V2Scans {
 	_tx, ok := v.config.driver.(*txDriver)
 	if !ok {
-		panic("ent: V2Agents is not a transactional entity")
+		panic("ent: V2Scans is not a transactional entity")
 	}
 	v.config.driver = _tx.drv
 	return v
 }
 
 // String implements the fmt.Stringer.
-func (v *V2Agents) String() string {
+func (v *V2Scans) String() string {
 	var builder strings.Builder
-	builder.WriteString("V2Agents(")
+	builder.WriteString("V2Scans(")
 	builder.WriteString(fmt.Sprintf("id=%v, ", v.ID))
 	builder.WriteString("status=")
 	builder.WriteString(v.Status)
 	builder.WriteString(", ")
-	builder.WriteString("last_heartbeat_at=")
-	builder.WriteString(v.LastHeartbeatAt.Format(time.ANSIC))
+	builder.WriteString("image=")
+	builder.WriteString(v.Image)
+	builder.WriteString(", ")
+	builder.WriteString("labels=")
+	builder.WriteString(fmt.Sprintf("%v", v.Labels))
 	builder.WriteString(", ")
 	builder.WriteString("created_at=")
 	builder.WriteString(v.CreatedAt.Format(time.ANSIC))
@@ -137,5 +153,5 @@ func (v *V2Agents) String() string {
 	return builder.String()
 }
 
-// V2AgentsSlice is a parsable slice of V2Agents.
-type V2AgentsSlice []*V2Agents
+// V2ScansSlice is a parsable slice of V2Scans.
+type V2ScansSlice []*V2Scans

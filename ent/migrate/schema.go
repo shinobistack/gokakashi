@@ -219,6 +219,21 @@ var (
 			},
 		},
 	}
+	// V2AgentTasksColumns holds the columns for the "v2_agent_tasks" table.
+	V2AgentTasksColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeUUID, Unique: true},
+		{Name: "agent_id", Type: field.TypeUUID},
+		{Name: "scan_id", Type: field.TypeUUID},
+		{Name: "status", Type: field.TypeString, Default: "pending"},
+		{Name: "created_at", Type: field.TypeTime},
+		{Name: "updated_at", Type: field.TypeTime},
+	}
+	// V2AgentTasksTable holds the schema information for the "v2_agent_tasks" table.
+	V2AgentTasksTable = &schema.Table{
+		Name:       "v2_agent_tasks",
+		Columns:    V2AgentTasksColumns,
+		PrimaryKey: []*schema.Column{V2AgentTasksColumns[0]},
+	}
 	// V2AgentsColumns holds the columns for the "v2_agents" table.
 	V2AgentsColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeUUID, Unique: true},
@@ -233,6 +248,21 @@ var (
 		Columns:    V2AgentsColumns,
 		PrimaryKey: []*schema.Column{V2AgentsColumns[0]},
 	}
+	// V2ScansColumns holds the columns for the "v2_scans" table.
+	V2ScansColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeUUID, Unique: true},
+		{Name: "status", Type: field.TypeString, Default: "pending"},
+		{Name: "image", Type: field.TypeString},
+		{Name: "labels", Type: field.TypeJSON, Nullable: true},
+		{Name: "created_at", Type: field.TypeTime},
+		{Name: "updated_at", Type: field.TypeTime},
+	}
+	// V2ScansTable holds the schema information for the "v2_scans" table.
+	V2ScansTable = &schema.Table{
+		Name:       "v2_scans",
+		Columns:    V2ScansColumns,
+		PrimaryKey: []*schema.Column{V2ScansColumns[0]},
+	}
 	// Tables holds all the tables in the schema.
 	Tables = []*schema.Table{
 		AgentLabelsTable,
@@ -245,7 +275,9 @@ var (
 		ScanLabelsTable,
 		ScanNotifiesTable,
 		ScansTable,
+		V2AgentTasksTable,
 		V2AgentsTable,
+		V2ScansTable,
 	}
 )
 
@@ -259,7 +291,13 @@ func init() {
 	ScanNotifiesTable.ForeignKeys[0].RefTable = ScansTable
 	ScansTable.ForeignKeys[0].RefTable = IntegrationsTable
 	ScansTable.ForeignKeys[1].RefTable = PoliciesTable
+	V2AgentTasksTable.Annotation = &entsql.Annotation{
+		Table: "v2_agent_tasks",
+	}
 	V2AgentsTable.Annotation = &entsql.Annotation{
 		Table: "v2_agents",
+	}
+	V2ScansTable.Annotation = &entsql.Annotation{
+		Table: "v2_scans",
 	}
 }

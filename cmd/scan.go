@@ -56,7 +56,9 @@ var scanCmd = &cobra.Command{
 var scanImageCmd = &cobra.Command{
 	Use:   "image",
 	Short: "Trigger a scan for a container image",
-	Run:   scanImage,
+	Run: func(cmd *cobra.Command, args []string) {
+		scanImage(cmd, args)
+	},
 }
 
 var scanStatusCmd = &cobra.Command{
