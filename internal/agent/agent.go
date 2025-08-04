@@ -7,6 +7,8 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/shinobistack/gokakashi/internal/agent/task"
+	"github.com/shinobistack/gokakashi/internal/restapi/v2/io"
 	"github.com/shinobistack/gokakashi/internal/scan/v2"
 	"github.com/shinobistack/gokakashi/pkg/client"
 )
@@ -93,6 +95,25 @@ func (a *Agent) Scan(ctx context.Context, image string) error {
 func (a *Agent) listenForAgentTasks(ctx context.Context) {
 	for range a.taskTicker.C {
 		log.Println("Checking for agent tasks")
+		pending := string(task.Pending)
+		tasks, err := a.client.Agent.ListTasks(ctx, &client.AgentTaskListRequest{
+			AgentID: a.id,
+			Status:  &pending,
+			Pagination: io.Pagination{
+				Page:    1,
+				PerPage: 1,
+			},
+		})
+		if err != nil {
+			log.Println("Error fetching agent tasks:", err)
+			continue
+		}
+		if len(tasks.Tasks) == 0 {
+			continue
+		}
+
+		task := tasks.Tasks[0]
+		log.Println("Found agent task:", task.ID)
 	}
 }
 

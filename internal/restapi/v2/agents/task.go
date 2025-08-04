@@ -37,7 +37,7 @@ func ListAgentTasks(client *ent.Client) func(ctx context.Context, req io.AgentTa
 			return status.Wrap(err, status.Internal)
 		}
 
-		tasks, err := q.Limit(perPage).Offset(offset).All(ctx)
+		tasks, err := q.Order(ent.Asc(v2agenttasks.FieldCreatedAt)).Limit(perPage).Offset(offset).All(ctx)
 		if err != nil {
 			return status.Wrap(err, status.Internal)
 		}
